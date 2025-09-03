@@ -1,0 +1,6 @@
+02 de Septiembre (Franya)
+
+1- Correrlo en la cmd 
+2- templates es para la interfaz: podemos usar tkinter (por favor)
+3- Aun falta manejar matrices rectangulares, 
+    pero no sé si eso se iba a conceptualizar ahorita
