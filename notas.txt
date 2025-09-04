@@ -1,13 +1,6 @@
-02 de Septiembre (Franya)
+03 de Septiembre (Franya)
 
-<<<<<<< HEAD
-1- Correrlo en la cmd 
-2- templates es para la interfaz: podemos usar tkinter (por favor) -> customtkinter
-3- Aun falta manejar matrices rectangulares, 
-    pero no sé si eso se iba a contemplar ahorita
-=======
 1- Correrlo en la cmd: 
     python main.py
 
 2- templates es para la interfaz: trabajar con customtkinter o pyqt
->>>>>>> 947a34a (Manejo de matrices escalonadas)
