@@ -17,7 +17,7 @@ class Matriz:
                 while True:
                     try:
                         valor_str = input(f"  Posición [{i+1}, {j+1}]: ")
-                        # .limit_denominator() convierte floats como 0.5 a una fracción limpia como 1/2
+                        #limit_denominator() convierte floats como 0.5 a una fracción limpia como 1/2
                         self.datos[i][j] = Fraction(valor_str).limit_denominator()
                         break
                     except (ValueError, ZeroDivisionError):

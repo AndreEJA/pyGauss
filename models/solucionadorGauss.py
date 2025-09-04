@@ -1,59 +1,73 @@
+from fractions import Fraction
 from models.claseMatriz import Matriz
 
 class SolucionadorGauss:
-    """Clase para resolver sistemas de ecuaciones lineales usando el método de eliminación de Gauss"""
+    """Resuelve sistemas de ecuaciones (cuadrados o rectangulares) y detecta el tipo de solución."""
+
     def __init__(self, matriz: Matriz):
         self.matriz = matriz
-        self.n = matriz.filas
+        self.filas = matriz.filas
+        self.columnas = matriz.columnas
+        self.incognitas = self.columnas - 1
 
     def triangularSuperior(self):
-        """
-        Convierte la matriz aumentada en una triangular superior usando pivoteo.
-        Esta es la versión corregida que asegura que el pivote en la diagonal no sea cero.
-        """
-        for k in range(self.n):
-            #1. pivoteo: asegurar que el elemento en la diagonal (pivote) no sea cero.
-            if self.matriz.datos[k][k] == 0:
-                #bscar una fila 'i' debajo de la actual 'k' para intercambiar
-                encontrado = False
-                for i in range(k + 1, self.n):
-                    if self.matriz.datos[i][k] != 0:
-                        self.matriz.intercambiarFilas(k, i)
-                        encontrado = True
-                        break
-                #si no se encuentra fila para intercambiar, el sistema no tiene solución única
-                if not encontrado:
-                    raise ValueError("El sistema no tiene solución única (matriz singular).")
+        """Convierte la matriz a su forma escalonada por filas."""
+        k = 0  #fila pivote
+        pivoteCol = 0  #columna pivote
+        while k < self.filas and pivoteCol < self.incognitas:
+            iMax = k
+            for i in range(k + 1, self.filas):
+                if abs(self.matriz.datos[i][pivoteCol]) > abs(self.matriz.datos[iMax][pivoteCol]):
+                    iMax = i
             
-            #2. eliminación: hacer ceros los elementos debajo del pivote
-            pivote_valor = self.matriz.datos[k][k]
-            for i in range(k + 1, self.n):
-                if self.matriz.datos[i][k] != 0: # Solo operar si no es ya cero
-                    factor = -self.matriz.datos[i][k] / pivote_valor
-                    self.matriz.combinarFilas(filaDestino=i, filaOrigen=k, factor=factor)
+            if self.matriz.datos[iMax][pivoteCol] == 0:
+                pivoteCol += 1
+                continue
+            
+            self.matriz.intercambiarFilas(k, iMax)
+            
+            valorPivote = self.matriz.datos[k][pivoteCol]
+            for i in range(k + 1, self.filas):
+                factor = -self.matriz.datos[i][pivoteCol] / valorPivote
+                self.matriz.combinarFilas(filaDestino=i, filaOrigen=k, factor=factor)
+            
+            k += 1
+            pivoteCol += 1
+            
+        print("\nMatriz en forma escalonada:")
+        print(self.matriz)
 
     def sustitucionRegresiva(self):
-        """
-        Resuelve la matriz triangular superior y devuelve la solución.
-        Esta lógica ahora es correcta porque triangularSuperior() funciona como debe.
-        """
-        x = [0] * self.n
-        #recorrer de abajo hacia arriba (desde la última ecuación a la primera)
-        for i in reversed(range(self.n)):
-            suma = sum(self.matriz.datos[i][j] * x[j] for j in range(i + 1, self.n))
+        """Resuelve el sistema. Se asume que ya se verificó que tiene solución única."""
+        x = [Fraction(0)] * self.incognitas
+        for i in reversed(range(self.filas)):
+            pivote_col = -1
+            for j in range(self.incognitas):
+                if self.matriz.datos[i][j] != 0:
+                    pivote_col = j
+                    break
             
-            #verificar si el pivote en la diagonal es cero después de la eliminación
-            if self.matriz.datos[i][i] == 0:
-                raise ValueError("El sistema es inconsistente o tiene infinitas soluciones.")
-                
-            x[i] = (self.matriz.datos[i][-1] - suma) / self.matriz.datos[i][i]
+            if pivote_col != -1:
+                suma = sum(self.matriz.datos[i][j] * x[j] for j in range(pivote_col + 1, self.incognitas))
+                x[pivote_col] = (self.matriz.datos[i][-1] - suma) / self.matriz.datos[i][pivote_col]
         return x
 
     def resolver(self):
-        """Ejecuta todo el proceso de Gauss y retorna la solución"""
-        print("\n--- Iniciando Eliminación Gaussiana ---")
+        """Orquesta el proceso completo: escalona, analiza y resuelve."""
         self.triangularSuperior()
-        print("\nMatriz en forma triangular superior:")
-        print(self.matriz)
-        print("--- Iniciando Sustitución Regresiva ---\n")
+
+        for i in range(self.filas):
+            esFilaNula = all(self.matriz.datos[i][j] == 0 for j in range(self.incognitas))
+            if esFilaNula and self.matriz.datos[i][-1] != 0:
+                raise ValueError(f"El sistema es inconsistente (no tiene solución). La fila {i+1} muestra una contradicción del tipo 0 = {self.matriz.datos[i][-1]}.")
+        
+        numeroPivotes = 0
+        for i in range(self.filas):
+            if any(self.matriz.datos[i][j] != 0 for j in range(self.incognitas)):
+                numeroPivotes += 1
+        
+        if numeroPivotes < self.incognitas:
+            raise ValueError(f"El sistema tiene infinitas soluciones ({self.incognitas} incógnitas pero solo {numeroPivotes} ecuaciones independientes).")
+
         return self.sustitucionRegresiva()
+
