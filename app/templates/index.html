@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="grid md:grid-cols-2 gap-6">
+  <a href="{{ url_for('principal.menu_matrices') }}" class="card-big">
+    <div>
+      <h2 class="text-2xl font-bold">Matrices</h2>
+      <p class="mt-1 opacity-80">Métodos de resolución y operaciones (Gauss, determinantes, etc.).</p>
+    </div>
+  </a>
+  <a href="{{ url_for('principal.menu_vectores') }}" class="card-big">
+    <div>
+      <h2 class="text-2xl font-bold">Vectores</h2>
+      <p class="mt-1 opacity-80">Módulo en construcción.</p>
+    </div>
+  </a>
+</section>
+{% endblock %}

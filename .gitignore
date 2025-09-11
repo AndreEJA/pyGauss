@@ -1,0 +1,35 @@
+# Entornos y cachés
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+# IDEs / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Archivos locales temporales
+*.log
+*.zip
+*.bak
+*.tmp
+*.swp
+
+# Config/secrets (por si luego agregas)
+.env
+
+# Bases locales (si llegas a usar)
+*.sqlite3
+*.db
+
+# Salidas generadas
+dist/
+build/
