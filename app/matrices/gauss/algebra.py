@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# LÓGICA OOP DEL MÉTODO (nombres en español y comentarios cortos)
+# LÓGICA OOP DEL MÉTODO 
 from fractions import Fraction
 import math, ast
 
