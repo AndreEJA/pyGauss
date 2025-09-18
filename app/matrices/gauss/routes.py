@@ -15,22 +15,26 @@ def vista_gauss():
 @gauss_bp.route("/resolver", methods=["POST"])
 def resolver():
     datos = request.get_json(force=True)
-    filas = int(datos.get("filas"))
-    columnas = int(datos.get("columnas"))
+    # Derivar filas/columnas de la tabla recibida (robusto ante desajustes del frontend)
     tabla = datos.get("tabla", [])
+    filas = len(tabla)
+    if filas == 0:
+        return jsonify({"ok": False, "error": "No se recibieron filas."}), 400
+    columnas = len(tabla[0]) - 1
+    if columnas < 0:
+        return jsonify({"ok": False, "error": "Formato de tabla inválido."}), 400
+    if any(len(f) != columnas + 1 for f in tabla):
+        return jsonify({"ok": False, "error": "Las filas no tienen el mismo número de columnas."}), 400
+
     modo_precision = datos.get("modo_precision", "fraccion")
     decimales = int(datos.get("decimales", 6))
 
-    if not filas or not columnas or filas <= 0 or columnas <= 0:
-        return jsonify({"ok": False, "error": "Parámetros inválidos."}), 400
-
-    # Evaluamos expresiones de cada celda con un parser seguro (AST)
     evaluador = EvaluadorSeguro()
     try:
         matriz_num = []
         for i in range(filas):
             fila_vals = []
-            for j in range(columnas):
+            for j in range(columnas+1):
                 expr = str(tabla[i][j]).strip()
                 if expr == "":
                     raise ValueError("Hay celdas vacías en la matriz.")
@@ -40,7 +44,6 @@ def resolver():
     except Exception as e:
         return jsonify({"ok": False, "error": f"Error al evaluar expresiones: {e}"}), 400
 
-    # Normalizamos como matriz aumentada y resolvemos con Gauss-Jordan paso a paso
     matriz = MatrizAumentada(matriz_num)
     formateador = FormateadorNumeros(modo=modo_precision, decimales=decimales)
     solver = ResolverGaussJordan(formateador=formateador)
@@ -52,6 +55,8 @@ def pdf():
     datos = request.get_json(force=True)
     pasos = datos.get("pasos", [])
     final = datos.get("final", {})
+    pivotes = final.get("pivotes", [])
+    libres = final.get("variables_libres", [])
     titulo = datos.get("titulo", "Método de Gauss-Jordan")
 
     buffer = BytesIO()
@@ -64,6 +69,10 @@ def pdf():
 
     if final:
         elems.append(Paragraph("<b>Resultado:</b>", estilos["Heading2"]))
+        if pivotes:
+            elems.append(Paragraph(f"Columnas pivote: {', '.join('x'+str(p) for p in pivotes)}", estilos["BodyText"]))
+        if libres:
+            elems.append(Paragraph(f"Variables libres: {', '.join(libres)}", estilos["BodyText"]))
         desc = final.get("descripcion", "")
         elems.append(Paragraph(desc, estilos["BodyText"]))
         sol = final.get("solucion")
@@ -84,6 +93,7 @@ def pdf():
     for idx, p in enumerate(pasos, start=1):
         elems.append(Paragraph(f"Paso {idx}: {p.get('descripcion','')}", estilos["Heading4"]))
         matriz = p.get("matriz", [])
+        col_piv = p.get("col_pivote")
         if matriz:
             filas = len(matriz)
             cols = len(matriz[0])
@@ -91,13 +101,16 @@ def pdf():
             for r in range(filas):
                 data.append([str(r+1)] + [str(matriz[r][c]) for c in range(cols)])
             t = Table(data, hAlign='LEFT')
-            t.setStyle(TableStyle([
-                ('BACKGROUND',(0,0),(-1,0), colors.HexColor("#F3F4F6")),
-                ('GRID',(0,0),(-1,-1), 0.5, colors.grey),
-                ('ALIGN',(0,0),(-1,-1),'CENTER'),
-                ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-                ('FONTNAME',(0,0),(-1,0), 'Helvetica-Bold')
-            ]))
+            ts = [('BACKGROUND',(0,0),(-1,0), colors.HexColor("#F3F4F6")),
+                  ('GRID',(0,0),(-1,-1), 0.5, colors.grey),
+                  ('ALIGN',(0,0),(-1,-1),'CENTER'),
+                  ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                  ('FONTNAME',(0,0),(-1,0), 'Helvetica-Bold')]
+            if col_piv:
+                pivot_col_pdf = 1 + int(col_piv)
+                ts.append(('BACKGROUND', (pivot_col_pdf,0), (pivot_col_pdf, filas), colors.HexColor('#FEF3C7')))
+                ts.append(('FONTNAME', (pivot_col_pdf,0), (pivot_col_pdf, filas), 'Helvetica-Bold'))
+            t.setStyle(TableStyle(ts))
             elems.append(t)
             elems.append(Spacer(1, 8))
 

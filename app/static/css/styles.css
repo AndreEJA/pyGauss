@@ -2,50 +2,39 @@
   --bg: #f1f5f9; --text:#0f172a; --panel:#ffffff; --border:#e2e8f0; --muted:#64748b;
   --accent:#e11d48; --primary:#0f172a; --soft:#f8fafc;
 }
-
 body{background:var(--bg);color:var(--text);}
 .nav-link{color:#0f172a;text-decoration:none;font-weight:600}
 .nav-link:hover{opacity:.8}
-
 .input{width:100%;border:1px solid var(--border);background:#fff;color:#0f172a;border-radius:12px;padding:.6rem .75rem;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .input::placeholder{color:#94a3b8}
-
 .btn-primary{display:inline-flex;align-items:center;justify-content:center;background:#0f172a;color:#fff;padding:.6rem 1rem;border-radius:12px;font-weight:600;box-shadow:0 6px 14px rgba(0,0,0,.15)}
 .btn-primary:hover{opacity:.95}
 .btn-accent{display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;padding:.7rem 1.1rem;border-radius:12px;font-weight:700;box-shadow:0 8px 18px rgba(251,113,133,.35)}
 .btn-ghost{display:inline-flex;align-items:center;justify-content:center;padding:.6rem 1rem;border:1px solid var(--border);border-radius:12px;background:transparent;color:#0f172a;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.06)}
 .btn-ghost:hover{background:rgba(148,163,184,.15)}
-
 .panel{padding:1.25rem;background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
 .panel-title{font-size:1.25rem;font-weight:800;margin-bottom:1rem;color:#0f172a}
 .lbl{display:block;font-size:.9rem;color:var(--muted);margin-bottom:.35rem}
-
 .card-big{display:block;padding:2rem;border-radius:18px;background:linear-gradient(135deg,#172554,#1e293b);color:#fff;box-shadow:0 16px 40px rgba(0,0,0,.35);text-decoration:none}
 .card-method{display:block;padding:1.25rem;border-radius:16px;background:var(--panel);border:1px solid var(--border);box-shadow:0 10px 24px rgba(0,0,0,.08);color:#0f172a;text-decoration:none}
-
 .matrix-table{border-collapse:separate;border-spacing:0; width:100%}
 .matrix-table th, .matrix-table td{border:1px solid var(--border);padding:.6rem .5rem;text-align:center;vertical-align:middle;color:#0f172a}
 .matrix-table thead th{background:rgba(148,163,184,.15);font-weight:700}
 .matrix-table .row-head{background:rgba(148,163,184,.15);font-weight:700;min-width:2.5rem}
-
 .celda input{width:100%;border:none;border-radius:8px;background:#ffffff;color:#0f172a;text-align:center;padding:.35rem}
 .celda input::placeholder{color:#94a3b8}
 .celda input:focus{outline:2px solid var(--accent);}
-
 .keypad{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
 .key{min-width:2.4rem;padding:.5rem .6rem;border:1px solid var(--border);border-radius:10px;background:#fff;color:#0f172a;font-weight:700;box-shadow:0 4px 10px rgba(0,0,0,.08);cursor:pointer}
 .key.wide{min-width:4.5rem}
-.tip{margin-left:.5rem;color:var(--muted);font-size:.85rem}
-
+.tip{margin-left:.5rem;color:#64748b;font-size:.85rem}
 .fill-row{display:flex;flex-wrap:wrap;gap:.5rem}
 .fill-btn{padding:.55rem 1rem;border-radius:999px;border:1px solid var(--border);background:var(--soft);color:#0f172a;font-weight:700;box-shadow:0 6px 14px rgba(0,0,0,.06);cursor:pointer}
 .fill-btn:hover{filter:brightness(1.05)}
-.note{color:var(--muted);font-size:.8rem;margin-top:.35rem}
-
+.note{color:#64748b;font-size:.8rem;margin-top:.35rem}
 .card-paso{padding:1rem;background:#ffffff;border-radius:16px;border:1px solid var(--border);box-shadow:0 8px 20px rgba(0,0,0,.08); color:#0f172a}
 .badge{display:inline-block;border-radius:999px;padding:.25rem .6rem;background:#e2e8f0;color:#0f172a;font-size:.75rem;font-weight:700}
 .final-card{background:#fff;color:#0f172a}
-
 .modal-backdrop{position:absolute;inset:0;background:rgba(2,6,23,.35)}
 .modal-card{position:relative;background:#fff;border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.35);border:1px solid #e2e8f0;max-width:28rem;width:92%;padding:1rem;transform:scale(.9);opacity:0;transition:transform .18s ease, opacity .18s ease}
 .modal-body{padding:.75rem 0;color:#0f172a}
@@ -54,5 +43,5 @@ body{background:var(--bg);color:var(--text);}
 #app-modal{display:flex} 
 #app-modal.hidden{display:none}
 #app-modal.show .modal-card{transform:scale(1);opacity:1}
-
-#msg{color:var(--muted)}
+#msg{color:#64748b}
+.matrix-table th.pivot, .matrix-table td.pivot { background:#FEF3C7 !important; }

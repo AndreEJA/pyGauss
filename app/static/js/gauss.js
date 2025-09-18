@@ -45,7 +45,7 @@ function moverFoco(pos,key,filas,columnas){
 function leerTabla(){
   const tabla=document.getElementById('tabla-matriz');
   const filas=tabla.querySelectorAll('tbody tr').length;
-  const columnas=tabla.querySelectorAll('thead tr th').length - 1;
+  const columnas=tabla.querySelectorAll('thead tr th').length - 2;  // -2: quita cabecera de filas y 'b'
   const datos=[];
   tabla.querySelectorAll('tbody tr').forEach(tr=>{
     const vals=[]; tr.querySelectorAll('td input').forEach(inp=> vals.push(inp.value.trim())); datos.push(vals);
@@ -75,7 +75,20 @@ function mostrarPasos(pasos){
       for(let c=0;c<cols;c++){ const td=document.createElement('td'); td.textContent=p.matriz[r][c]; tr.appendChild(td); }
       tbody.appendChild(tr);
     }
-    tabla.appendChild(tbody); wrap.appendChild(tabla); card.appendChild(wrap);
+    tabla.appendChild(tbody);
+
+    if(p.col_pivote){
+      const pivotHeaderIdx = 1 + (p.col_pivote - 1);
+      if(thr.children[pivotHeaderIdx]) thr.children[pivotHeaderIdx].classList.add('pivot');
+      const rows = tbody.querySelectorAll('tr');
+      rows.forEach(tr => {
+        const tds = tr.querySelectorAll('td');
+        const idxBody = (p.col_pivote - 1);
+        if(tds[idxBody]) tds[idxBody].classList.add('pivot');
+      });
+    }
+
+    wrap.appendChild(tabla); card.appendChild(wrap);
     cont.appendChild(card);
   });
   document.getElementById('zona-pasos').classList.remove('hidden');
@@ -84,6 +97,8 @@ function mostrarPasos(pasos){
 function mostrarFinal(final){
   const z=document.getElementById('zona-final'); const desc=document.getElementById('final-desc'); const ul=document.getElementById('final-sol');
   desc.textContent=final.descripcion||''; ul.innerHTML='';
+  if(final.pivotes && final.pivotes.length){ const li=document.createElement('li'); li.className='sol-item'; li.textContent=`Columnas pivote: `+ final.pivotes.map(p=>'x'+p).join(', '); ul.appendChild(li); }
+  if(final.variables_libres && final.variables_libres.length){ const li=document.createElement('li'); li.className='sol-item'; li.textContent=`Variables libres: `+ final.variables_libres.join(', '); ul.appendChild(li); }
   if(final.solucion){ Object.entries(final.solucion).forEach(([k,v])=>{ const li=document.createElement('li'); li.className='sol-item'; li.textContent=`${k}: ${v}`; ul.appendChild(li); }); }
   z.classList.remove('hidden');
 }
@@ -111,9 +126,10 @@ document.addEventListener('click',(e)=>{
       const start=ultimaCeldaActiva.selectionStart||ultimaCeldaActiva.value.length;
       const end=ultimaCeldaActiva.selectionEnd||start;
       const v=ultimaCeldaActiva.value;
-      ultimaCeldaActiva.value=v.slice(0,start)+ins+v.slice(end);
+      let toInsert = ins === '^' ? '**' : ins;
+      ultimaCeldaActiva.value=v.slice(0,start)+toInsert+v.slice(end);
       ultimaCeldaActiva.focus();
-      if(ins.endsWith('()')){ const pos=start+ins.length-1; ultimaCeldaActiva.setSelectionRange(pos,pos); }
+      if(toInsert.endsWith('()')){ const pos=start+toInsert.length-1; ultimaCeldaActiva.setSelectionRange(pos,pos); }
     }
   }
   if(e.target.matches('.fill-btn')) rellenar(e.target.getAttribute('data-fill'));
