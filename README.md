@@ -1,11 +1,7 @@
 # PyGauss UI Light
-
 Sin modo oscuro. Encabezados y pasos de alto contraste.
----
 
-# Instrucciones para Correr PyGauss
 
----
 
 ## **Instrucciones para Correr PyGauss**
 
