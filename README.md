@@ -1,7 +1,9 @@
 # PyGauss UI Light
 Sin modo oscuro. Encabezados y pasos de alto contraste.
 
-
+## 🔗 Código de Referencia en C#
+Implementación sencilla para la suma y multiplicación de matrices en C# en el siguiente repositorio:
+[**franygutz/suma-de-matrices**](https://github.com/franygutz/suma-de-matrices)
 
 ## **Instrucciones para Correr PyGauss**
 
@@ -41,3 +43,5 @@ Una vez que las dependencias estén instaladas, puedes iniciar el servidor de de
 
 ```bash
 python run.py
+
+
