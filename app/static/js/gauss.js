@@ -126,10 +126,19 @@ document.addEventListener('click',(e)=>{
       const start=ultimaCeldaActiva.selectionStart||ultimaCeldaActiva.value.length;
       const end=ultimaCeldaActiva.selectionEnd||start;
       const v=ultimaCeldaActiva.value;
-      let toInsert = ins === '^' ? '**' : ins;
+      let toInsert = ins;
+      let cursorPos = start + toInsert.length;
+      if(ins.endsWith('()')){ toInsert=ins.slice(0,-2); cursorPos=start+toInsert.length+1; }
+      
+      // Lógica para el botón 'x²' (potenciación)
+      if (ins === 'x^') {
+          toInsert = '^';
+          cursorPos = start + 1;
+      }
+
       ultimaCeldaActiva.value=v.slice(0,start)+toInsert+v.slice(end);
       ultimaCeldaActiva.focus();
-      if(toInsert.endsWith('()')){ const pos=start+toInsert.length-1; ultimaCeldaActiva.setSelectionRange(pos,pos); }
+      ultimaCeldaActiva.setSelectionRange(cursorPos, cursorPos);
     }
   }
   if(e.target.matches('.fill-btn')) rellenar(e.target.getAttribute('data-fill'));

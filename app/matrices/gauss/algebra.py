@@ -37,50 +37,69 @@ def a_fraccion_si_aplica(x):
         except: return float(x)
     return x
 
+# Esta clase ha sido re-escrita para ser más robusta
 class EvaluadorSeguro:
-    nombres={'pi':math.pi,'e':math.e,'sin':math.sin,'cos':math.cos,'tan':math.tan,'sqrt':math.sqrt,'raiz':math.sqrt,'frac':lambda a,b:Fraction(a,b)}
-    ops_bin=(ast.Add,ast.Sub,ast.Mult,ast.Div,ast.Pow); ops_uni=(ast.UAdd,ast.USub)
-    def evaluar(self,expr:str):
-        tree=ast.parse(expr,mode='eval'); return self._eval(tree.body)
-    def _eval(self,node):
-        if isinstance(node,ast.Num): return a_fraccion_si_aplica(node.n)
-        if isinstance(node,ast.Constant):
-            v=node.value
-            if isinstance(v,(int,float)): return a_fraccion_si_aplica(v)
-            raise ValueError("Constante no permitida")
-        if isinstance(node,ast.BinOp) and isinstance(node.op,self.ops_bin):
-            a=self._eval(node.left); b=self._eval(node.right); return self._binop(a,b,node.op)
-        if isinstance(node,ast.UnaryOp) and isinstance(node.op,self.ops_uni):
-            v=self._eval(node.operand); return v if isinstance(node.op,ast.UAdd) else -v
-        if isinstance(node,ast.Name):
-            if node.id in self.nombres: return self.nombres[node.id]
-            raise ValueError(f"Nombre no permitido: {node.id}")
-        if isinstance(node,ast.Call):
-            if isinstance(node.func,ast.Name) and node.func.id in self.nombres:
-                fn=self.nombres[node.func.id]; args=[self._eval(a) for a in node.args]; return fn(*args)
-            raise ValueError("Función no permitida")
-        raise ValueError("Expresión no permitida")
-    def _binop(self,a,b,op):
-        if isinstance(a,Fraction) and isinstance(b,Fraction):
-            if isinstance(op,ast.Add): return a+b
-            if isinstance(op,ast.Sub): return a-b
-            if isinstance(op,ast.Mult): return a*b
-            if isinstance(op,ast.Div):
-                if b==0: raise ZeroDivisionError("División por cero")
-                return a/b
-            if isinstance(op,ast.Pow):
-                if b.denominator==1 and b.numerator>=0: return a**b.numerator
-                return float(a)**float(b)
+    def evaluar(self, expr: str):
+        allowed_names = {
+            'sin': math.sin, 'cos': math.cos, 'tan': math.tan, 
+            'sqrt': math.sqrt, 'pi': math.pi, 'e': math.e,
+            'frac': lambda a, b: Fraction(a, b)
+        }
+        
+        # Reemplaza ^ por ** antes de evaluar
+        expr = expr.replace('^', '**')
+        
+        try:
+            node = ast.parse(expr, mode='eval')
+            return self._evaluate_node(node.body, allowed_names)
+        except Exception as e:
+            raise ValueError(f"Expresión no permitida: {e}")
+
+    def _evaluate_node(self, node, allowed_names):
+        if isinstance(node, (ast.Expression, ast.Module)):
+            return self._evaluate_node(node.body, allowed_names)
+        elif isinstance(node, ast.Num):
+            return a_fraccion_si_aplica(node.n)
+        elif isinstance(node, ast.Constant):
+            return a_fraccion_si_aplica(node.value)
+        elif isinstance(node, ast.BinOp):
+            left = self._evaluate_node(node.left, allowed_names)
+            right = self._evaluate_node(node.right, allowed_names)
+            if isinstance(node.op, ast.Add):
+                return left + right
+            elif isinstance(node.op, ast.Sub):
+                return left - right
+            elif isinstance(node.op, ast.Mult):
+                return left * right
+            elif isinstance(node.op, ast.Div):
+                if right == 0:
+                    raise ValueError("División por cero")
+                return left / right
+            elif isinstance(node.op, ast.Pow):
+                return left ** right
+            else:
+                raise ValueError("Operador binario no soportado")
+        elif isinstance(node, ast.UnaryOp):
+            operand = self._evaluate_node(node.operand, allowed_names)
+            if isinstance(node.op, ast.USub):
+                return -operand
+            else:
+                raise ValueError("Operador unario no soportado")
+        elif isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id in allowed_names:
+                func = allowed_names[node.func.id]
+                args = [self._evaluate_node(arg, allowed_names) for arg in node.args]
+                return func(*args)
+            else:
+                raise ValueError("Llamada a función no permitida")
+        elif isinstance(node, ast.Name):
+            if node.id in allowed_names:
+                return allowed_names[node.id]
+            else:
+                raise ValueError(f"Nombre de variable no permitido: {node.id}")
         else:
-            af=float(a) if isinstance(a,Fraction) else a; bf=float(b) if isinstance(b,Fraction) else b
-            if isinstance(op,ast.Add): return af+bf
-            if isinstance(op,ast.Sub): return af-bf
-            if isinstance(op,ast.Mult): return af*bf
-            if isinstance(op,ast.Div):
-                if bf==0: raise ZeroDivisionError("División por cero")
-                return af/bf
-            if isinstance(op,ast.Pow): return af**bf
-        raise ValueError("Operación no soportada")
+            raise ValueError("Nodo de expresión no soportado")
+
 
 class PasoOperacion:
     def __init__(self, desc, matriz, fmt, col_pivote=None):

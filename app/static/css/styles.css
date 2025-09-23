@@ -45,3 +45,21 @@ body{background:var(--bg);color:var(--text);}
 #app-modal.show .modal-card{transform:scale(1);opacity:1}
 #msg{color:#64748b}
 .matrix-table th.pivot, .matrix-table td.pivot { background:#FEF3C7 !important; }
+.card-method {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-method:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.1);
+}
+
+.card-method:hover .text-sm {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.card-method .text-sm {
+    transition: opacity 0.3s ease;
+}
+

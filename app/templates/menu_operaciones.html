@@ -1,0 +1,30 @@
+{% extends "base.html" %} {% block content %}
+<h1 class="text-2xl font-bold mb-4">Operaciones con Matrices</h1>
+<div class="grid sm:grid-cols-2 gap-4">
+  <a
+    href="{{ url_for('operaciones.vista_operacion_suma') }}"
+    class="card-method"
+  >
+    <div class="text-lg font-semibold">Suma de Matrices</div>
+    <div class="text-sm opacity-80">
+      Sumar dos matrices con las mismas dimensiones.
+    </div>
+  </a>
+  <a
+    href="{{ url_for('operaciones.vista_operacion_multiplicacion') }}"
+    class="card-method"
+  >
+    <div class="text-lg font-semibold">Multiplicación de Matrices</div>
+    <div class="text-sm opacity-80">Multiplicar matrices A × B.</div>
+  </a>
+  <a
+    href="{{ url_for('operaciones.vista_matriz_por_vector') }}"
+    class="card-method"
+  >
+    <div class="text-lg font-semibold">Matriz × Vector(es)</div>
+    <div class="text-sm opacity-80">
+      Multiplicar una matriz por uno o más vectores columna.
+    </div>
+  </a>
+</div>
+{% endblock %}
