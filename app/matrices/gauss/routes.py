@@ -1,5 +1,11 @@
 from flask import Blueprint, render_template, request, jsonify, send_file
-from .algebra import ResolverGaussJordan, EvaluadorSeguro, MatrizAumentada, FormateadorNumeros
+from .algebra import (
+    ResolverGaussJordan,
+    ResolverGauss,            # 🔹 nuevo import
+    EvaluadorSeguro,
+    MatrizAumentada,
+    FormateadorNumeros
+)
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -7,15 +13,20 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
 gauss_bp = Blueprint("gauss", __name__, template_folder="../../../templates")
-
+ 
 @gauss_bp.route("/", methods=["GET"])
 def vista_gauss():
     return render_template("gauss.html", title="Método de Gauss-Jordan")
 
+ 
+@gauss_bp.route("/simple", methods=["GET"])
+def vista_gauss_simple():
+    return render_template("gauss_simple.html", title="Método de Gauss")
+
+
 @gauss_bp.route("/resolver", methods=["POST"])
-def resolver():
+def resolver_gauss_jordan():
     datos = request.get_json(force=True)
-    # Derivar filas/columnas de la tabla recibida (robusto ante desajustes del frontend)
     tabla = datos.get("tabla", [])
     filas = len(tabla)
     if filas == 0:
@@ -32,21 +43,56 @@ def resolver():
     evaluador = EvaluadorSeguro()
     try:
         matriz_num = []
-        for i in range(filas):
+        for fila in tabla:
             fila_vals = []
-            for j in range(columnas+1):
-                expr = str(tabla[i][j]).strip()
+            for val in fila:
+                expr = str(val).strip()
                 if expr == "":
                     raise ValueError("Hay celdas vacías en la matriz.")
-                val = evaluador.evaluar(expr)
-                fila_vals.append(val)
+                fila_vals.append(evaluador.evaluar(expr))
             matriz_num.append(fila_vals)
     except Exception as e:
         return jsonify({"ok": False, "error": f"Error al evaluar expresiones: {e}"}), 400
 
     matriz = MatrizAumentada(matriz_num)
     formateador = FormateadorNumeros(modo=modo_precision, decimales=decimales)
-    solver = ResolverGaussJordan(formateador=formateador)
+    solver = ResolverGaussJordan(formateador)
+    resultado = solver.resolver(matriz)
+    return jsonify({"ok": True, **resultado})
+
+@gauss_bp.route("/resolver_simple", methods=["POST"])
+def resolver_gauss_simple():
+    datos = request.get_json(force=True)
+    tabla = datos.get("tabla", [])
+    filas = len(tabla)
+    if filas == 0:
+        return jsonify({"ok": False, "error": "No se recibieron filas."}), 400
+    columnas = len(tabla[0]) - 1
+    if columnas < 0:
+        return jsonify({"ok": False, "error": "Formato de tabla inválido."}), 400
+    if any(len(f) != columnas + 1 for f in tabla):
+        return jsonify({"ok": False, "error": "Las filas no tienen el mismo número de columnas."}), 400
+
+    modo_precision = datos.get("modo_precision", "fraccion")
+    decimales = int(datos.get("decimales", 6))
+
+    evaluador = EvaluadorSeguro()
+    try:
+        matriz_num = []
+        for fila in tabla:
+            fila_vals = []
+            for val in fila:
+                expr = str(val).strip()
+                if expr == "":
+                    raise ValueError("Hay celdas vacías en la matriz.")
+                fila_vals.append(evaluador.evaluar(expr))
+            matriz_num.append(fila_vals)
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Error al evaluar expresiones: {e}"}), 400
+
+    matriz = MatrizAumentada(matriz_num)
+    formateador = FormateadorNumeros(modo=modo_precision, decimales=decimales)
+    solver = ResolverGauss(formateador)  # 🔹 aquí usamos el método nuevo
     resultado = solver.resolver(matriz)
     return jsonify({"ok": True, **resultado})
 

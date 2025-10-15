@@ -194,5 +194,70 @@ class ResolverGaussJordan:
             if b==0: raise ZeroDivisionError("División por cero")
             return a/b
         bf=float(b)
-        if bf==0: raise ZeroDivisionError("División por cero")
+        if bf==0: raise ZeroDivisionError( "División por cero")
         return float(a)/bf
+    
+class ResolverGauss:
+    """
+    Método de Gauss (eliminación hacia adelante).
+    Triangulariza la matriz aumentada sin reducir completamente.
+    """
+    def __init__(self, formateador: FormateadorNumeros):
+        self.pasos = []
+        self.formateador = formateador
+
+    def _reg(self, d, A, col_pivote=None):
+        self.pasos.append(PasoOperacion(d, A, self.formateador.fmt, col_pivote))
+
+    def resolver(self, matriz: MatrizAumentada):
+        A = matriz.copiar()
+        m, np1, n = matriz.m, matriz.np1, matriz.n
+        fila = 0
+
+        for col in range(n):
+            # Buscar pivote
+            piv = None
+            maxabs = 0
+            for r in range(fila, m):
+                try:
+                    val = abs(float(A[r][col]))
+                except:
+                    val = 0
+                if val > maxabs and not es_casi_cero(A[r][col]):
+                    maxabs = val
+                    piv = r
+            if piv is None:
+                continue
+
+            # Intercambio si hace falta
+            if piv != fila:
+                A[fila], A[piv] = A[piv], A[fila]
+                self._reg(f"F{fila+1} ⇄ F{piv+1}", A, col_pivote=col)
+
+            # Normalizar pivote
+            pv = A[fila][col]
+            if es_casi_cero(pv):
+                continue
+            for j in range(col, np1):
+                A[fila][j] = A[fila][j] / pv
+            self._reg(f"Pivote en x{col+1}. F{fila+1} ← (1/{self.formateador.fmt(pv)})·F{fila+1}", A, col_pivote=col)
+
+            # Eliminar hacia abajo (no hacia arriba)
+            for r in range(fila + 1, m):
+                factor = A[r][col]
+                if es_casi_cero(factor):
+                    continue
+                for j in range(col, np1):
+                    A[r][j] = A[r][j] - factor * A[fila][j]
+                self._reg(f"F{r+1} ← F{r+1} - ({self.formateador.fmt(factor)})·F{fila+1}", A, col_pivote=col)
+
+            fila += 1
+            if fila == m:
+                break
+
+        # Resultado: matriz triangular superior lista para sustitución
+        pasos = [
+            {"descripcion": p.descripcion, "matriz": p.matriz, "col_pivote": (p.col_pivote + 1 if p.col_pivote is not None else None)}
+            for p in self.pasos
+        ]
+        return {"pasos": pasos, "final": {"descripcion": "Matriz triangular superior obtenida (lista para sustitución regresiva)."}}
