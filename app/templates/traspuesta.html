@@ -1,0 +1,59 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-8">
+  <section class="panel">
+    <h2 class="panel-title text-slate-900">Traspuesta de una Matriz</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+      <label class="block">
+        <span class="lbl">Filas (m)</span>
+        <input id="inp-filas" type="number" min="1" value="2" class="input" />
+      </label>
+      <label class="block">
+        <span class="lbl">Columnas (n)</span>
+        <input id="inp-columnas" type="number" min="1" value="3" class="input" />
+      </label>
+      <div class="sm:col-span-2">
+        <button id="btn-crear" class="btn-primary w-full">Crear Matriz</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="zona-matriz" class="panel hidden">
+    <h3 class="text-lg font-semibold text-slate-900 mb-3">Matriz A (m×n)</h3>
+    <div class="min-w-full overflow-auto rounded-xl border border-slate-200">
+      <table id="tabla-A" class="matrix-table w-full"></table>
+    </div>
+
+    <div class="kbd-row mt-3">
+      <button class="kbd" data-ins="pi">π</button>
+      <button class="kbd" data-ins="e">e</button>
+      <button class="kbd" data-ins="sqrt()">√</button>
+      <button class="kbd" data-ins="sin()">sin</button>
+      <button class="kbd" data-ins="cos()">cos</button>
+      <button class="kbd" data-ins="tan()">tan</button>
+      <button class="kbd" data-ins="^">x^</button>
+      <button class="kbd" data-ins="/">/</button>
+      <button class="kbd" data-ins="(">(</button>
+      <button class="kbd" data-ins=")">)</button>
+      <button class="kbd" data-ins="+">+</button>
+      <button class="kbd" data-ins="-">-</button>
+    </div>
+
+    <div class="mt-4 flex gap-3">
+      <button id="btn-resolver" class="btn-accent">Calcular Traspuesta</button>
+      <span id="msg" class="text-sm text-slate-500"></span>
+    </div>
+  </section>
+
+  <section id="zona-resultado" class="panel hidden">
+    <h3 class="text-lg font-semibold text-slate-900 mb-3">Resultado: Aᵗ</h3>
+    <div class="overflow-auto max-h-[50vh] rounded-xl border border-slate-200">
+      <table id="tabla-resultado" class="matrix-table w-full"></table>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/traspuesta.js') }}"></script>
+{% endblock %}

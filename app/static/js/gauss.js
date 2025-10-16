@@ -1,3 +1,4 @@
+let lineasActuales = [];
 let ultimaCeldaActiva=null, ultimoResultado=null;
 
 function crearTabla(filas, columnas){
@@ -101,6 +102,7 @@ function mostrarFinal(final){
   if(final.variables_libres && final.variables_libres.length){ const li=document.createElement('li'); li.className='sol-item'; li.textContent=`Variables libres: `+ final.variables_libres.join(', '); ul.appendChild(li); }
   if(final.solucion){ Object.entries(final.solucion).forEach(([k,v])=>{ const li=document.createElement('li'); li.className='sol-item'; li.textContent=`${k}: ${v}`; ul.appendChild(li); }); }
   z.classList.remove('hidden');
+  const zia=document.getElementById('zona-ia'); if(zia) zia.classList.remove('hidden');
 }
 
 function setMsg(t){ document.getElementById('msg').textContent = t||''; }
@@ -185,3 +187,31 @@ document.addEventListener('DOMContentLoaded',()=>{
     }catch(err){ showModal('No se pudo generar el PDF: '+err.message); }
   });
 });
+// --- IA opcional ---
+const btnIA = document.getElementById('btn-ia');
+if(btnIA){
+  btnIA.addEventListener('click', async ()=>{
+    const ctx = (document.getElementById('ia-contexto')||{}).value || '';
+    const out = document.getElementById('ia-out'); const msg = document.getElementById('ia-msg');
+    if(msg) msg.textContent = "Consultando IA...";
+    out && out.classList.add('hidden'); out && (out.textContent="");
+    try{
+      const r = await fetch('/matrices/gauss/ia', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ contexto: ctx, lineas: lineasActuales })
+      });
+      const js = await r.json();
+      if(js.ok){
+        out && (out.textContent = js.texto || "(sin respuesta)");
+        out && out.classList.remove('hidden');
+        if(msg) msg.textContent = "Listo.";
+      }else{
+        alert(js.error || "Error en IA");
+        if(msg) msg.textContent = "";
+      }
+    }catch(e){
+      alert("Error al consultar IA: " + e.message);
+      if(msg) msg.textContent = "";
+    }
+  });
+}

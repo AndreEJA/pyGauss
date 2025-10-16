@@ -120,7 +120,30 @@
       <button id="btn-pdf" class="btn-ghost">Descargar PDF</button>
     </div>
   </section>
+
+  <section id="zona-ia" class="panel hidden">
+    <h3 class="text-lg font-semibold mb-2 text-slate-900">Consulta IA (opcional)</h3>
+    <p class="text-slate-600 mb-2">Describe aquí el contexto del ejercicio o tu pregunta. Luego de resolver, puedes enviar esto a la IA para obtener un criterio corto sobre variables libres.</p>
+    <textarea id="ia-contexto" class="input w-full min-h-[120px]" placeholder="Escribe el enunciado del ejercicio o tu duda..."></textarea>
+    <div class="mt-3 flex gap-3">
+      <button id="btn-ia" class="btn-accent">Preguntar a IA</button>
+      <span id="ia-msg" class="text-sm text-slate-500"></span>
+    </div>
+    <pre id="ia-out" class="mt-3 p-3 rounded-lg bg-slate-50 text-slate-800 whitespace-pre-wrap hidden"></pre>
+  </section>
+
 </div>
 {% endblock %} {% block extra_js %}
 <script src="{{ url_for('static', filename='js/gauss.js') }}"></script>
 {% endblock %}
+
+  <section id="zona-ia" class="panel hidden">
+    <h3 class="text-lg font-semibold mb-2 text-slate-900">Consulta IA (opcional)</h3>
+    <p class="text-slate-600 mb-2">Describe aquí el contexto del ejercicio o tu pregunta. Luego de resolver, puedes enviar esto a la IA para obtener un criterio corto sobre variables libres.</p>
+    <textarea id="ia-contexto" class="input w-full min-h-[120px]" placeholder="Escribe el enunciado del ejercicio o tu duda..."></textarea>
+    <div class="mt-3 flex gap-3">
+      <button id="btn-ia" class="btn-accent">Preguntar a IA</button>
+      <span id="ia-msg" class="text-sm text-slate-500"></span>
+    </div>
+    <pre id="ia-out" class="mt-3 p-3 rounded-lg bg-slate-50 text-slate-800 whitespace-pre-wrap hidden"></pre>
+  </section>

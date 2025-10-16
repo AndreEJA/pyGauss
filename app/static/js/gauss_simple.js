@@ -170,6 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("zona-final").classList.remove("hidden");
         document.getElementById("msg").textContent = "Listo.";
         ultimoResultado = js;
+        try{ renderLineas((js.final && js.final.lineas) ? js.final.lineas : []);}catch(_){}
       } catch (err) {
         document.getElementById("msg").textContent = "";
         alert("Error: " + err.message);
@@ -207,3 +208,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+
+// --- Render de líneas xk=... (Gauss simple) ---
+function renderLineas(lineas){
+  const ul = document.getElementById('final-sol');
+  if(!ul) return;
+  ul.innerHTML = '';
+  (lineas||[]).forEach(txt=>{
+    const li = document.createElement('li');
+    li.textContent = txt;
+    ul.appendChild(li);
+  });
+}

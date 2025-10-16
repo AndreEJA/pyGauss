@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, send_file
 from .algebra import (
+    
     ResolverGaussJordan,
     ResolverGauss,            # 🔹 nuevo import
     EvaluadorSeguro,
@@ -12,6 +13,34 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
+from .pygauss_ext import gauss_solve, gauss_jordan_solve
+from .hf_client import hf_generate, load_hf_config
+
+def _lineas_a_solucion(lineas):
+    """
+    Convierte un arreglo de líneas tipo 'x1 = 60 + x6' y 'Variable libre: x6'
+    a un diccionario { 'x1': '60 + x6', ..., 'x6': 'Variable libre' }.
+    """
+    sol = {}
+    if not isinstance(lineas, list):
+        return sol
+    for s in lineas:
+        if not isinstance(s, str): 
+            continue
+        s = s.strip()
+        if not s:
+            continue
+        if s.lower().startswith('variable libre'):
+            partes = s.split(':', 1)
+            if len(partes) == 2:
+                var = partes[1].strip()
+                if var:
+                    sol[var] = 'Variable libre'
+        else:
+            if '=' in s:
+                left, right = s.split('=', 1)
+                sol[left.strip()] = right.strip()
+    return sol
 gauss_bp = Blueprint("gauss", __name__, template_folder="../../../templates")
  
 @gauss_bp.route("/", methods=["GET"])
@@ -58,6 +87,20 @@ def resolver_gauss_jordan():
     formateador = FormateadorNumeros(modo=modo_precision, decimales=decimales)
     solver = ResolverGaussJordan(formateador)
     resultado = solver.resolver(matriz)
+    # Añadir líneas x1=..., libres, etc. con Gauss-Jordan
+    A = [fila[:-1] for fila in matriz_num]
+    b = [fila[-1] for fila in matriz_num]
+    gj = gauss_jordan_solve(A, b, keep_steps=False)
+    # Normaliza estructura
+    if isinstance(resultado.get("final"), dict):
+        resultado["final"]["lineas"] = gj.get("lines", [])
+        resultado["final"]["solucion"] = _lineas_a_solucion(gj.get("lines", []))
+        resultado["final"]["pivotes"] = gj.get("pivots", resultado["final"].get("pivotes", []))
+        # variables libres como 'xk'
+        libres_idx = gj.get("free_vars", [])
+        resultado["final"]["variables_libres"] = [f"x{i+1}" for i in libres_idx]
+    else:
+        resultado["final"] = {"lineas": gj.get("lines", []), "pivotes": gj.get("pivots", []), "variables_libres": [f"x{i+1}" for i in gj.get("free_vars", [])], "solucion": _lineas_a_solucion(gj.get("lines", []))}
     return jsonify({"ok": True, **resultado})
 
 @gauss_bp.route("/resolver_simple", methods=["POST"])
@@ -94,6 +137,20 @@ def resolver_gauss_simple():
     formateador = FormateadorNumeros(modo=modo_precision, decimales=decimales)
     solver = ResolverGauss(formateador)  # 🔹 aquí usamos el método nuevo
     resultado = solver.resolver(matriz)
+    # Añadir líneas x1=..., libres, etc. con Gauss-Jordan
+    A = [fila[:-1] for fila in matriz_num]
+    b = [fila[-1] for fila in matriz_num]
+    gj = gauss_jordan_solve(A, b, keep_steps=False)
+    # Normaliza estructura
+    if isinstance(resultado.get("final"), dict):
+        resultado["final"]["lineas"] = gj.get("lines", [])
+        resultado["final"]["solucion"] = _lineas_a_solucion(gj.get("lines", []))
+        resultado["final"]["pivotes"] = gj.get("pivots", resultado["final"].get("pivotes", []))
+        # variables libres como 'xk'
+        libres_idx = gj.get("free_vars", [])
+        resultado["final"]["variables_libres"] = [f"x{i+1}" for i in libres_idx]
+    else:
+        resultado["final"] = {"lineas": gj.get("lines", []), "pivotes": gj.get("pivots", []), "variables_libres": [f"x{i+1}" for i in gj.get("free_vars", [])], "solucion": _lineas_a_solucion(gj.get("lines", []))}
     return jsonify({"ok": True, **resultado})
 
 @gauss_bp.route("/pdf", methods=["POST"])
@@ -163,3 +220,32 @@ def pdf():
     doc.build(elems)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name="gauss_pasos.pdf", mimetype="application/pdf")
+
+
+@gauss_bp.route("/ia", methods=["POST"])
+def preguntar_ia():
+    datos = request.get_json(force=True)
+    contexto = datos.get("contexto", "").strip()
+    lineas = datos.get("lineas", [])
+    from pathlib import Path
+    base_dir = str(Path(__file__).resolve().parents[3])
+    cfg = load_hf_config(base_dir)
+    api_token = cfg.get("api_token", "")
+    model = cfg.get("model_name", "microsoft/Phi-3.5-mini-instruct")
+
+    if not api_token:
+        return jsonify({"ok": False, "error": "Falta configurar HF_API_TOKEN o hf_config.json"}), 400
+
+    resumen = "\n".join(lineas) if isinstance(lineas, list) else str(lineas)
+    prompt = (
+        "En el contexto de este ejercicio:\n" + contexto + "\n\n" +
+        "Mensaje del cuadro de texto disponible para preguntar IA despues de responder el ejercicio:\n" +
+        "Explica en 2–4 líneas el criterio para elegir valores de variables libres y cómo interpretar las dependencias.\n\n" +
+        "Segun la respuesta que obtengo y las variables encontradas (incluye variables libres):\n" +
+        resumen + "\n\n" +
+        "Da una respuesta corta y sencilla con el criterio."
+    )
+    r = hf_generate(prompt=prompt, api_token=api_token, model=model)
+    if r.get("ok"):
+        return jsonify({"ok": True, "texto": r.get("text",""), "model": r.get("model", model)})
+    return jsonify({"ok": False, "error": r.get("error","Error desconocido"), "raw": r.get("raw",""), "model": r.get("model", model)})

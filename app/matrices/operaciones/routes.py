@@ -56,3 +56,66 @@ def operar_matrices():
         return jsonify({"ok": False, "error": str(e)}), 400
     except Exception:
         return jsonify({"ok": False, "error": "Ocurrió un error inesperado."}), 500
+
+
+
+# --- NUEVAS RUTAS: Traspuesta e Inversa ---
+from .inversa_alg import transpose as _transpose, inverse_2x2 as _inverse_2x2, gauss_jordan_inverse as _gj_inverse
+from .operaciones_matrices import evaluar_matriz_str
+from ..gauss.algebra import FormateadorNumeros
+
+@operaciones_bp.route("/traspuesta", methods=["GET"])
+def vista_traspuesta():
+    return render_template("traspuesta.html", title="Traspuesta")
+
+@operaciones_bp.route("/traspuesta/resolver", methods=["POST"])
+def resolver_traspuesta():
+    datos = request.get_json(force=True)
+    matriz_str = datos.get("matriz_str")
+    try:
+        A = evaluar_matriz_str(matriz_str)
+        T = _transpose(A)
+        form = FormateadorNumeros(modo=datos.get("modo_precision","fraccion"), decimales=int(datos.get("decimales",6)))
+        F = [[form.fmt(x) for x in fila] for fila in T]
+        return jsonify({"ok": True, "resultado": F})
+    except ValueError as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+    except Exception:
+        return jsonify({"ok": False, "error": "Ocurrió un error inesperado."}), 500
+
+@operaciones_bp.route("/inversa", methods=["GET"])
+def vista_inversa():
+    return render_template("inversa.html", title="Inversa")
+
+@operaciones_bp.route("/inversa/resolver", methods=["POST"])
+def resolver_inversa():
+    datos = request.get_json(force=True)
+    n = int(datos.get("n", 0))
+    matriz_str = datos.get("matriz_str")
+    modo = datos.get("modo_precision", "fraccion")
+    dec = int(datos.get("decimales", 6))
+    if n < 2:
+        return jsonify({"ok": False, "error": "n debe ser un entero ≥ 2."}), 400
+    try:
+        A = evaluar_matriz_str(matriz_str)
+        # validación cuadrada n×n
+        if len(A) != n or any(len(fila)!=n for fila in A):
+            return jsonify({"ok": False, "error": "La matriz debe ser n×n con n filas y n columnas."}), 400
+        if n == 2:
+            res = _inverse_2x2(A)
+            if not res.get("ok"):
+                return jsonify({"ok": True, "mensaje": res.get("motivo"), "inversa": None, "pasos": res.get("pasos", [])})
+            return jsonify({"ok": True, "inversa": res.get("inversa"), "pasos": res.get("pasos", [])})
+        else:
+            res = _gj_inverse(A)
+            if not res.get("ok"):
+                return jsonify({"ok": True, "mensaje": res.get("motivo"), "inversa": None, "pasos": res.get("pasos", [])})
+            # formatear
+            form = FormateadorNumeros(modo=modo, decimales=dec)
+            inv_fmt = [[form.fmt(x) for x in fila] for fila in res["inversa"]]
+            pasos = res.get("pasos", [])
+            return jsonify({"ok": True, "inversa": inv_fmt, "pasos": pasos})
+    except ValueError as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"ok": False, "error": "Ocurrió un error inesperado."}), 500
