@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Ocio y Retos de Álgebra Lineal</h1>
+<p class="text-slate-600 mb-6">
+  ¡Aprende jugando! Estos mini-juegos te ayudarán a conceptualizar ideas de matrices y coordenadas de forma interactiva.
+</p>
+
+<div class="grid sm:grid-cols-2 gap-4">
+  <a href="{{ url_for('ocio.buscaminas_reglas') }}" class="card-method">
+    <div class="text-lg font-semibold">Buscaminas Matricial</div>
+    <div class="text-sm opacity-80">
+      Reglas y la relación con las Matrices, Coordenadas y Filtros.
+    </div>
+  </a>
+  
+  <a href="{{ url_for('ocio.sudoku') }}" class="card-method">
+    <div class="text-lg font-semibold">Sudoku Matricial</div>
+    <div class="text-sm opacity-80">
+      En desarrollo. Se relaciona con matrices 9x9 y restricciones.
+    </div>
+  </a>
+</div>
+{% endblock %}

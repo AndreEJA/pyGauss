@@ -9,3 +9,6 @@ def menu_matrices():
 @principal_bp.route("/vectores")
 def menu_vectores():
     return render_template("menu_vectores.html", title="Vectores")
+@principal_bp.route("/ocio")
+def menu_ocio():
+    return render_template("menu_ocio.html", title="Ocio y Juegos")

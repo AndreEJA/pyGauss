@@ -10,21 +10,28 @@
       Sumar dos matrices con las mismas dimensiones.
     </div>
   </a>
-  <a
-    href="{{ url_for('operaciones.vista_traspuesta') }}"
-    class="card-method"
-  >
+  <a href="{{ url_for('operaciones.vista_traspuesta') }}" class="card-method">
     <div class="text-lg font-semibold">Traspuesta de Matriz</div>
     <div class="text-sm opacity-80">Calcula Aᵗ para una matriz m×n.</div>
   </a>
-  <a
-    href="{{ url_for('operaciones.vista_inversa') }}"
-    class="card-method"
-  >
+  <a href="{{ url_for('operaciones.vista_inversa') }}" class="card-method">
     <div class="text-lg font-semibold">Inversa de Matriz</div>
-    <div class="text-sm opacity-80">Para n×n (n≥2). Fórmula 2×2 o Gauss‑Jordan paso a paso.</div>
+    <div class="text-sm opacity-80">
+      Para n×n (n≥2). Fórmula 2×2 o Gauss‑Jordan paso a paso.
+    </div>
   </a>
-
+  <a href="{{ url_for('operaciones.vista_determinante') }}" class="card-method">
+    <div class="text-lg font-semibold">Determinante de Matriz</div>
+    <div class="text-sm opacity-80">
+      Calcula det(A) para matrices cuadradas. Reducción por filas con pasos.
+    </div>
+  </a>
+  <a href="{{ url_for('operaciones.vista_cramer') }}" class="card-method">
+    <div class="text-lg font-semibold">Regla de Cramer</div>
+    <div class="text-sm opacity-80">
+      Resuelve Ax=b calculando determinantes.
+    </div>
+  </a>
   <a
     href="{{ url_for('operaciones.vista_operacion_multiplicacion') }}"
     class="card-method"
@@ -42,7 +49,4 @@
     </div>
   </a>
 </div>
-
-  
-
 {% endblock %}

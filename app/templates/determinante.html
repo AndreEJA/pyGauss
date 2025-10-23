@@ -1,0 +1,85 @@
+{% extends "base.html" %} {% block content %}
+<div class="space-y-8">
+  <section class="panel">
+    <h2 class="panel-title text-slate-900">
+      Determinante de una Matriz Cuadrada
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+      <label class="block">
+        <span class="lbl">Orden (n para n×n)</span>
+        <input id="inp-orden" type="number" min="2" value="3" class="input" />
+      </label>
+      <div class="sm:col-span-3">
+        <button id="btn-crear" class="btn-primary w-full">Crear Matriz</button>
+      </div>
+    </div>
+    <p class="text-sm text-slate-600 mt-2">
+      Para n=2 se usa la fórmula de $ad-bc$. Para n > 2 se usa la reducción por
+      filas (método de Gauss).
+    </p>
+  </section>
+
+  <section id="zona-matriz" class="panel hidden">
+    <h3 class="text-lg font-semibold text-slate-900 mb-3">Matriz A (n×n)</h3>
+    <div class="min-w-full overflow-auto rounded-xl border border-slate-200">
+      <table id="tabla-A" class="matrix-table w-full"></table>
+    </div>
+
+    <div class="kbd-row mt-3">
+      <button class="kbd" data-ins="pi">π</button>
+      <button class="kbd" data-ins="e">e</button>
+      <button class="kbd" data-ins="sqrt()">√</button>
+      <button class="kbd" data-ins="sin()">sin</button>
+      <button class="kbd" data-ins="cos()">cos</button>
+      <button class="kbd" data-ins="tan()">tan</button>
+      <button class="kbd" data-ins="^">x^</button>
+      <button class="kbd" data-ins="/">/</button>
+      <button class="kbd" data-ins="(">(</button>
+      <button class="kbd" data-ins=")">)</button>
+      <button class="kbd" data-ins="+">+</button>
+      <button class="kbd" data-ins="-">-</button>
+    </div>
+
+    <div class="mt-4 flex gap-3 flex-wrap items-end">
+      <label class="block">
+        <span class="lbl">Modo</span>
+        <select id="sel-modo" class="input">
+          <option value="fraccion">Fracciones</option>
+          <option value="decimal">Decimales</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="lbl">Decimales</span>
+        <input
+          id="inp-decimales"
+          type="number"
+          min="0"
+          value="6"
+          class="input w-28"
+        />
+      </label>
+      <button id="btn-resolver" class="btn-accent">
+        Calcular Determinante
+      </button>
+      <span id="msg" class="text-sm text-slate-500"></span>
+    </div>
+  </section>
+
+  <section id="zona-pasos" class="panel hidden">
+    <h3 class="text-lg font-semibold text-slate-900 mb-3">
+      Pasos de Reducción (n > 2)
+    </h3>
+    <div id="lista-pasos" class="space-y-4"></div>
+  </section>
+
+  <section id="zona-resultado" class="panel final-card hidden">
+    <h3 class="text-lg font-semibold text-slate-900 mb-2">Resultado: det(A)</h3>
+    <div
+      id="resultado-valor"
+      class="text-2xl font-extrabold text-slate-900"
+    ></div>
+  </section>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="{{ url_for('static', filename='js/determinante.js') }}"></script>
+{% endblock %}

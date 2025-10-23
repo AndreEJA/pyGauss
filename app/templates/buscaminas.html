@@ -1,0 +1,112 @@
+{% extends "base.html" %} {% block content %}
+<h1 class="text-2xl font-bold mb-4">Buscaminas Matricial: Reglas y Álgebra</h1>
+
+<div class="space-y-8">
+  <section class="panel ">
+    <h2 class="panel-title">Objetivo y Reglas del Juego</h2>
+
+    <div class="space-y-4">
+      <h3 class="text-lg font-semibold text-slate-900">Instrucciones de Uso</h3>
+      <ul class="list-disc ml-6 space-y-3 text-slate-700">
+        <li>
+          <strong>Objetivo:</strong> Despejar todas las celdas seguras sin
+          detonar ninguna mina.
+        </li>
+        <li>
+          <strong>Click Izquierdo (Revelar):</strong> Destapa una celda. Si es
+          una mina (💣), pierdes. Si es un número, esa es tu pista.
+        </li>
+        <li>
+          <strong>Click Derecho (Marcar):</strong> Coloca una
+          <strong>bandera (🚩)</strong> para marcar una posible mina. Esto
+          previene un click accidental.
+        </li>
+        <li>
+          <strong>Pistas:</strong> El número revelado indica
+          <strong>cuántas minas</strong> hay en las 8 celdas adyacentes a la
+          celda actual.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">Minijuego Interactivo</h2>
+    <div id="controles" class="flex gap-4 items-end mb-4">
+      <label class="block">
+        <span class="lbl">Filas (N)</span>
+        <input
+          id="sel-n"
+          type="number"
+          min="5"
+          max="15"
+          value="9"
+          class="input w-20"
+        />
+      </label>
+      <label class="block">
+        <span class="lbl">Columnas (M)</span>
+        <input
+          id="sel-m"
+          type="number"
+          min="5"
+          max="15"
+          value="9"
+          class="input w-20"
+        />
+      </label>
+      <label class="block">
+        <span class="lbl">Minas</span>
+        <input
+          id="sel-minas"
+          type="number"
+          min="5"
+          max="50"
+          value="10"
+          class="input w-20"
+        />
+      </label>
+      <button id="btn-nuevo-juego" class="btn-primary">Nuevo Juego</button>
+      <div id="estado-juego" class="text-lg font-semibold text-slate-900">
+        Juego listo.
+      </div>
+    </div>
+
+    <div id="tablero" class="mt-4 mx-auto"></div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">Fundamentos de Álgebra Lineal</h2>
+    <p class="text-slate-600 mb-4">
+      El juego es una excelente analogía de la operación con matrices:
+    </p>
+    <ul class="list-disc ml-6 space-y-2 text-slate-700">
+      <li>
+        <strong>Matriz de Minas (M):</strong> La cuadrícula oculta es una matriz
+        binaria M.
+      </li>
+      <li>
+        <strong>Coordenadas:</strong> Al hacer clic, seleccionas una entrada
+        específica <strong>M(i, j)</strong> usando coordenadas (vectores de
+        posición).
+      </li>
+      <li>
+        <strong>Operador de Convolución:</strong> El número revelado es el
+        resultado de aplicar un <strong>filtro de convolución</strong> (un
+        operador lineal) a la Matriz de Minas.
+      </li>
+      <li>
+        <strong>Espacio Vectorial:</strong> Los límites del tablero definen un
+        espacio vectorial <strong>R²</strong> donde cada celda es una coordenada
+        (i, j).
+      </li>
+    </ul>
+  </section>
+</div>
+{% endblock %} {% block extra_js %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/buscaminas.css') }}"
+/>
+<script src="{{ url_for('static', filename='js/buscaminas.js') }}"></script>
+{% endblock %}

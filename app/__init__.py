@@ -7,10 +7,12 @@ def crear_app():
     from app.matrices.gauss.routes import gauss_bp
     from app.matrices.operaciones.routes import operaciones_bp
     from app.matrices.vectores.routes import vectores_bp
+    from app.ocio.routes import ocio_bp
     
     app.register_blueprint(principal_bp)
     app.register_blueprint(gauss_bp, url_prefix="/matrices/gauss")
     app.register_blueprint(operaciones_bp, url_prefix="/matrices/operaciones")
     app.register_blueprint(vectores_bp, url_prefix="/matrices/vectores")
+    app.register_blueprint(ocio_bp, url_prefix="/ocio")
     
     return app
