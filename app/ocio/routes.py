@@ -1,7 +1,5 @@
-# app/ocio/routes.py
 from flask import Blueprint, render_template
 
-# Definición del Blueprint 'ocio'
 ocio_bp = Blueprint("ocio", __name__, template_folder="../../templates")
 
 @ocio_bp.route("/buscaminas/reglas")
