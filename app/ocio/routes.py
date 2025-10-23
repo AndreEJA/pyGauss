@@ -12,4 +12,4 @@ def buscaminas_jugar():
 
 @ocio_bp.route("/sudoku")
 def sudoku():
-    return render_template("sudoku.html", title="Sudoku (En Desarrollo)")
+    return render_template("sudoku.html",    title="Sudoku (En Desarrollo)")
