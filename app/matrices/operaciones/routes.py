@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify
-from .operaciones_matrices import sumar_matrices, multiplicar_matrices, evaluar_matriz_str, multiplicar_matriz_por_vectores
+from .operaciones_matrices import sumar_matrices, multiplicar_matrices, evaluar_matriz_str, multiplicar_matriz_por_vectores, sumar_matrices_con_escalares 
 from ..gauss.algebra import FormateadorNumeros
 from ..gauss.algebra import a_fraccion_si_aplica # Importado para manejo de tipos
 
@@ -23,25 +23,54 @@ def vista_operacion_multiplicacion():
 def vista_matriz_por_vector():
     return render_template("operaciones_matriz_vector.html", title="Multiplicación de Matriz por Vector", operacion="matriz_por_vector")
 
+@operaciones_bp.route("/suma-escalar", methods=["GET"])
+def vista_suma_escalar():
+    # Se actualiza el título y operacion name
+    return render_template("operaciones_escalar.html", title="Suma con Múltiples Escalares", operacion="suma_escalar_multiple")
+
 @operaciones_bp.route("/operar", methods=["POST"])
 def operar_matrices():
     try:
         datos = request.get_json(force=True)
-        matriz1_str = datos.get("matriz1", [])
-        matriz2_str = datos.get("matriz2", [])
         operacion = datos.get("operacion")
         
-        matriz1 = evaluar_matriz_str(matriz1_str)
-        matriz2 = evaluar_matriz_str(matriz2_str)
-
-        if operacion == "sumar":
-            resultado = sumar_matrices(matriz1, matriz2)
+        # Lógica general para suma/multiplicación simple
+        if operacion in ["sumar", "multiplicar", "matriz_por_vector"]:
+            matriz1_str = datos.get("matriz1", [])
+            matriz2_str = datos.get("matriz2", [])
+            matriz1 = evaluar_matriz_str(matriz1_str)
+            matriz2 = evaluar_matriz_str(matriz2_str)
             
-        elif operacion == "multiplicar":
-            resultado = multiplicar_matrices(matriz1, matriz2)
+            if operacion == "sumar":
+                resultado = sumar_matrices(matriz1, matriz2)
+            elif operacion == "multiplicar":
+                resultado = multiplicar_matrices(matriz1, matriz2)
+            elif operacion == "matriz_por_vector":
+                resultado = multiplicar_matriz_por_vectores(matriz1, matriz2)
         
-        elif operacion == "matriz_por_vector":
-            resultado = multiplicar_matriz_por_vectores(matriz1, matriz2)
+        elif operacion == "suma_escalar_multiple":
+            # NUEVA LÓGICA DE OPERACIÓN MULTIPLE
+            matrices_str_list = datos.get("matrices_str", [])
+            escalares_str_list = datos.get("escalares_str", [])
+            
+            if len(matrices_str_list) != len(escalares_str_list) or not matrices_str_list:
+                 raise ValueError("Debe proporcionar una o más matrices y un escalar por matriz.")
+
+            # 1. Evaluar todas las matrices
+            matrices_evaluadas = [evaluar_matriz_str(m_str) for m_str in matrices_str_list]
+
+            # 2. Evaluar todos los escalares (se evalúan como una lista de 1 fila)
+            escalares_evaluadas = evaluar_matriz_str([escalares_str_list])[0]
+            
+            # 3. Validar dimensiones (todas deben ser iguales)
+            if not matrices_evaluadas: raise ValueError("No se encontraron matrices para operar.")
+            m, n = len(matrices_evaluadas[0]), len(matrices_evaluadas[0][0])
+            for mat in matrices_evaluadas:
+                 if len(mat) != m or (m > 0 and len(mat[0]) != n):
+                      raise ValueError("Todas las matrices deben tener las mismas dimensiones para la suma escalar.")
+            
+            # 4. Realizar la suma
+            resultado = sumar_matrices_con_escalares(matrices_evaluadas, escalares_evaluadas)
 
         else:
             return jsonify({"ok": False, "error": "Operación no soportada."}), 400
@@ -53,8 +82,10 @@ def operar_matrices():
     
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
-    except Exception:
-        return jsonify({"ok": False, "error": "Ocurrió un error inesperado."}), 500
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"ok": False, "error": f"Ocurrió un error inesperado: {str(e)}"}), 500
 
 
 # --- RUTAS DE TRASPUESTA E INVERSA ---

@@ -1,5 +1,6 @@
 {% extends "base.html" %} {% block content %}
 <h1 class="text-2xl font-bold mb-4">Operaciones con Matrices</h1>
+
 <div class="grid sm:grid-cols-2 gap-4">
   <a
     href="{{ url_for('operaciones.vista_operacion_suma') }}"
@@ -46,6 +47,12 @@
     <div class="text-lg font-semibold">Matriz × Vector(es)</div>
     <div class="text-sm opacity-80">
       Multiplicar una matriz por uno o más vectores columna.
+    </div>
+  </a>
+  <a href="{{ url_for('operaciones.vista_suma_escalar') }}" class="card-method">
+    <div class="text-lg font-semibold">Escalar·Matriz + Escalar·Matriz</div>
+    <div class="text-sm opacity-80">
+      Calcular c₁A + c₂B (Matrices A y B deben tener mismas dimensiones).
     </div>
   </a>
 </div>

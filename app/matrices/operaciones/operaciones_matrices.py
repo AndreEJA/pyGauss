@@ -140,6 +140,49 @@ def multiplicar_matrices(matriz1, matriz2):
                 matriz_producto[i][j] = float(matriz_producto[i][j])
     return matriz_producto
 
+def sumar_matrices_con_escalares(matrices_list, escalares_list):
+    """
+    Suma un conjunto de matrices después de multiplicarlas por sus respectivos escalares:
+    R = c1*A1 + c2*A2 + ...
+    """
+    if not matrices_list or len(matrices_list) != len(escalares_list):
+        raise ValueError("El número de matrices debe coincidir con el número de escalares, y la lista no debe estar vacía.")
+    
+    # Tomar las dimensiones de la primera matriz para inicializar el resultado
+    filas = len(matrices_list[0])
+    cols = len(matrices_list[0][0])
+    
+    # Inicializar la matriz resultado con ceros
+    matriz_resultado = [[0 for _ in range(cols)] for _ in range(filas)]
+    
+    # Iterar sobre cada matriz y su escalar
+    for i in range(len(matrices_list)):
+        matriz = matrices_list[i]
+        escalar = escalares_list[i]
+        
+        # Validación de dimensiones
+        if len(matriz) != filas or len(matriz[0]) != cols:
+            raise ValueError("Todas las matrices deben tener las mismas dimensiones.")
+        
+        # Sumar la matriz escalada al resultado
+        for r in range(filas):
+            for c in range(cols):
+                val_parcial = escalar * matriz[r][c]
+                matriz_resultado[r][c] += val_parcial
+    
+    # Formatear el resultado final para evitar problemas de tipos de datos complejos (Fraction)
+    for r in range(filas):
+        for c in range(cols):
+            val = matriz_resultado[r][c]
+            if isinstance(val, float):
+                matriz_resultado[r][c] = round(val, 6) # Mantener consistencia si es float
+            else:
+                # Si es Fraction, convertir a float para simplificar el manejo en Python
+                try: matriz_resultado[r][c] = float(val)
+                except: pass # Si no se puede convertir, se deja como está (Fraction)
+                
+    return matriz_resultado
+
 def multiplicar_matriz_por_vectores(matriz, vectores):
     """Multiplica una matriz por una matriz de vectores columna."""
     filas_matriz = len(matriz)

@@ -1,6 +1,12 @@
 :root{
-  --bg: #f1f5f9; --text:#0f172a; --panel:#ffffff; --border:#e2e8f0; --muted:#64748b;
-  --accent:#e11d48; --primary:#0f172a; --soft:#f8fafc;
+  --bg: #eef5fb; 
+  --text:#0f172a; 
+  --panel:#ffffff; 
+  --border:#d3dce6; 
+  --muted:#64748b;
+  --accent:#e11d48; 
+  --primary:#0f172a; 
+  --soft:#f8fafc;
 }
 body{background:var(--bg);color:var(--text);}
 .nav-link{color:#0f172a;text-decoration:none;font-weight:600}

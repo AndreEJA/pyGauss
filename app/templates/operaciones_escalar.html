@@ -1,0 +1,120 @@
+{% extends "base.html" %} {% block content %}
+<div class="space-y-8">
+  <section class="panel">
+    <h2 class="panel-title text-slate-900">{{ title }}</h2>
+    <p class="text-slate-600 mb-4">
+      Calcular c₁A + c₂B₂ + ... + cₙXₙ. Todas las matrices deben tener las
+      mismas dimensiones.
+    </p>
+    <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end">
+      <label class="block">
+        <span class="lbl">Filas (m)</span>
+        <input
+          id="inp-filas"
+          type="number"
+          min="1"
+          max="100"
+          value="2"
+          class="input"
+        />
+      </label>
+      <label class="block">
+        <span class="lbl">Columnas (n)</span>
+        <input
+          id="inp-columnas"
+          type="number"
+          min="1"
+          max="100"
+          value="2"
+          class="input"
+        />
+      </label>
+      <label class="block">
+        <span class="lbl">Cantidad de Matrices (N)</span>
+        <input
+          id="inp-cantidad-matrices"
+          type="number"
+          min="2"
+          max="10"
+          value="3"
+          class="input"
+        />
+      </label>
+      <div class="block sm:col-span-2">
+        <button
+          id="btn-crear"
+          class="btn-primary w-full"
+          data-operacion="{{ operacion }}"
+        >
+          Crear Matrices
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section id="zona-matrices" class="panel hidden">
+    <h3 class="text-lg font-bold text-slate-900 mb-4">
+      Matrices y Escalares
+    </h3>
+
+    <div id="contenedor-matrices-y-escalares" class="space-y-6"></div>
+
+    <div
+      class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end mt-6 border-t pt-6"
+    >
+      <label class="block col-span-2">
+        <span class="lbl">Precisión</span>
+        <select id="sel-precision" class="input">
+          <option value="fraccion">Fracciones exactas</option>
+          <option value="decimal">Decimales</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="lbl">Decimales (si aplica)</span>
+        <input
+          id="inp-decimales"
+          type="number"
+          min="0"
+          max="12"
+          value="6"
+          class="input"
+        />
+      </label>
+      <div class="block">
+        <button id="btn-resolver" class="btn-accent w-full">Resolver</button>
+      </div>
+    </div>
+
+    <div class="mt-4 keypad">
+      <button class="key" data-ins="(">(</button>
+      <button class="key" data-ins=")">)</button>
+      <button class="key" data-ins="+">+</button>
+      <button class="key" data-ins="-">−</button>
+      <button class="key" data-ins="*">×</button>
+      <button class="key" data-ins="/">÷</button>
+      <button class="key" data-ins="x^">x²</button>
+      <button class="key" data-ins="sqrt()">√</button>
+      <button class="key" data-ins="sin()">sin</button>
+      <button class="key" data-ins="cos()">cos</button>
+      <button class="key" data-ins="tan()">tan</button>
+      <button class="key" data-ins="pi">π</button>
+      <button class="key" data-ins="e">e</button>
+      <button class="key wide" data-ins="frac(, )">a/b</button>
+      <span class="tip"
+        >Tip: usa <code>frac(a,b)</code> o <code>3/4</code>.</span
+      >
+    </div>
+  </section>
+
+  <section id="zona-resultado" class="panel hidden">
+    <h3 class="text-lg font-semibold text-slate-900 mb-3">
+      Resultado: Suma Escalar
+    </h3>
+    <div class="overflow-auto max-h-[50vh] rounded-xl border border-slate-200">
+      <table id="tabla-resultado" class="matrix-table w-full"></table>
+    </div>
+  </section>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="{{ url_for('static', filename='js/operaciones_escalar.js') }}"></script>
+{% endblock %}
