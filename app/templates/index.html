@@ -1,22 +1,118 @@
-{% extends "base.html" %}
-{% block content %}
-<section class="grid md:grid-cols-2 gap-6">
-  <a href="{{ url_for('principal.menu_matrices') }}" class="card-big">
+{% extends "base.html" %} {% block content %}
+<header
+  class="text-center py-16 px-4 bg-white/50 backdrop-blur-sm rounded-3xl shadow-xl mb-10 border border-slate-200"
+>
+  <h1 class="text-6xl font-extrabold tracking-tighter text-slate-900 mb-4">
+    <span
+      class="text-rose-600 transition-colors duration-500 hover:text-slate-900"
+      >Py</span
+    ><span class="transition-colors duration-500 hover:text-rose-600"
+      >Gauss</span
+    >
+  </h1>
+  <p class="text-xl text-slate-700 max-w-3xl mx-auto mb-8">
+    Tu herramienta web interactiva para dominar el Álgebra Lineal. Resuelve
+    sistemas de ecuaciones, opera matrices y comprueba la independencia lineal,
+    todo con pasos detallados.
+  </p>
+  <div class="flex justify-center gap-4">
+    <a
+      href="{{ url_for('principal.menu_matrices') }}"
+      class="btn-accent text-lg"
+    >
+      Comenzar con Matrices
+    </a>
+    <a
+      href="{{ url_for('principal.menu_vectores') }}"
+      class="btn-accent text-lg"
+    >
+      Explorar Vectores
+    </a>
+    <a href="{{ url_for('principal.menu_ocio') }}" class="btn-accent text-lg">
+      Aprende Jugando
+    </a>
+  </div>
+</header>
+
+<section class="mb-10">
+  <h2
+    class="text-3xl font-bold text-slate-800 mb-6 text-center border-b pb-2 border-slate-200"
+  >
+    Funcionalidades Clave
+  </h2>
+  <div class="grid md:grid-cols-3 gap-6">
+    <div class="panel transition-all duration-300 hover:shadow-lg">
+      <div class="text-2xl font-bold text-rose-600 mb-2">
+        Eliminación Gaussiana
+      </div>
+      <p class="text-sm opacity-80">
+        Resuelve sistemas Ax=b con el método de Gauss-Jordan y obtén la solución
+        paramétrica paso a paso.
+      </p>
+    </div>
+    <div class="panel transition-all duration-300 hover:shadow-lg">
+      <div class="text-2xl font-bold text-rose-600 mb-2">
+        Cálculo de Determinantes
+      </div>
+      <p class="text-sm opacity-80">
+        Calcula determinantes (2x2, nxn) usando reducción por filas, con
+        seguimiento del factor escalar.
+      </p>
+    </div>
+    <div class="panel transition-all duration-300 hover:shadow-lg">
+      <div class="text-2xl font-bold text-rose-600 mb-2">
+        Operaciones Matriciales
+      </div>
+      <p class="text-sm opacity-80">
+        Realiza suma, multiplicación, traspuesta e inversa (2x2 con fórmula, nxn
+        con GJ).
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="grid md:grid-cols-3 gap-6">
+  <h2
+    class="md:col-span-3 text-3xl font-bold text-slate-800 mb-2 mt-4 text-center border-b pb-2 border-slate-200"
+  >
+    Navegación Rápida
+  </h2>
+
+  <a
+    href="{{ url_for('principal.menu_matrices') }}"
+    class="card-big transition-transform duration-300 hover:scale-[1.03]"
+    style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
+  >
     <div>
       <h2 class="text-2xl font-bold">Matrices</h2>
-      <p class="mt-1 opacity-80">Métodos de resolución y operaciones.</p>
+      <p class="mt-1 opacity-80 text-slate-100">
+        Métodos de resolución y operaciones detalladas.
+      </p>
     </div>
   </a>
-  <a href="{{ url_for('principal.menu_vectores') }}" class="card-big">
+
+  <a
+    href="{{ url_for('principal.menu_vectores') }}"
+    class="card-big transition-transform duration-300 hover:scale-[1.03]"
+    style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
+  >
     <div>
-      <h2 class="text-2xl font-bold">Vectores</h2>
-      <p class="mt-1 opacity-80">Módulo en construcción.</p>
+      <h2 class="text-2xl font-bold text-white">Vectores</h2>
+      <p class="mt-1 opacity-80 text-slate-300">
+        Independencia lineal y otros conceptos.
+      </p>
     </div>
   </a>
-  <a href="{{ url_for('principal.menu_ocio') }}" class="card-big">
+  <a
+    href="{{ url_for('principal.menu_ocio') }}"
+    class="card-big transition-transform duration-300 hover:scale-[1.03]"
+    style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
+  >
     <div>
-      <h2 class="text-2xl font-bold">Ocio</h2>
-      <p class="mt-1 opacity-80">Juegos y retos interactivos.</p>
+      <h2 class="text-2xl font-bold text-white">Ocio</h2>
+      <p class="mt-1 opacity-80 text-slate-300">
+        Juegos y retos interactivos para aprender Álgebra Lineal.
+      </p>
     </div>
   </a>
 </section>
