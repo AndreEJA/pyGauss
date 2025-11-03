@@ -3,7 +3,7 @@ let ultimaCeldaActiva=null;
 function crearTabla(filas, columnas, containerDiv, index){
   const tableId = `tabla-matriz${index}`;
   const h4 = document.createElement('h4');
-  h4.className = 'text-lg font-medium text-slate-800 mb-2';
+  h4.className = 'text-base font-semibold text-slate-900 mb-2';
   h4.textContent = `Matriz A${index} (m×n)`;
 
   const tablaWrap = document.createElement('div');
@@ -91,11 +91,14 @@ function mostrarResultado(resultado){
   z.classList.remove('hidden');
 }
 
-function setMsg(t){ document.getElementById('msg').textContent = t||''; }
-
-function showModal(message){
-  const modal=document.getElementById('app-modal'); const txt=document.getElementById('modal-text');
-  txt.textContent=message; modal.classList.remove('hidden'); setTimeout(()=> modal.classList.add('show'), 10);
+function setMsg(t) {
+  const el = document.getElementById('msg');
+  if (el) {
+    el.textContent = t || '';
+  } else {
+    // Para que no se rompa si no existe en el HTML
+    console.log('[suma-escalar]', t || '');
+  }
 }
 
 
@@ -122,37 +125,96 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 
   
-  document.getElementById('btn-resolver').addEventListener('click', async ()=>{
-      const numMatrices=parseInt(document.getElementById('inp-cantidad-matrices').value,10);
-      const {matrices, escalares} = leerMatricesYEscalares(numMatrices);
-      
-      // Validation check (basic)
-      if (matrices.length !== numMatrices || escalares.length !== numMatrices) {
-          showModal('Error: Faltan datos de matrices o escalares. Asegúrate de crear la matriz primero.');
-          return;
-      }
+  document.getElementById('btn-resolver').addEventListener('click', async () => {
+    const numMatrices = parseInt(document.getElementById('inp-cantidad-matrices').value, 10);
+    const { matrices, escalares } = leerMatricesYEscalares(numMatrices);
 
-      setMsg('Calculando...');
-      const modo_precision=document.getElementById('sel-precision').value;
-      const decimales=parseInt(document.getElementById('inp-decimales').value,10)||6;
-      
-      try{
-        const resp=await fetch('/matrices/operaciones/operar',{method:'POST',headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-              matrices_str: matrices, 
-              escalares_str: escalares, 
-              operacion: 'suma_escalar_multiple', // Nuevo tipo de operación
-              modo_precision, 
-              decimales
-          })});
-        const js=await resp.json();
-        if(!js.ok) throw new Error(js.error||'Error');
-        mostrarResultado(js.resultado);
-        setMsg('Listo.');
-      }catch(err){
-        setMsg('');
-        showModal('Error: '+err.message);
-      }
+    if (matrices.length !== numMatrices || escalares.length !== numMatrices) {
+      showModal('Error: Faltan datos de matrices o escalares. Asegúrate de crear la matriz primero.');
+      return;
+    }
+
+    setMsg('Calculando...');
+    const modo_precision = document.getElementById('sel-precision').value;
+    const decimales = parseInt(document.getElementById('inp-decimales').value, 10) || 6;
+
+    try {
+      const resp = await fetch('/matrices/operaciones/operar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          matrices_str: matrices,
+          escalares_str: escalares,
+          operacion: 'suma_escalar_multiple', // <- TAL CUAL
+          modo_precision,
+          decimales
+        })
+      });
+
+      const js = await resp.json();
+      console.log('[suma-escalar] respuesta del backend:', js);  // útil para revisar en consola
+
+      if (!js.ok) throw new Error(js.error || 'Error');
+
+       // Mostrar matriz resultado
+       mostrarResultado(js.resultado);
+
+       // Mostrar u ocultar la sección de pasos
+       const pasosDiv = document.getElementById('pasos');
+ 
+       if (js.pasos && Array.isArray(js.pasos) && js.pasos.length > 0) {
+         pasosDiv.style.display = 'block';
+         pasosDiv.innerHTML = ''; // limpiamos
+ 
+         js.pasos.forEach((paso, idx) => {
+           const stepWrapper = document.createElement('div');
+           stepWrapper.className = 'mb-6';
+ 
+           // Título del paso
+           const h4 = document.createElement('h4');
+           h4.className = 'font-semibold mb-2 text-slate-800';
+           h4.textContent = paso.titulo || `Paso ${idx + 1}`;
+           stepWrapper.appendChild(h4);
+ 
+           // Tabla de la matriz
+           // Tabla de la matriz (estilo estándar pyGauss)
+          if (paso.matriz && Array.isArray(paso.matriz)) {
+            const tablaWrap = document.createElement('div');
+            tablaWrap.className = 'overflow-auto max-h-[50vh] rounded-xl border border-slate-200 mb-2';
+
+            const table = document.createElement('table');
+            table.className = 'matrix-table w-full text-center text-slate-800';
+
+            const tbody = document.createElement('tbody');
+            paso.matriz.forEach(fila => {
+              const tr = document.createElement('tr');
+              fila.forEach(val => {
+                const td = document.createElement('td');
+                td.className = 'px-4 py-2 border border-slate-200';
+                td.textContent = val;
+                tr.appendChild(td);
+              });
+              tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            tablaWrap.appendChild(table);
+            stepWrapper.appendChild(tablaWrap);
+          }
+
+ 
+           pasosDiv.appendChild(stepWrapper);
+         });
+       } else {
+         pasosDiv.innerHTML = '';
+         pasosDiv.style.display = 'none';
+       }
+
+      setMsg('Listo.');
+    } catch (err) {
+      console.error('[suma-escalar] error:', err);
+      setMsg('');
+      showModal('Error: ' + err.message);
+    }
   });
 
   document.addEventListener('click', (e) => {

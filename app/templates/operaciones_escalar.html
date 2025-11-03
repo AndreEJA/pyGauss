@@ -84,6 +84,8 @@
         <button id="btn-resolver" class="btn-accent w-full">Resolver</button>
       </div>
     </div>
+    <p id="msg" class="text-sm text-slate-500 mt-2"></p>
+
 
     <div class="mt-4 keypad">
       <button class="key" data-ins="(">(</button>
@@ -113,8 +115,13 @@
     <div class="overflow-auto max-h-[50vh] rounded-xl border border-slate-200">
       <table id="tabla-resultado" class="matrix-table w-full"></table>
     </div>
+    <div
+    id="pasos"
+    class="bg-slate-50 p-4 rounded-xl text-sm text-slate-800 overflow-auto mt-4 space-y-4"
+  ></div>
   </section>
 </div>
+
 {% endblock %} {% block extra_js %}
 <script src="{{ url_for('static', filename='js/operaciones_escalar.js') }}"></script>
 {% endblock %}

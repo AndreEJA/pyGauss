@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from fractions import Fraction
 import math, ast
 

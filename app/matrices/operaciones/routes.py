@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify
-from .operaciones_matrices import sumar_matrices, multiplicar_matrices, evaluar_matriz_str, multiplicar_matriz_por_vectores, sumar_matrices_con_escalares 
+from .operaciones_matrices import sumar_matrices, multiplicar_matrices, evaluar_matriz_str, multiplicar_matriz_por_vectores, sumar_matrices_con_escalares
 from ..gauss.algebra import FormateadorNumeros
 from ..gauss.algebra import a_fraccion_si_aplica # Importado para manejo de tipos
 
@@ -33,8 +33,10 @@ def operar_matrices():
     try:
         datos = request.get_json(force=True)
         operacion = datos.get("operacion")
-        
-        # Lógica general para suma/multiplicación simple
+        # Debug opcional:
+        print("DEBUG operacion:", operacion)
+
+        # --- CASOS SIMPLES: suma, multiplicación, matriz por vector ---
         if operacion in ["sumar", "multiplicar", "matriz_por_vector"]:
             matriz1_str = datos.get("matriz1", [])
             matriz2_str = datos.get("matriz2", [])
@@ -47,38 +49,85 @@ def operar_matrices():
                 resultado = multiplicar_matrices(matriz1, matriz2)
             elif operacion == "matriz_por_vector":
                 resultado = multiplicar_matriz_por_vectores(matriz1, matriz2)
-        
+
+        # --- NUEVO: SUMA CON MÚLTIPLES ESCALARES ---
         elif operacion == "suma_escalar_multiple":
-            # NUEVA LÓGICA DE OPERACIÓN MULTIPLE
-            matrices_str_list = datos.get("matrices_str", [])
-            escalares_str_list = datos.get("escalares_str", [])
-            
-            if len(matrices_str_list) != len(escalares_str_list) or not matrices_str_list:
-                 raise ValueError("Debe proporcionar una o más matrices y un escalar por matriz.")
+            matrices_str = datos.get("matrices_str", [])
+            escalares_str = datos.get("escalares_str", [])
 
-            # 1. Evaluar todas las matrices
-            matrices_evaluadas = [evaluar_matriz_str(m_str) for m_str in matrices_str_list]
+            if not matrices_str:
+                return jsonify(ok=False, error="No recibí matrices."), 400
 
-            # 2. Evaluar todos los escalares (se evalúan como una lista de 1 fila)
-            escalares_evaluadas = evaluar_matriz_str([escalares_str_list])[0]
-            
-            # 3. Validar dimensiones (todas deben ser iguales)
-            if not matrices_evaluadas: raise ValueError("No se encontraron matrices para operar.")
-            m, n = len(matrices_evaluadas[0]), len(matrices_evaluadas[0][0])
-            for mat in matrices_evaluadas:
-                 if len(mat) != m or (m > 0 and len(mat[0]) != n):
-                      raise ValueError("Todas las matrices deben tener las mismas dimensiones para la suma escalar.")
-            
-            # 4. Realizar la suma
-            resultado = sumar_matrices_con_escalares(matrices_evaluadas, escalares_evaluadas)
+            if len(matrices_str) != len(escalares_str):
+                return jsonify(ok=False, error="La cantidad de matrices y escalares no coincide."), 400
 
+            # Evaluar matrices y escalares (soportando expresiones)
+            matrices = [evaluar_matriz_str(m) for m in matrices_str]
+            escalares = [evaluar_matriz_str([[s]])[0][0] for s in escalares_str]
+
+            # Validar dimensiones iguales
+            filas = len(matrices[0])
+            cols = len(matrices[0][0])
+            for m in matrices[1:]:
+                if len(m) != filas or len(m[0]) != cols:
+                    return jsonify(ok=False, error="Todas las matrices deben tener el mismo tamaño."), 400
+
+            # PASOS CRUDOS: guardamos título + matriz numérica
+            pasos_raw = []
+            acumulador = [[0 for _ in range(cols)] for _ in range(filas)]
+
+            for i, (mat, esc) in enumerate(zip(matrices, escalares), start=1):
+                # 1) Matriz escalada
+                matriz_escalada = [[esc * val for val in fila] for fila in mat]
+                pasos_raw.append({
+                    "titulo": f"Paso {i}: Multiplicamos la matriz {i} por el escalar {esc}.",
+                    "matriz": matriz_escalada
+                })
+
+                # 2) Suma con el acumulado
+                acumulador = [
+                    [acumulador[r][c] + matriz_escalada[r][c] for c in range(cols)]
+                    for r in range(filas)
+                ]
+                pasos_raw.append({
+                    "titulo": "Sumamos la matriz resultante con el acumulado anterior.",
+                    "matriz": [fila[:] for fila in acumulador]
+                })
+
+            resultado = acumulador
+
+        # --- CUALQUIER OTRA OPERACIÓN ---
         else:
-            return jsonify({"ok": False, "error": "Operación no soportada."}), 400
+            return jsonify({"ok": False, "error": f"Operación no soportada: {operacion}"}), 400
 
-        formateador = FormateadorNumeros(modo=datos.get("modo_precision", "fraccion"), decimales=int(datos.get("decimales", 6)))
+        # --- FORMATEO NUMÉRICO COMÚN ---
+        formateador = FormateadorNumeros(
+            modo=datos.get("modo_precision", "fraccion"),
+            decimales=int(datos.get("decimales", 6))
+        )
         matriz_final_formateada = [[formateador.fmt(v) for v in fila] for fila in resultado]
 
+        # Si es suma con múltiples escalares: también formateamos los pasos
+        if operacion == "suma_escalar_multiple":
+            pasos = []
+            for paso in pasos_raw:
+                matriz_fmt = [[formateador.fmt(v) for v in fila] for fila in paso["matriz"]]
+                pasos.append({
+                    "titulo": paso["titulo"],
+                    "matriz": matriz_fmt
+                })
+            return jsonify({"ok": True, "resultado": matriz_final_formateada, "pasos": pasos})
+
+        # Otras operaciones (sin pasos)
         return jsonify({"ok": True, "resultado": matriz_final_formateada})
+    
+    except ValueError as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"ok": False, "error": f"Ocurrió un error inesperado: {str(e)}"}), 500
+
     
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
