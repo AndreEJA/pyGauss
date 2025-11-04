@@ -24,16 +24,17 @@
           <span class="text-rose-600">Py</span><span>Gauss</span>
         </a>
         <nav class="flex gap-6 items-center">
-          <a class="nav-link" href="{{ url_for('principal.menu_matrices') }}"
-            >Matrices</a
-          >
-          <a class="nav-link" href="{{ url_for('principal.menu_vectores') }}"
-            >Vectores</a
-          >
-          <a class="nav-link" href="{{ url_for('principal.menu_ocio') }}"
-            >Ocio</a
-          >
-        </nav>
+          <a class="nav-link" href="{{ url_for('principal.inicio') }}">Inicio</a>
+          <a class="nav-link" href="{{ url_for('principal.unidad_algebra_lineal') }}">
+            Álgebra Lineal
+          </a>
+          <a class="nav-link" href="{{ url_for('principal.unidad_metodos_numericos') }}">
+            Métodos Numéricos
+          </a>
+          <a class="nav-link" href="{{ url_for('principal.unidad_calculo') }}">
+            Cálculo
+          </a>
+        </nav>        
       </div>
     </header>
 

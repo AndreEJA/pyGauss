@@ -7,6 +7,7 @@ operaciones_bp = Blueprint("operaciones", __name__, template_folder="../../../te
 
 # --- RUTAS PRINCIPALES ---
 
+
 @operaciones_bp.route("/", methods=["GET"])
 def vista_menu_operaciones():
     return render_template("menu_operaciones.html", title="Menú de Operaciones")

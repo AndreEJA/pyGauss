@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-3">Unidad 2: Métodos Numéricos</h1>
+<p class="text-slate-600 mb-6">
+  Aquí irán los módulos de métodos numéricos: resolución de ecuaciones,
+  interpolación, integración numérica, etc. De momento es un hub en construcción.
+</p>
+
+<div class="grid sm:grid-cols-2 gap-4">
+  <div class="card-method">
+    <div class="text-lg font-semibold">Métodos cerrados.
+    </div>
+    <div class="text-sm opacity-80">
+      Método de Bisección, Método de Regla Falsa.
+    </div>
+  </div>
+
+  <div class="card-method">
+    <div class="text-lg font-semibold">Métodos abiertos.</div>
+    <div class="text-sm opacity-80">
+      Método de Newton - Raphson, Método de la Secante.
+    </div>
+  </div>
+
+  <div class="card-method">
+    <div class="text-lg font-semibold">Raíces de polinomios</div>
+    <div class="text-sm opacity-80">
+      Método de Lin Bairstow
+    </div>
+  </div>
+</div>
+{% endblock %}

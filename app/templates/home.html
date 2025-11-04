@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+
+<header
+  class="text-center py-16 px-4 bg-white/50 backdrop-blur-sm rounded-3xl shadow-xl mb-10 border border-slate-200"
+>
+  <h1 class="text-5xl font-extrabold tracking-tighter text-slate-900 mb-4">
+    <span class="text-rose-600">Py</span>Gauss
+  </h1>
+  <p class="text-xl text-slate-700 max-w-3xl mx-auto mb-6">
+    Elige la unidad con la que quieres trabajar. PyGauss será tu
+    calculadora matemática para matrices, métodos numéricos y cálculo.
+  </p>
+  <p class="text-sm text-slate-500">
+    Unidad 1 ya está disponible. Las Unidades 2 y 3 están en desarrollo
+  </p>
+</header>
+
+<section class="mb-10">
+  <h2
+    class="text-3xl font-bold text-slate-800 mb-6 text-center border-b pb-2 border-slate-200"
+  >
+    Unidades de la Calculadora
+  </h2>
+
+  <div class="grid md:grid-cols-3 gap-6">
+    <!-- UNIDAD 1 -->
+    <a
+      href="{{ url_for('principal.unidad_algebra_lineal') }}"
+      class="card-big transition-transform duration-300 hover:scale-[1.02]"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-2xl font-bold text-slate-900">
+          Unidad 1: Álgebra Lineal
+        </h3>
+        <span
+          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700"
+        >
+          Activa
+        </span>
+      </div>
+      <p class="text-sm text-slate-600 mb-3">
+        Matrices y vectores: sistemas de ecuaciones, operaciones matriciales,
+        independencia lineal y juegos relacionados.
+      </p>
+      <p class="text-sm font-semibold text-rose-600">
+        Entrar a la Unidad 1 →
+      </p>
+    </a>
+
+    <!-- UNIDAD 2 -->
+    <a
+      href="{{ url_for('principal.unidad_metodos_numericos') }}"
+      class="card-big transition-transform duration-300 hover:scale-[1.02]"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-2xl font-bold text-slate-900">
+          Unidad 2: Métodos Numéricos
+        </h3>
+        <span
+          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700"
+        >
+          En desarrollo
+        </span>
+      </div>
+      <p class="text-sm text-slate-600 mb-3">
+        Métodos iterativos y de aproximación para resolver ecuaciones y
+        problemas de ingeniería: bisección, Newton-Raphson, interpolación, etc.
+      </p>
+      <p class="text-sm font-semibold text-rose-600">
+        Ver Unidad 2 (demo) →
+      </p>
+    </a>
+
+    <!-- UNIDAD 3 -->
+    <a
+      href="{{ url_for('principal.unidad_calculo') }}"
+      class="card-big transition-transform duration-300 hover:scale-[1.02]"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-2xl font-bold text-slate-900">
+          Unidad 3: Cálculo
+        </h3>
+        <span
+          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700"
+        >
+          En desarrollo
+        </span>
+      </div>
+      <p class="text-sm text-slate-600 mb-3">
+        Herramientas para derivadas, integrales, límites y series, todo con
+        enfoque práctico para ingeniería.
+      </p>
+      <p class="text-sm font-semibold text-rose-600">
+        Ver Unidad 3 (demo) →
+      </p>
+    </a>
+  </div>
+</section>
+
+{% endblock %}
