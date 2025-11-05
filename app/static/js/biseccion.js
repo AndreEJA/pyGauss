@@ -46,20 +46,11 @@
         "$1$2*$3"
       );
   
-      // 🔴 CAMBIO IMPORTANTE
       // variable de UNA letra seguida de paréntesis: a(x+1) -> a*(x+1)
-      // pero sin cortar nombres de funciones como cos, sen, log, tan, etc.
-      //
-      // Ejemplos:
-      //   "x(x+1)"   -> "x*(x+1)"
-      //   "t(x)"     -> "t*(x)"
-      //   "(x+1)a(x)"-> "(x+1)*a*(x)"
-      //   "cos(x)"   -> se queda "cos(x)" ✅
-      //   "sen(x)"   -> "sin(x)" (por el reemplazo anterior) ✅
+      // (no rompe cos(x), sen(x), log(x), etc.)
       real = real.replace(/(^|[^A-Za-z0-9_])([A-Za-z])\s*\(/g, "$1$2*(");
   
-      // paréntesis seguido de variable: (x+1)x -> (x+1)*x
-      // también funciona con funciones: (x+1)cos(x) -> (x+1)*cos(x)
+      // paréntesis seguido de variable/función: (x+1)x -> (x+1)*x, (x+1)cos(x) -> (x+1)*cos(x)
       real = real.replace(/\)\s*([A-Za-z])/g, ")*$1");
   
       // paréntesis seguido de paréntesis: )( -> )*(
@@ -68,49 +59,45 @@
       return real;
     }
   
-    // ==========================
-    // 2. De "bonito" -> LaTeX
-    // ==========================
+    
     function prettyToLatex(pretty) {
       if (!pretty) return "";
   
       let tex = pretty.trim();
   
       // --- trigonométricas ---
-      // sen(x) -> \sin(x)
       tex = tex.replace(/\bsen\(/gi, "\\sin(");
-      // tg(x) o tan(x) -> \tan(x)
       tex = tex.replace(/\btg\(/gi, "\\tan(");
       tex = tex.replace(/\btan\(/gi, "\\tan(");
-      // cos(x) -> \cos(x)
       tex = tex.replace(/\bcos\(/gi, "\\cos(");
   
       // --- logaritmos ---
-      // ln(x) -> \ln(x)
       tex = tex.replace(/\bln\(/gi, "\\ln(");
-      // log10(x) -> \log_{10}(x)
       tex = tex.replace(/log10\(/gi, "\\log_{10}(");
-      // log_b(x) escrito como log_b(  -> \log_b(
       tex = tex.replace(/log_([0-9A-Za-z]+)\(/g, "\\log_{$1}(");
   
       // --- raíz cuadrada ---
-      // √(x+1) -> \sqrt{x+1}
       tex = tex.replace(/√\(([^)]+)\)/g, "\\sqrt{$1}");
-      // √x -> \sqrt{x}
       tex = tex.replace(/√([A-Za-z0-9]+)/g, "\\sqrt{$1}");
   
       // --- pi ---
       tex = tex.replace(/π/g, "\\pi");
   
       // --- fracciones sencillas ---
-      // (a)/(b) -> \frac{a}{b}
       tex = tex.replace(/\(([^)]+)\)\s*\/\s*\(([^)]+)\)/g, "\\frac{$1}{$2}");
-      // 3/4 -> \frac{3}{4}
       tex = tex.replace(/(\d+)\s*\/\s*(\d+)/g, "\\frac{$1}{$2}");
   
       // --- potencias ---
-      // x^4, (x+1)^2 -> x^{4}, (x+1)^{2}
-      tex = tex.replace(/([A-Za-z0-9\)\]])\^(-?\d+)/g, "$1^{ $2 }");
+      // 1) base^(expresión entre paréntesis): e^(-x), x^(1/2), a^(n+1)
+      tex = tex.replace(
+        /([A-Za-z0-9\)\]])\^\(([^)]+)\)/g,
+        "$1^{ $2 }"
+      );
+      // 2) base^exponente simple: x^4, a^n, 2^k
+      tex = tex.replace(
+        /([A-Za-z0-9\)\]])\^(-?[A-Za-z0-9]+)/g,
+        "$1^{ $2 }"
+      );
   
       return tex;
     }
@@ -132,11 +119,9 @@
           return;
         }
   
-        // Mostramos f(x) = ... en notación LaTeX inline
-        const fullLatex = `\\( f(x) = ${latexBody} \\)`;
+        const fullLatex = `\\(${latexBody} \\)`;
         displaySpan.textContent = fullLatex;
   
-        // Pedimos a MathJax que renderice solo este span
         if (window.MathJax && window.MathJax.typesetPromise) {
           MathJax.typesetPromise([displaySpan]).catch((err) =>
             console.error("MathJax error:", err)

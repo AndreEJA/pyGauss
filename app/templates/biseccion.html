@@ -51,26 +51,36 @@
           Función f(x)
         </label>
 
-        <!-- Campo visible BONITO -->
-        <input
-          type="text"
-          id="funcion_pretty"
-          name="funcion_pretty"
-          value="{{ datos.funcion|default('') }}"
-          class="w-full rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500 text-sm"
-          placeholder="Ej: x^4 - 5x^3 + 0.5x^2 - 11x + 10"
-          autocomplete="off"
-          required
-        />
+        <!-- Contenedor tipo input con LaTeX -->
+        <div class="relative">
+          <!-- Cajita visible donde se dibuja MathJax -->
+          <div
+            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm transition focus-within:border-rose-500 focus-within:ring-2 focus-within:ring-rose-500/40"
+          >
+            <span
+              id="funcion_display"
+              class="block text-slate-900 min-h-[1.4rem]"
+            ></span>
+          </div>
 
-        <!-- Vista previa en LaTeX -->
-        <p class="mt-2 text-xs text-slate-500">
-          Vista previa:&nbsp;
-          <span id="funcion_display" class="inline-block"></span>
-        </p>
+          <!-- Input real que captura la escritura -->
+          <input
+            type="text"
+            id="funcion_pretty"
+            name="funcion_pretty"
+            value="{{ datos.funcion_pretty|default('') }}"
+            class="absolute inset-0 w-full h-full bg-transparent border-none outline-none text-transparent caret-slate-800 px-3 py-2"
+            placeholder="Ej: x^4 - 5x^3 + 0.5x^2 - 11x + 10"
+            autocomplete="off"
+            required
+          />
+        </div>
 
         <!-- Campo OCULTO que se envía al servidor con sintaxis Python -->
         <input type="hidden" id="funcion_real" name="funcion" />
+
+        <!-- NUEVO: campo oculto para enviar el LaTeX bonito -->
+        <input type="hidden" id="funcion_latex" name="funcion_latex" />
 
         <!-- Teclado tipo GeoGebra (matriz) -->
         <div class="mt-3 bg-slate-50/60 rounded-2xl p-3 border border-slate-200 max-h-64 overflow-y-auto">
@@ -251,17 +261,17 @@
   <!-- Resultados / Ejemplo -->
   <div class="lg:col-span-2 bg-white rounded-3xl shadow-md border border-slate-200 p-6">
     <h2 class="text-xl font-semibold text-slate-800 mb-2">
-      Ejemplo Método de Bisección
+      Método de Bisección
     </h2>
 
     {% if resultados %}
-      <div class="mb-4 text-sm text-slate-700 space-y-1">
-        <!-- Aquí usamos MathJax para mostrar la función que se usó -->
+    <div class="mb-4 text-sm text-slate-700 space-y-1">
         <p class="font-semibold">
-          Función utilizada:
-          <span class="ml-2">
-            \( f(x) = {{ datos.funcion|default('') }} \)
-          </span>
+        Función utilizada:
+        <span class="ml-2">
+            \( f(x) = {{ datos.funcion_latex|safe }} \)
+        </span>
+        </p>
         </p>
         <p>
           <span class="font-semibold">Intervalo inferior (a):</span>
