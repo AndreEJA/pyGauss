@@ -9,9 +9,6 @@
       return; // por si se carga en otra página
     }
   
-    // ==========================
-    // 1. De "bonito" -> Python
-    // ==========================
     function translateToReal(pretty) {
       let real = pretty;
   
@@ -49,10 +46,20 @@
         "$1$2*$3"
       );
   
-      // variable seguida de paréntesis: x(x+1) -> x*(x+1)
-      real = real.replace(/([A-Za-z])\s*\(/g, "$1*(");
+      // 🔴 CAMBIO IMPORTANTE
+      // variable de UNA letra seguida de paréntesis: a(x+1) -> a*(x+1)
+      // pero sin cortar nombres de funciones como cos, sen, log, tan, etc.
+      //
+      // Ejemplos:
+      //   "x(x+1)"   -> "x*(x+1)"
+      //   "t(x)"     -> "t*(x)"
+      //   "(x+1)a(x)"-> "(x+1)*a*(x)"
+      //   "cos(x)"   -> se queda "cos(x)" ✅
+      //   "sen(x)"   -> "sin(x)" (por el reemplazo anterior) ✅
+      real = real.replace(/(^|[^A-Za-z0-9_])([A-Za-z])\s*\(/g, "$1$2*(");
   
       // paréntesis seguido de variable: (x+1)x -> (x+1)*x
+      // también funciona con funciones: (x+1)cos(x) -> (x+1)*cos(x)
       real = real.replace(/\)\s*([A-Za-z])/g, ")*$1");
   
       // paréntesis seguido de paréntesis: )( -> )*(
