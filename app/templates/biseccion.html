@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<header
+  class="text-center py-10 px-4 bg-white/50 backdrop-blur-sm rounded-3xl shadow-xl mb-8 border border-slate-200"
+>
+  <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 mb-3">
+    Método de Bisección
+  </h1>
+  <p class="text-slate-600 max-w-2xl mx-auto">
+    Si <span class="font-semibold">f</span> es continua en <span class="font-semibold">[a,b]</span> y 
+    <span class="font-semibold">f(a)</span> y <span class="font-semibold">f(b)</span> tienen signos diferentes, 
+    entonces en <span class="font-semibold">(a,b)</span> existe al menos una raíz real.
+  </p>
+</header>
+
+<section class="grid gap-6 lg:grid-cols-3 mb-10">
+  <!-- Formulario -->
+  <div
+    class="lg:col-span-1 bg-white rounded-3xl shadow-md border border-slate-200 p-6"
+  >
+    <h2 class="text-xl font-semibold text-slate-800 mb-4">
+      Datos de entrada
+    </h2>
+
+    {% if error_msg %}
+      <div class="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+        {{ error_msg }}
+      </div>
+    {% endif %}
+
+    <!-- 👇 mantenemos el url_for tal cual -->
+    <form method="post" action="{{ url_for('metodos_numericos.biseccion') }}" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+          Función f(x)
+        </label>
+        <input
+          type="text"
+          name="funcion"
+          value="{{ datos.funcion|default('') }}"
+          class="w-full rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500 text-sm"
+          placeholder="Ej: x**4 - 5*x**3 + 0.5*x**2 - 11*x + 10"
+          required
+        />
+        <p class="mt-1 text-xs text-slate-500">
+          Usa sintaxis de Python: <code>x**2</code>, <code>sin(x)</code>, etc.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Intervalo inferior (a)
+          </label>
+          <input
+            type="number"
+            step="any"
+            name="xi"
+            value="{{ datos.xi|default('') }}"
+            class="w-full rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500 text-sm"
+            required
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Intervalo superior (b)
+          </label>
+          <input
+            type="number"
+            step="any"
+            name="xu"
+            value="{{ datos.xu|default('') }}"
+            class="w-full rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500 text-sm"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Error de convergencia (E)
+          </label>
+          <input
+            type="number"
+            step="any"
+            name="es"
+            value="{{ datos.es|default('') }}"
+            class="w-full rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500 text-sm"
+            required
+          />
+          <p class="mt-1 text-xs text-slate-500">
+            Ejemplo: 0.0001
+          </p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Iteraciones máximas
+          </label>
+          <input
+            type="number"
+            name="max_iter"
+            value="{{ datos.max_iter|default('') }}"
+            class="w-full rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500 text-sm"
+            min="1"
+          />
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full mt-2 inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold shadow-sm border border-rose-500 text-white bg-rose-500 hover:bg-rose-600 transition"
+      >
+        Calcular bisección
+      </button>
+    </form>
+  </div>
+
+  <!-- Resultados -->
+  <div class="lg:col-span-2 bg-white rounded-3xl shadow-md border border-slate-200 p-6">
+    <h2 class="text-xl font-semibold text-slate-800 mb-2">
+      Ejemplo Método de Bisección
+    </h2>
+
+    {% if resultados %}
+      <!-- Encabezado tipo ejemplo (como la segunda imagen) -->
+      <div class="mb-4 text-sm text-slate-700 space-y-1">
+        <p class="font-semibold">
+          f(x) = 
+          <code class="px-1.5 py-0.5 rounded-lg bg-slate-100 text-slate-800 text-xs">
+            {{ datos.funcion|default('') }}
+          </code>
+        </p>
+        <p>
+          <span class="font-semibold">Intervalo inferior (a):</span>
+          {{ datos.xi|default('') }}
+          &nbsp;&nbsp;
+          <span class="font-semibold">Intervalo superior (b):</span>
+          {{ datos.xu|default('') }}
+        </p>
+        <p>
+          <span class="font-semibold">Error de Convergencia:</span>
+          {{ datos.es|default('') }}
+        </p>
+      </div>
+
+      <div class="overflow-auto max-h-[60vh] rounded-2xl border border-slate-200">
+        <table class="matrix-table w-full text-sm">
+          <thead class="bg-slate-50 text-slate-700">
+            <tr>
+              <th class="px-3 py-2 text-left font-semibold">n</th>
+              <th class="px-3 py-2 text-left font-semibold">a</th>
+              <th class="px-3 py-2 text-left font-semibold">b</th>
+              <th class="px-3 py-2 text-left font-semibold">c</th>
+              <th class="px-3 py-2 text-left font-semibold">f(a)</th>
+              <th class="px-3 py-2 text-left font-semibold">f(b)</th>
+              <th class="px-3 py-2 text-left font-semibold">f(c)</th>
+              <th class="px-3 py-2 text-left font-semibold">Ea (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in resultados %}
+              <tr class="border-t border-slate-200">
+                <td class="px-3 py-1.5 text-slate-700 text-center">
+                  {{ fila.n if fila.n is defined else loop.index }}
+                </td>
+                <td class="px-3 py-1.5 text-slate-700 text-right">
+                  {{ fila.xi if fila.xi is defined else '' }}
+                </td>
+                <td class="px-3 py-1.5 text-slate-700 text-right">
+                  {{ fila.xu if fila.xu is defined else '' }}
+                </td>
+                <td class="px-3 py-1.5 text-slate-700 text-right">
+                  {{ fila.xr if fila.xr is defined else '' }}
+                </td>
+                <td class="px-3 py-1.5 text-slate-700 text-right">
+                  {{ fila.f_xi if fila.f_xi is defined else '' }}
+                </td>
+                <td class="px-3 py-1.5 text-slate-700 text-right">
+                  {{ fila.f_xu if fila.f_xu is defined else '' }}
+                </td>
+                <td class="px-3 py-1.5 text-slate-700 text-right">
+                  {{ fila.f_xr if fila.f_xr is defined else '' }}
+                </td>
+                <td class="px-3 py-1.5 text-slate-700 text-right">
+                  {{ fila.ea if fila.ea is defined else '' }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if raiz is not none %}
+        <div class="mt-4 text-sm text-slate-700">
+          <p>
+            <span class="font-semibold">Raíz aproximada:</span>
+            {{ raiz }}
+          </p>
+          <p>
+            <span class="font-semibold">Iteraciones realizadas:</span>
+            {{ n_iter }}
+          </p>
+        </div>
+      {% endif %}
+    {% else %}
+      <p class="mt-2 text-sm text-slate-500">
+        Ingresa los datos a la izquierda y pulsa <span class="font-semibold">“Calcular bisección”</span> para ver el desarrollo iterativo.
+      </p>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}
