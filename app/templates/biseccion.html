@@ -13,12 +13,27 @@
     <span class="font-semibold">f(a)</span> y <span class="font-semibold">f(b)</span> tienen signos diferentes, 
     entonces en <span class="font-semibold">(a,b)</span> existe al menos una raíz real.
   </p>
+
+  <!-- Configuración de MathJax (puedes mover esto a base.html en el <head> si quieres que sea global) -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)'], ['$', '$']],
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+
+  <!-- Cargar MathJax (TeX -> SVG) -->
+  <script id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+  </script>
 </header>
 
 <section class="grid gap-6 lg:grid-cols-3 mb-10">
   <!-- Formulario -->
   <div
-    class="lg:col-span-1 bg-white rounded-3xl shadow-md border border-slate-200 p-6"
+    class="lg:col-span-1 bg-white rounded-3xl shadow-md border border-slate-200 p-6 overflow-hidden"
   >
     <h2 class="text-xl font-semibold text-slate-800 mb-4">
       Datos de entrada
@@ -43,47 +58,123 @@
           name="funcion_pretty"
           value="{{ datos.funcion|default('') }}"
           class="w-full rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500 text-sm"
-          placeholder="Ej: x^3 - 5x + √x"
+          placeholder="Ej: x^4 - 5x^3 + 0.5x^2 - 11x + 10"
           autocomplete="off"
           required
         />
 
+        <!-- Vista previa en LaTeX -->
+        <p class="mt-2 text-xs text-slate-500">
+          Vista previa:&nbsp;
+          <span id="funcion_display" class="inline-block"></span>
+        </p>
+
         <!-- Campo OCULTO que se envía al servidor con sintaxis Python -->
         <input type="hidden" id="funcion_real" name="funcion" />
 
-        <!-- Teclado tipo GeoGebra -->
-        <div class="mt-3 space-y-2 text-sm">
-          <!-- fila 1: variables y constantes -->
-          <div class="flex flex-wrap gap-2">
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="x">x</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="y">y</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="π">π</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="e">e</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="(">(</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert=")">)</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="+">+</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="-">−</button>
-          </div>
+        <!-- Teclado tipo GeoGebra (matriz) -->
+        <div class="mt-3 bg-slate-50/60 rounded-2xl p-3 border border-slate-200 max-h-64 overflow-y-auto">
+          <div class="grid grid-cols-4 sm:grid-cols-6 gap-1.5 text-xs sm:text-sm">
 
-          <!-- fila 2: potencias, raíz, valor absoluto, comparadores, fracción -->
-          <div class="flex flex-wrap gap-2">
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="^">xⁿ</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="√(">√▢</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="|">|x|</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="×">×</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="÷">÷</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="<"><</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert=">">></button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="(/)">a/b</button>
-          </div>
+            <!-- Fila 1: variables y constantes -->
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="x">x</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="y">y</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="π">π</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="e">e</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="(">(</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert=")">)</button>
 
-          <!-- fila 3: trigonométricas y logaritmos -->
-          <div class="flex flex-wrap gap-2">
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="sen(">sen</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="cos(">cos</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="tg(">tg</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="ln(">ln</button>
-            <button type="button" class="px-3 py-1 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50" data-insert="log10(">log₁₀</button>
+            <!-- Fila 2: operaciones básicas -->
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="+">+</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="-">−</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="×">×</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="÷">÷</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="^">^</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="√(">√</button>
+
+            <!-- Fila 3: valor absoluto, comparadores, fracciones -->
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="|">|x|</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="<">&lt;</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert=">">&gt;</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-1 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="(a)/(b)">a/b</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="a b/c">a b/c</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="^">xⁿ</button>
+
+            <!-- Fila 4: trigonométricas -->
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="sen(">sen</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="cos(">cos</button>
+            <button
+              type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-2 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-normal"
+              data-insert="tg(">tg</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="asen(">sen⁻¹</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="acos(">cos⁻¹</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="atan(">tg⁻¹</button>
+
+            <!-- Fila 5: logs y exponenciales -->
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="ln(">ln</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="log10(">log₁₀</button>
+            <button
+              type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-1 py-2 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-normal"
+              data-insert="log_(">log_b</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="e^(">eˣ</button>
+            <button type="button"
+              class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight"
+              data-insert="10^(">10ˣ</button>
+            <span></span> <!-- celda vacía -->
           </div>
         </div>
       </div>
@@ -157,7 +248,7 @@
     </form>
   </div>
 
-  <!-- Resultados -->
+  <!-- Resultados / Ejemplo -->
   <div class="lg:col-span-2 bg-white rounded-3xl shadow-md border border-slate-200 p-6">
     <h2 class="text-xl font-semibold text-slate-800 mb-2">
       Ejemplo Método de Bisección
@@ -165,11 +256,12 @@
 
     {% if resultados %}
       <div class="mb-4 text-sm text-slate-700 space-y-1">
+        <!-- Aquí usamos MathJax para mostrar la función que se usó -->
         <p class="font-semibold">
-          f(x) =
-          <code class="px-1.5 py-0.5 rounded-lg bg-slate-100 text-slate-800 text-xs">
-            {{ datos.funcion|default('') }}
-          </code>
+          Función utilizada:
+          <span class="ml-2">
+            \( f(x) = {{ datos.funcion|default('') }} \)
+          </span>
         </p>
         <p>
           <span class="font-semibold">Intervalo inferior (a):</span>
@@ -184,7 +276,7 @@
         </p>
       </div>
 
-      <div class="rounded-2xl border border-slate-200 mt-2">
+      <div class="rounded-2xl border border-slate-200 mt-2 overflow-x-auto">
         <table class="matrix-table w-full text-xs">
           <thead class="bg-slate-50 text-slate-700">
             <tr>
@@ -247,6 +339,14 @@
       <p class="mt-2 text-sm text-slate-500">
         Ingresa los datos a la izquierda y pulsa
         <span class="font-semibold">“Calcular bisección”</span> para ver el desarrollo iterativo.
+      </p>
+
+      <!-- Ejemplo fijo con la función del enunciado, también en LaTeX -->
+      <p class="mt-3 text-sm text-slate-700">
+        Ejemplo:
+        <span class="ml-1">
+          \( f(x) = x^4 - 5x^3 + 0.5x^2 - 11x + 10 \)
+        </span>
       </p>
     {% endif %}
   </div>
