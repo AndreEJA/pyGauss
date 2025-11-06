@@ -2,7 +2,8 @@
 
 (function () {
     const prettyInput = document.getElementById("funcion_pretty");
-    const realInput = document.getElementById("funcion_real");
+    const realInput   = document.getElementById("funcion_real");
+    const latexInput  = document.getElementById("funcion_latex");
     const displaySpan = document.getElementById("funcion_display");
   
     if (!prettyInput || !realInput) {
@@ -59,7 +60,6 @@
       return real;
     }
   
-    
     function prettyToLatex(pretty) {
       if (!pretty) return "";
   
@@ -102,32 +102,68 @@
       return tex;
     }
   
+    // Decidir si vale la pena intentar renderizar con MathJax
+    // (si la expresión está muy "incompleta", usamos texto plano)
+    function shouldRenderWithMathJax(pretty) {
+      if (!pretty) return false;
+  
+      const p = pretty.trim();
+  
+      // Si termina en ^, _, \ o "log_" => probablemente incompleto
+      if (/[\\^_]$/.test(p)) return false;
+      if (/log_$/.test(p)) return false;
+  
+      // Paréntesis desbalanceados: más '(' que ')'
+      let balance = 0;
+      for (const ch of p) {
+        if (ch === "(") balance++;
+        else if (ch === ")") balance--;
+      }
+      if (balance > 0) return false;
+  
+      return true;
+    }
+  
     // ==========================
     // 3. Sincronizar todo
     // ==========================
     function syncRealAndDisplay() {
       const pretty = prettyInput.value;
+  
       // Para Python
       realInput.value = translateToReal(pretty);
   
-      // Para la vista con MathJax
-      if (displaySpan) {
-        const latexBody = prettyToLatex(pretty);
-  
-        if (!latexBody) {
-          displaySpan.textContent = "";
-          return;
-        }
-  
-        const fullLatex = `\\(${latexBody} \\)`;
-        displaySpan.textContent = fullLatex;
-  
-        if (window.MathJax && window.MathJax.typesetPromise) {
-          MathJax.typesetPromise([displaySpan]).catch((err) =>
-            console.error("MathJax error:", err)
-          );
-        }
+      // Para LaTeX
+      const latexBody = prettyToLatex(pretty);
+      if (latexInput) {
+        latexInput.value = latexBody;
       }
+  
+      if (!displaySpan) return;
+  
+      if (!latexBody) {
+        displaySpan.textContent = "";
+        return;
+      }
+  
+      // Si la expresión aún está "abierta" o MathJax no está listo,
+      // mostramos solo el texto plano y NO llamamos a MathJax
+      if (!shouldRenderWithMathJax(pretty) ||
+          !window.MathJax ||
+          !MathJax.typesetPromise) {
+        displaySpan.textContent = pretty;
+        return;
+      }
+  
+      // Aquí ya asumimos que es seguro renderizar con MathJax
+      const fullLatex = `\\(${latexBody} \\)`;
+      displaySpan.textContent = fullLatex;
+  
+      MathJax.typesetPromise([displaySpan]).catch((err) => {
+        console.warn("MathJax error:", err);
+        // Si por algo falla, caemos a texto plano
+        displaySpan.textContent = pretty;
+      });
     }
   
     // Inicializar
@@ -148,5 +184,62 @@
         prettyInput.focus();
       });
     });
+      // ==========================
+  // 4. Zoom de la gráfica
+  // ==========================
+  const graficaImg     = document.getElementById("grafica_img");
+  const graficaWrapper = document.getElementById("grafica_wrapper");
+
+  if (graficaImg && graficaWrapper) {
+    let zoomLevel = 1;
+
+    function aplicarZoom() {
+      graficaImg.style.transform = `scale(${zoomLevel})`;
+    }
+
+    // Botones +, -, reset
+    document.querySelectorAll("[data-zoom]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const accion = btn.dataset.zoom;
+        if (accion === "in") {
+          zoomLevel *= 1.25;
+        } else if (accion === "out") {
+          zoomLevel /= 1.25;
+        } else if (accion === "reset") {
+          zoomLevel = 1;
+        }
+
+        // Limitar el zoom entre 0.5x y 8x para que no se vuelva loco
+        if (zoomLevel < 0.5) zoomLevel = 0.5;
+        if (zoomLevel > 8)   zoomLevel = 8;
+
+        aplicarZoom();
+      });
+    });
+
+    // Zoom con la rueda del mouse sobre la gráfica
+    graficaWrapper.addEventListener("wheel", (e) => {
+      // Ctrl+rueda suele usarse para zoom del navegador, mejor no interferir
+      if (e.ctrlKey) return;
+
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        // scroll hacia arriba -> acercar
+        zoomLevel *= 1.1;
+      } else {
+        // scroll hacia abajo -> alejar
+        zoomLevel /= 1.1;
+      }
+
+      if (zoomLevel < 0.5) zoomLevel = 0.5;
+      if (zoomLevel > 8)   zoomLevel = 8;
+
+      aplicarZoom();
+    });
+
+    // valor inicial
+    aplicarZoom();
+  }
+
   })();
   

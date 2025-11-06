@@ -1,4 +1,3 @@
-# app/metodos_numericos/routes.py
 from flask import Blueprint, render_template, request
 from .biseccion import metodo_biseccion, evaluar_funcion
 import re
@@ -6,16 +5,43 @@ import math
 import io
 import base64
 
+# --- nuevos imports ---
 import matplotlib
 matplotlib.use("Agg")  # backend sin interfaz gráfica
 import matplotlib.pyplot as plt
+import numpy as np
+from sympy import symbols, sympify, lambdify
 
 metodos_bp = Blueprint(
     "metodos_numericos",
     __name__,
     url_prefix="/metodos-numericos"
 )
+# --- función nueva para graficar ---
+def graficar_funcion(expr_python, x_min=-10, x_max=10):
+    x = symbols('x')
+    f_sym = sympify(expr_python)
+    f = lambdify(x, f_sym, 'numpy')
+    xs = np.linspace(x_min, x_max, 800)
+    try:
+        ys = f(xs)
+    except Exception:
+        ys = np.full_like(xs, np.nan, dtype=float)
 
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.axvline(0, color="black", linewidth=0.8)
+    ax.grid(True, linestyle="--", alpha=0.4)
+    ax.plot(xs, ys, linewidth=1.4)
+    ax.set_xlim(x_min, x_max)
+    ax.set_xlabel("x")
+    ax.set_ylabel("f(x)")
+    fig.tight_layout()
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=120)
+    plt.close(fig)
+    buf.seek(0)
+    return base64.b64encode(buf.read()).decode("utf-8")
 # ---- conversor "bonito" -> LaTeX (versión Python) ----
 def pretty_to_latex(pretty: str) -> str:
     if not pretty:
@@ -82,6 +108,8 @@ def biseccion():
         "xu": "",
         "es": "0.0001",
         "max_iter": "50",
+        "x_min": "",
+        "x_max": "",
     }
 
     if request.method == "POST":
@@ -101,7 +129,7 @@ def biseccion():
             # Generar LaTeX en el servidor (a partir de func_pretty)
             func_latex = pretty_to_latex(func_pretty)
 
-            # Parámetros numéricos
+            # Parámetros numéricos para el método de bisección
             xi_str = request.form.get("xi", "").strip()
             xu_str = request.form.get("xu", "").strip()
 
@@ -121,6 +149,25 @@ def biseccion():
             es = float(request.form.get("es", "0.0001"))
             max_iter = int(request.form.get("max_iter", "50"))
 
+            # ---- Rango de x para la gráfica (zoom tipo GeoGebra) ----
+            x_min_str = request.form.get("x_min", "").strip()
+            x_max_str = request.form.get("x_max", "").strip()
+
+            # Valores por defecto si el usuario no escribe nada
+            try:
+                x_min = float(x_min_str) if x_min_str else -10.0
+            except ValueError:
+                x_min = -10.0
+
+            try:
+                x_max = float(x_max_str) if x_max_str else 10.0
+            except ValueError:
+                x_max = 10.0
+
+            # Si el usuario se equivoca y pone x_min > x_max, los invertimos
+            if x_min > x_max:
+                x_min, x_max = x_max, x_min
+
             # Guardar lo que se volverá a pintar en el formulario / resultados
             datos["funcion_pretty"] = func_pretty
             datos["funcion"] = expr          # versión Python
@@ -129,6 +176,8 @@ def biseccion():
             datos["xu"] = "" if accion == "graficar" and (xi_str == "" or xu_str == "") else str(xu)
             datos["es"] = str(es)
             datos["max_iter"] = str(max_iter)
+            datos["x_min"] = str(x_min)
+            datos["x_max"] = str(x_max)
 
             # 1) Si pidió calcular bisección, ejecutamos el método
             if accion == "biseccion":
@@ -137,16 +186,16 @@ def biseccion():
                 )
 
             # 2) Siempre que tengamos expr, generamos la gráfica con Matplotlib
-            #    usando el intervalo [xi, xu]
-            if xi == xu:
-                xi -= 5
-                xu += 5
+            #    usando el intervalo [x_min, x_max] (zoom independiente del intervalo [xi, xu])
+            if x_min == x_max:
+                x_min -= 5
+                x_max += 5
 
             num_puntos = 400
             xs = []
             ys = []
             for i in range(num_puntos + 1):
-                x = xi + (xu - xi) * i / num_puntos
+                x = x_min + (x_max - x_min) * i / num_puntos
                 try:
                     y = evaluar_funcion(expr, x)
                     if not math.isfinite(y):
