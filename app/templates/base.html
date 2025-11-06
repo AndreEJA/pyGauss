@@ -4,14 +4,26 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{ title or "PyGauss" }}</title>
+    
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('theme');
+          if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (_) {}
+      })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/styles.css') }}"
     />
   </head>
-  <body class="h-full bg-slate-100 text-slate-900">
-    <header
+  <body class="h-full bg-slate-100 text-slate-900"> <header
       class="w-full bg-white/90 backdrop-blur border-b border-slate-200 sticky top-0 z-20"
     >
       <div
@@ -34,7 +46,17 @@
           <a class="nav-link" href="{{ url_for('principal.unidad_calculo') }}">
             Cálculo
           </a>
-        </nav>        
+          
+          <button
+            id="theme-toggle-btn"
+            type="button"
+            class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-800"
+            aria-label="Toggle dark mode"
+          >
+            <svg id="theme-toggle-sun" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm0 13a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm8-5a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM3 10a1 1 0 01-1 1H1a1 1 0 110-2h1a1 1 0 011 1zM16 16a1 1 0 01-1.414 0l-1.06-1.06a1 1 0 011.413-1.415l1.06 1.06a1 1 0 010 1.415zM6.464 6.464a1 1 0 01-1.414 0L3.99 5.404a1 1 0 111.414-1.414l1.06 1.06a1 1 0 010 1.414zM16.06 5.404a1 1 0 01-1.414 1.414l-1.06-1.06a1 1 0 111.414-1.414l1.06 1.06zM5.404 16.06a1 1 0 01-1.414-1.414l1.06-1.06a1 1 0 111.414 1.414l-1.06 1.06zM10 7a3 3 0 100 6 3 3 0 000-6z"></path></svg>
+            <svg id="theme-toggle-moon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+          </button>
+          </nav>        
       </div>
     </header>
 
@@ -58,6 +80,9 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+    
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    
     {% block extra_js %}{% endblock %}
   </body>
 </html>

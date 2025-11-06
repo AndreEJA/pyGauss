@@ -1,4 +1,3 @@
-# app/metodos_numericos/routes.py
 from flask import Blueprint, render_template, request
 from .biseccion import metodo_biseccion, evaluar_funcion
 import re
@@ -7,7 +6,7 @@ import io
 import base64
 
 import matplotlib
-matplotlib.use("Agg")  # backend sin interfaz gráfica
+matplotlib.use("Agg")  
 import matplotlib.pyplot as plt
 
 metodos_bp = Blueprint(
@@ -16,7 +15,6 @@ metodos_bp = Blueprint(
     url_prefix="/metodos-numericos"
 )
 
-# ---- conversor "bonito" -> LaTeX (versión Python) ----
 def pretty_to_latex(pretty: str) -> str:
     if not pretty:
         return ""
@@ -67,13 +65,12 @@ def biseccion():
     raiz = None
     n_iter = None
     error_msg = None
-    grafica_png = None   # <- aquí guardamos la imagen en base64
-
-    # Función de ejemplo SOLO como respaldo interno
+    grafica_png = None   
+    
+    # Función por defecto si el usuario no ingresa nada
     expr_default = "x**4 - 5*x**3 + 0.5*x**2 - 11*x + 10"
     pretty_default = "x^4 - 5x^3 + 0.5x^2 - 11x + 10"
-
-    # Valores iniciales que se muestran en el formulario
+    
     datos = {
         "funcion_pretty": "",
         "funcion": "",
@@ -86,11 +83,10 @@ def biseccion():
 
     if request.method == "POST":
         try:
-            accion = request.form.get("accion", "biseccion")  # "graficar" o "biseccion"
+            accion = request.form.get("accion", "biseccion")  
 
-            # Lo que el usuario ve (bonito)
             func_pretty = request.form.get("funcion_pretty", "").strip()
-            # Lo que enviamos oculto con sintaxis Python
+
             expr = request.form.get("funcion", "").strip()
 
             if not expr:
@@ -98,14 +94,11 @@ def biseccion():
             if not func_pretty:
                 func_pretty = pretty_default
 
-            # Generar LaTeX en el servidor (a partir de func_pretty)
             func_latex = pretty_to_latex(func_pretty)
 
-            # Parámetros numéricos
             xi_str = request.form.get("xi", "").strip()
             xu_str = request.form.get("xu", "").strip()
 
-            # Para la bisección son obligatorios; para "graficar" podemos usar rango por defecto
             if xi_str == "" or xu_str == "":
                 # Si solo quiere graficar, le damos un rango por defecto
                 if accion == "graficar":
@@ -123,8 +116,8 @@ def biseccion():
 
             # Guardar lo que se volverá a pintar en el formulario / resultados
             datos["funcion_pretty"] = func_pretty
-            datos["funcion"] = expr          # versión Python
-            datos["funcion_latex"] = func_latex  # versión LaTeX bonita
+            datos["funcion"] = expr         
+            datos["funcion_latex"] = func_latex  
             datos["xi"] = "" if accion == "graficar" and (xi_str == "" or xu_str == "") else str(xi)
             datos["xu"] = "" if accion == "graficar" and (xi_str == "" or xu_str == "") else str(xu)
             datos["es"] = str(es)
@@ -211,8 +204,7 @@ def biseccion():
         error_msg=error_msg,
         grafica_png=grafica_png,
     )
-
-
+    
 @metodos_bp.route("/regla-falsa", methods=["GET", "POST"])
 def regla_falsa():
-    return render_template("regla_falsa.html")
+    return render_template("regla_falsa.html", title="Regla Falsa (En Desarrollo)")

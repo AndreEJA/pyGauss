@@ -1,103 +1,151 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %} {% block content %}
 
 <header
   class="text-center py-16 px-4 bg-white/50 backdrop-blur-sm rounded-3xl shadow-xl mb-10 border border-slate-200"
 >
-  <h1 class="text-5xl font-extrabold tracking-tighter text-slate-900 mb-4">
-    <span class="text-rose-600">Py</span>Gauss
+  <h1 class="text-6xl font-extrabold tracking-tighter text-slate-900 mb-4">
+    <span
+      class="text-rose-600 transition-colors duration-500 hover:text-slate-900"
+      >Py</span
+    ><span class="transition-colors duration-500 hover:text-rose-600"
+      >Gauss</span
+    >
   </h1>
-  <p class="text-xl text-slate-700 max-w-3xl mx-auto mb-6">
-    Tu herramienta web interactiva para dominar el Álgebra Lineal. Resuelve
-    sistemas de ecuaciones, opera matrices y comprueba la independencia lineal,
-    todo con pasos detallados.
+  <p class="text-xl text-slate-700 max-w-3xl mx-auto mb-8">
+    Tu herramienta web interactiva para dominar el Álgebra Lineal, Métodos
+    Numéricos y Cálculo, todo con pasos detallados.
   </p>
-  <p class="text-sm text-slate-500">
-    Unidad 1 ya está disponible. Las Unidades 2 y 3 están en desarrollo
-  </p>
+  <div class="flex justify-center gap-4 flex-wrap">
+    <a
+      href="{{ url_for('principal.unidad_algebra_lineal') }}"
+      class="btn-accent text-lg"
+    >
+      Unidad 1: Álgebra Lineal
+    </a>
+    <a
+      href="{{ url_for('principal.unidad_metodos_numericos') }}"
+      class="btn-accent text-lg"
+    >
+      Unidad 2: Métodos Numéricos
+    </a>
+    <a
+      href="{{ url_for('principal.unidad_calculo') }}"
+      class="btn-accent text-lg"
+    >
+      Unidad 3: Cálculo
+    </a>
+  </div>
 </header>
 
 <section class="mb-10">
   <h2
     class="text-3xl font-bold text-slate-800 mb-6 text-center border-b pb-2 border-slate-200"
   >
-    Unidades de la Calculadora
+    Funcionalidades Clave
+  </h2>
+  <div class="grid md:grid-cols-3 gap-6">
+    <div class="panel transition-all duration-300 hover:shadow-lg">
+      <div class="text-2xl font-bold text-rose-600 mb-2">Álgebra Lineal</div>
+      <p class="text-sm opacity-80">
+        Resuelve sistemas Ax=b (Gauss-Jordan), calcula determinantes, inversas y
+        comprueba la independencia lineal.
+      </p>
+    </div>
+    <div class="panel transition-all duration-300 hover:shadow-lg">
+      <div class="text-2xl font-bold text-rose-600 mb-2">Métodos Numéricos</div>
+      <p class="text-sm opacity-80">
+        Encuentra raíces de ecuaciones con métodos cerrados como Bisección y
+        Regla Falsa, con tablas de iteración.
+      </p>
+    </div>
+    <div class="panel transition-all duration-300 hover:shadow-lg">
+      <div class="text-2xl font-bold text-rose-600 mb-2">Cálculo</div>
+      <p class="text-sm opacity-80">
+        (Próximamente) Herramientas para derivadas, integrales, límites y series
+        con enfoque práctico.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2
+    class="text-3xl font-bold text-slate-800 mb-6 text-center border-b pb-2 border-slate-200"
+  >
+    Navegación Rápida
   </h2>
 
   <div class="grid md:grid-cols-3 gap-6">
-    <!-- UNIDAD 1 -->
     <a
       href="{{ url_for('principal.unidad_algebra_lineal') }}"
-      class="block bg-white border border-slate-200 rounded-3xl shadow-lg px-6 py-8
-             transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl"
+      class="card-big transition-transform duration-300 hover:scale-[1.03]"
+      style="
+        background: linear-gradient(135deg, #e11d48, #f43f5e);
+        color: white;
+      "
     >
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-2xl font-bold text-slate-900">
-          Unidad 1: Álgebra Lineal
-        </h3>
-        <span
-          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700"
-        >
-          Activa
-        </span>
+      <div>
+        <div class="flex items-start justify-between mb-2">
+          <h2 class="text-2xl font-bold">Álgebra Lineal</h2>
+          <span
+            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white"
+          >
+            Activa
+          </span>
+        </div>
+        <p class="mt-1 opacity-80 text-slate-100">
+          Sistemas de ecuaciones, operaciones con matrices, independencia lineal
+          y más.
+        </p>
       </div>
-      <p class="text-sm text-slate-600 mb-3">
-        Matrices y vectores: sistemas de ecuaciones, operaciones matriciales,
-        independencia lineal y juegos relacionados.
-      </p>
-      <p class="text-sm font-semibold text-rose-600">
-        Entrar a la Unidad 1 →
-      </p>
     </a>
 
-    <!-- UNIDAD 2 -->
     <a
       href="{{ url_for('principal.unidad_metodos_numericos') }}"
-      class="block bg-white border border-slate-200 rounded-3xl shadow-lg px-6 py-8
-             transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl"
+      class="card-big transition-transform duration-300 hover:scale-[1.03]"
+      style="
+        background: linear-gradient(135deg, #e11d48, #f43f5e);
+        color: white;
+      "
     >
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-2xl font-bold text-slate-900">
-          Unidad 2: Métodos Numéricos
-        </h3>
-        <span
-          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700"
-        >
-          En desarrollo
-        </span>
+      <div>
+        <div class="flex items-start justify-between mb-2">
+          <h2 class="text-2xl font-bold text-white">Métodos Numéricos</h2>
+          <span
+            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white"
+          >
+            En desarrollo
+          </span>
+        </div>
+        <p class="mt-1 opacity-80 text-slate-100">
+          Resuelve ecuaciones complejas con métodos de aproximación como
+          bisección y Newton-Raphson.
+        </p>
       </div>
-      <p class="text-sm text-slate-600 mb-3">
-        Métodos iterativos y de aproximación para resolver ecuaciones y
-        problemas de ingeniería: bisección, Newton-Raphson, interpolación, etc.
-      </p>
-      <p class="text-sm font-semibold text-rose-600">
-        Ver Unidad 2 (demo) →
-      </p>
     </a>
 
-    <!-- UNIDAD 3 -->
     <a
       href="{{ url_for('principal.unidad_calculo') }}"
-      class="block bg-white border border-slate-200 rounded-3xl shadow-lg px-6 py-8
-             transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl"
+      class="card-big transition-transform duration-300 hover:scale-[1.03]"
+      style="
+        background: linear-gradient(135deg, #e11d48, #f43f5e);
+        color: white;
+      "
     >
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-2xl font-bold text-slate-900">
-          Unidad 3: Cálculo
-        </h3>
-        <span
-          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700"
-        >
-          En desarrollo
-        </span>
+      <div>
+        <div class="flex items-start justify-between mb-2">
+          <h2 class="text-2xl font-bold text-white">Cálculo</h2>
+          <span
+            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white"
+          >
+            En desarrollo
+          </span>
+        </div>
+        <p class="mt-1 opacity-80 text-slate-100">
+          Herramientas para derivadas, integrales, límites y series con un
+          enfoque práctico.
+        </p>
       </div>
-      <p class="text-sm text-slate-600 mb-3">
-        Herramientas para derivadas, integrales, límites y series, todo con
-        enfoque práctico para ingeniería.
-      </p>
-      <p class="text-sm font-semibold text-rose-600">
-        Ver Unidad 3 (demo) →
-      </p>
     </a>
   </div>
 </section>

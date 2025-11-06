@@ -1,4 +1,3 @@
-# app/metodos_numericos/biseccion.py
 import math
 
 def evaluar_funcion(expr, x):
@@ -8,17 +7,20 @@ def evaluar_funcion(expr, x):
     """
     permitidos = {
         "x": x,
-        "y": x,              # por si usan y en vez de x
+        "y": x,              
         "sin": math.sin,
         "cos": math.cos,
         "tan": math.tan,
         "exp": math.exp,
-        "log": math.log,     # ln
+        "log": math.log,     
         "log10": math.log10,
         "sqrt": math.sqrt,
         "pi": math.pi,
         "e": math.e,
         "abs": abs,
+        "asin": math.asin,
+        "acos": math.acos,
+        "atan": math.atan,
     }
     return eval(expr, {"__builtins__": {}}, permitidos)
 
@@ -33,7 +35,6 @@ def metodo_biseccion(expr, a_inicial, b_inicial, es=0.0001, max_iter=50):
         n_iter: número de iteraciones realizadas
     """
     resultados = []
-    c_anterior = None
     raiz = None
 
     a = a_inicial
@@ -46,40 +47,30 @@ def metodo_biseccion(expr, a_inicial, b_inicial, es=0.0001, max_iter=50):
         c = (a + b) / 2.0
         fc = evaluar_funcion(expr, c)
 
-        # Error relativo aproximado
-        if c_anterior is None:
-            ea = 0.0
-        else:
-            ea = abs((c - c_anterior) / c)
+        ea = abs(fc)
 
         resultados.append({
             "iter": i,
             "a": a,
             "b": b,
             "c": c,
-            "ea": ea,
+            "ea": ea,   #sirve para guardar el abs(fc)
             "fa": fa,
             "fb": fb,
             "fc": fc,
         })
 
-        # Si encontramos raíz exacta
-        if fc == 0.0:
+        # Si encontramos raíz exacta (fc == 0) o el error es menor a la tolerancia
+        if ea < es:
             raiz = c
             break
 
-        # Elegir nuevo intervalo
+        # Elegir nuevo intervalo 
         if fa * fc < 0:
             b = c
         else:
             a = c
 
-        # Criterio de paro por error
-        if i > 1 and ea < es:
-            raiz = c
-            break
-
-        c_anterior = c
         raiz = c  # por si salimos por max_iter
 
     n_iter = len(resultados)
