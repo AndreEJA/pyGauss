@@ -65,12 +65,13 @@ def biseccion():
     raiz = None
     n_iter = None
     error_msg = None
-    grafica_png = None   
-    
-    # Función por defecto si el usuario no ingresa nada
+    grafica_png = None   #aca se guardara la imgen
+
+    # Función de ejemplo SOLO como respaldo interno
     expr_default = "x**4 - 5*x**3 + 0.5*x**2 - 11*x + 10"
     pretty_default = "x^4 - 5x^3 + 0.5x^2 - 11x + 10"
-    
+
+    # Valores iniciales que se muestran en el formulario
     datos = {
         "funcion_pretty": "",
         "funcion": "",
@@ -83,10 +84,10 @@ def biseccion():
 
     if request.method == "POST":
         try:
-            accion = request.form.get("accion", "biseccion")  
+            accion = request.form.get("accion", "biseccion") 
 
             func_pretty = request.form.get("funcion_pretty", "").strip()
-
+            # Lo que enviamos oculto con sintaxis Python
             expr = request.form.get("funcion", "").strip()
 
             if not expr:
@@ -94,11 +95,14 @@ def biseccion():
             if not func_pretty:
                 func_pretty = pretty_default
 
+            # Generar LaTeX en el servidor (a partir de func_pretty)
             func_latex = pretty_to_latex(func_pretty)
 
+            # Parámetros numéricos
             xi_str = request.form.get("xi", "").strip()
             xu_str = request.form.get("xu", "").strip()
 
+            # Para la bisección son obligatorios; para "graficar" podemos usar rango por defecto
             if xi_str == "" or xu_str == "":
                 # Si solo quiere graficar, le damos un rango por defecto
                 if accion == "graficar":
@@ -116,8 +120,8 @@ def biseccion():
 
             # Guardar lo que se volverá a pintar en el formulario / resultados
             datos["funcion_pretty"] = func_pretty
-            datos["funcion"] = expr         
-            datos["funcion_latex"] = func_latex  
+            datos["funcion"] = expr          # versión Python
+            datos["funcion_latex"] = func_latex  # versión LaTeX bonita
             datos["xi"] = "" if accion == "graficar" and (xi_str == "" or xu_str == "") else str(xi)
             datos["xu"] = "" if accion == "graficar" and (xi_str == "" or xu_str == "") else str(xu)
             datos["es"] = str(es)
@@ -125,6 +129,12 @@ def biseccion():
 
             # 1) Si pidió calcular bisección, ejecutamos el método
             if accion == "biseccion":
+                # Validar que f(a) y f(b) tengan signos opuestos
+                fa = evaluar_funcion(expr, xi)
+                fb = evaluar_funcion(expr, xu)
+                if fa * fb >= 0:
+                    raise ValueError("La función no tiene signos opuestos en f(a) y f(b). El método no puede continuar.")
+
                 resultados, raiz, n_iter = metodo_biseccion(
                     expr, xi, xu, es, max_iter
                 )
@@ -204,7 +214,8 @@ def biseccion():
         error_msg=error_msg,
         grafica_png=grafica_png,
     )
-    
+
+
 @metodos_bp.route("/regla-falsa", methods=["GET", "POST"])
 def regla_falsa():
     return render_template("regla_falsa.html", title="Regla Falsa (En Desarrollo)")
