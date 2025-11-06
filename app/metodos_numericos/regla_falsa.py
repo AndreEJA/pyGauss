@@ -25,7 +25,7 @@ def evaluar_funcion(expr, x):
     return eval(expr, {"__builtins__": {}}, permitidos)
 
 
-def metodo_biseccion(expr, a_inicial, b_inicial, es=0.0001, max_iter=50):
+def metodo_regla_falsa(expr, a_inicial, b_inicial, es=0.0001, max_iter=200):
     """
     Método de la bisección.
 
@@ -44,7 +44,7 @@ def metodo_biseccion(expr, a_inicial, b_inicial, es=0.0001, max_iter=50):
         fa = evaluar_funcion(expr, a)
         fb = evaluar_funcion(expr, b)
 
-        c = (a + b) / 2.0
+        c = (b) - ((fb*(b-a))/(fb-fa))
         fc = evaluar_funcion(expr, c)
 
         ea = abs(fc)
