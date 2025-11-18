@@ -1,4 +1,5 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} 
+{% block content %}
 
 <header
   class="text-center py-16 px-4 bg-white/50 backdrop-blur-sm rounded-3xl shadow-xl mb-10 border border-slate-200"
@@ -15,7 +16,7 @@
     Herramientas para encontrar raíces de ecuaciones y aproximar soluciones que
     no pueden resolverse analíticamente con pasos detallados.
   </p>
-  <div class="flex justify-center gap-4">
+  <div class="flex justify-center gap-4 flex-wrap">
     <a
       href="{{ url_for('metodos_numericos.biseccion') }}"
       class="btn-accent text-lg"
@@ -28,12 +29,19 @@
     >
       Regla Falsa
     </a>
+    <!--Nuevo botón para Newton-Raphson -->
+    <a
+      href="{{ url_for('metodos_numericos.newton_raphson') }}"
+      class="btn-accent text-lg"
+    >
+      Newton-Raphson
+    </a>
   </div>
 </header>
 
 <section class="mb-10">
   <h2
-    class="text-3xl font-bold text-slate-800 mb-6 text-center border-b pb-2 border-slate-200"
+    class="text-3cxl font-bold text-slate-800 mb-6 text-center border-b pb-2 border-slate-200"
   >
     Funcionalidades Clave
   </h2>
@@ -57,13 +65,15 @@
   </div>
 </section>
 
-<section class="grid md:grid-cols-2 gap-6">
+<!-- SECCIÓN DE NAVEGACIÓN RÁPIDA AJUSTADA A 3 COLUMNAS -->
+<section class="grid md:grid-cols-3 gap-6">
   <h2
-    class="md:col-span-3 text-3xl font-bold text-slate-800 mb-2 mt-4 text-center border-b pb-2 border-slate-200"
+    class="md:col-span-3 text-3xl font-bold text-slate-800 mt-4 mb-4 text-center border-b pb-2 border-slate-200"
   >
     Navegación Rápida
   </h2>
 
+  <!-- Tarjeta Bisección -->
   <a
     href="{{ url_for('metodos_numericos.biseccion') }}"
     class="card-big transition-transform duration-300 hover:scale-[1.03]"
@@ -72,25 +82,39 @@
     <div>
       <h2 class="text-2xl font-bold">Método de Bisección</h2>
       <p class="mt-1 opacity-80 text-slate-100">
-        El método más simple y seguro. Divide el intervalo a la mitad en cada
-        paso.
+        El método más simple y seguro. Divide el intervalo a la mitad en cada paso.
       </p>
     </div>
   </a>
 
+  <!-- Tarjeta Regla Falsa -->
   <a
     href="{{ url_for('metodos_numericos.regla_falsa') }}"
     class="card-big transition-transform duration-300 hover:scale-[1.03]"
     style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
   >
     <div>
-      <h2 class="text-2xl font-bold text-white">Método de Regla Falsa</h2>
-      <p class="mt-1 opacity-80 text-slate-300">
-        Una versión mejorada que usa una línea secante para acelerar la
-        convergencia.
+      <h2 class="text-2xl font-bold">Método de Regla Falsa</h2>
+      <p class="mt-1 opacity-80 text-slate-100">
+        Una versión mejorada que usa una línea secante para acelerar la convergencia.
       </p>
     </div>
   </a>
 
+  <!-- Tarjeta Newton-Raphson -->
+  <a
+    href="{{ url_for('metodos_numericos.newton_raphson') }}"
+    class="card-big transition-transform duration-300 hover:scale-[1.03]"
+    style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
+  >
+    <div>
+      <h2 class="text-2xl font-bold">Método de Newton-Raphson</h2>
+      <p class="mt-1 opacity-80 text-slate-100">
+        Método abierto que usa la derivada para converger rápidamente a la raíz
+        a partir de un valor inicial x₀.
+      </p>
+    </div>
+  </a>
 </section>
+
 {% endblock %}

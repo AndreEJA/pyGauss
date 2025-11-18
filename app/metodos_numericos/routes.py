@@ -1,6 +1,9 @@
 from flask import Blueprint, render_template, request
 from .biseccion import metodo_biseccion, evaluar_funcion
 from .regla_falsa import metodo_regla_falsa
+from .newton_raphson import metodo_newton_raphson 
+from sympy import symbols, sympify, diff, latex
+
 import re
 import math
 import io
@@ -372,3 +375,80 @@ def regla_falsa():
         error_msg=error_msg,
         grafica_png=grafica_png,
     )
+    
+@metodos_bp.route("/newton-raphson", methods=["GET", "POST"])
+def newton_raphson():
+    from sympy import symbols, sympify, diff, latex
+
+    resultados = None
+    raiz = None
+    n_iter = None
+    error_msg = None
+    derivada_latex = None
+
+    # valores iniciales del formulario (vacíos)
+    datos = {
+        "funcion_pretty": "",
+        "funcion": "",
+        "funcion_latex": "",
+        "x0": "",
+        "es": "0.0001",
+        "max_iter": "50",
+    }
+
+    if request.method == "POST":
+        try:
+            func_pretty = request.form.get("funcion_pretty", "").strip()
+            expr = request.form.get("funcion", "").strip()
+
+            # si no hay función, NO ponemos ejemplo, mostramos error
+            if not func_pretty or not expr:
+                raise ValueError("Debes ingresar la función f(x).")
+
+            # LaTeX bonito desde lo que ve el usuario
+            func_latex = pretty_to_latex(func_pretty)
+
+            # Derivada simbólica
+            x = symbols("x")
+            f_sym = sympify(expr)
+            fprime_sym = diff(f_sym, x)
+            derivada_latex = latex(fprime_sym)
+
+            # Parámetros numéricos
+            x0_str = request.form.get("x0", "").strip()
+            if x0_str == "":
+                raise ValueError("Debes ingresar un valor inicial x₀.")
+            x0 = float(x0_str)
+
+            es = float(request.form.get("es", "0.0001"))
+            max_iter = int(request.form.get("max_iter", "50"))
+
+            # Ejecutar método
+            resultado = metodo_newton_raphson(expr, x0, es, max_iter)
+            resultados = resultado["tabla"]
+            raiz = resultado["raiz"]
+            n_iter = resultado["n_iter"]
+
+            # Lo que se vuelve a pintar en el form
+            datos["funcion_pretty"] = func_pretty
+            datos["funcion"] = expr
+            datos["funcion_latex"] = func_latex
+            datos["x0"] = x0_str
+            datos["es"] = str(es)
+            datos["max_iter"] = str(max_iter)
+
+        except Exception as e:
+            error_msg = f"No se pudo aplicar el método: {e}"
+
+    return render_template(
+        "newton_raphson.html",
+        datos=datos,
+        resultados=resultados,
+        raiz=raiz,
+        n_iter=n_iter,
+        error_msg=error_msg,
+        derivada_latex=derivada_latex,
+    )
+
+
+
