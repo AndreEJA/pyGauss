@@ -278,15 +278,28 @@
     <div class="overflow-x-auto rounded-xl border border-slate-200">
       <table class="min-w-full text-sm text-left">
         <thead class="bg-slate-50">
-          <tr>
-            <th class="px-3 py-2 font-semibold text-slate-700">Iteración</th>
-            <th class="px-3 py-2 font-semibold text-slate-700">x_i</th>
-            <th class="px-3 py-2 font-semibold text-slate-700">f(x_i)</th>
-            <th class="px-3 py-2 font-semibold text-slate-700">f'(x_i)</th>
-            <th class="px-3 py-2 font-semibold text-slate-700">x_{i+1}</th>
-            <th class="px-3 py-2 font-semibold text-slate-700">e_a</th>
+          <tr class="border-b border-slate-200">
+            <th class="px-4 py-3 text-center text-[13px] font-semibold text-slate-700 tracking-wide">
+              Iteración
+            </th>
+            <th class="px-4 py-3 text-center text-[13px] font-semibold text-slate-700 tracking-wide">
+              \( x_i \)
+            </th>
+            <th class="px-4 py-3 text-center text-[13px] font-semibold text-slate-700 tracking-wide">
+              \( f(x_i) \)
+            </th>
+            <th class="px-4 py-3 text-center text-[13px] font-semibold text-slate-700 tracking-wide">
+              \( f'(x_i) \)
+            </th>
+            <th class="px-4 py-3 text-center text-[13px] font-semibold text-slate-700 tracking-wide">
+              \( x_{i+1} \)
+            </th>
+            <th class="px-4 py-3 text-center text-[13px] font-semibold text-slate-700 tracking-wide">
+              \( e_a \)
+            </th>
           </tr>
         </thead>
+        
         <tbody class="bg-white">
           {% for fila in resultados %}
           <tr class="border-t border-slate-100">
