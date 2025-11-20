@@ -39,82 +39,159 @@
   </div>
 </header>
 
+<!-- DEFINICIÓN GENERAL -->
 <section class="mb-10">
   <h2
-    class="text-3cxl font-bold text-slate-800 mb-6 text-center border-b pb-2 border-slate-200"
+    class="text-3xl font-bold text-slate-800 mb-4 text-center border-b pb-2 border-slate-200"
   >
-    Funcionalidades Clave
+    Raíces de ecuaciones
   </h2>
-  <div class="grid md:grid-cols-2 gap-6">
-    <div class="panel transition-all duration-300 hover:shadow-lg">
-      <div class="text-2xl font-bold text-rose-600 mb-2">Métodos Cerrados</div>
-      <p class="text-sm opacity-80">
-        Garantizan la convergencia si se inicia con un intervalo [a, b] que
-        contiene la raíz, como Bisección y Regla Falsa.
-      </p>
-    </div>
-    <div class="panel transition-all duration-300 hover:shadow-lg">
-      <div class="text-2xl font-bold text-rose-600 mb-2">
-        Gráficas Interactivas
-      </div>
-      <p class="text-sm opacity-80">
-        Visualiza la función f(x) para ayudarte a elegir los intervalos
-        iniciales [a, b] o el punto de inicio x₀.
-      </p>
-    </div>
-  </div>
+  <p class="text-lg text-slate-700 max-w-3xl mx-auto text-center">
+    Es el valor de una variable o de un parámetro que satisface una ecuación.
+  </p>
 </section>
 
-<!-- SECCIÓN DE NAVEGACIÓN RÁPIDA AJUSTADA A 3 COLUMNAS -->
-<section class="grid md:grid-cols-3 gap-6">
-  <h2
-    class="md:col-span-3 text-3xl font-bold text-slate-800 mt-4 mb-4 text-center border-b pb-2 border-slate-200"
-  >
-    Navegación Rápida
-  </h2>
+<!-- CATEGORÍAS: CERRADOS, ABIERTOS, POLINOMIOS -->
+<section class="space-y-10">
 
-  <!-- Tarjeta Bisección -->
-  <a
-    href="{{ url_for('metodos_numericos.biseccion') }}"
-    class="card-big transition-transform duration-300 hover:scale-[1.03]"
-    style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
-  >
-    <div>
-      <h2 class="text-2xl font-bold">Método de Bisección</h2>
-      <p class="mt-1 opacity-80 text-slate-100">
-        El método más simple y seguro. Divide el intervalo a la mitad en cada paso.
-      </p>
+  <!-- 1. MÉTODOS CERRADOS -->
+  <section>
+    <div class="flex items-center gap-3 mb-4">
+      <span
+        class="inline-flex h-9 w-9 items-center justify-center rounded-full
+               bg-rose-500 text-white text-sm font-semibold shadow-md"
+      >
+        1
+      </span>
+      <div>
+        <h3 class="text-2xl font-bold text-slate-800">
+          Métodos cerrados
+        </h3>
+        <p class="text-sm text-slate-500">
+          Requieren un intervalo inicial <span class="font-semibold">[a,b]</span> donde
+          la función cambia de signo para garantizar convergencia.
+        </p>
+      </div>
     </div>
-  </a>
 
-  <!-- Tarjeta Regla Falsa -->
-  <a
-    href="{{ url_for('metodos_numericos.regla_falsa') }}"
-    class="card-big transition-transform duration-300 hover:scale-[1.03]"
-    style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
-  >
-    <div>
-      <h2 class="text-2xl font-bold">Método de Regla Falsa</h2>
-      <p class="mt-1 opacity-80 text-slate-100">
-        Una versión mejorada que usa una línea secante para acelerar la convergencia.
-      </p>
-    </div>
-  </a>
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- Bisección -->
+      <a
+        href="{{ url_for('metodos_numericos.biseccion') }}"
+        class="card-big transition-transform duration-300 hover:scale-[1.03]"
+        style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
+      >
+        <div>
+          <h4 class="text-2xl font-bold">Método de Bisección</h4>
+          <p class="mt-1 opacity-80 text-slate-100">
+            El método más simple y seguro. Divide el intervalo a la mitad en cada paso.
+          </p>
+        </div>
+      </a>
 
-  <!-- Tarjeta Newton-Raphson -->
-  <a
-    href="{{ url_for('metodos_numericos.newton_raphson') }}"
-    class="card-big transition-transform duration-300 hover:scale-[1.03]"
-    style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
-  >
-    <div>
-      <h2 class="text-2xl font-bold">Método de Newton-Raphson</h2>
-      <p class="mt-1 opacity-80 text-slate-100">
-        Método abierto que usa la derivada para converger rápidamente a la raíz
-        a partir de un valor inicial x₀.
-      </p>
+      <!-- Regla Falsa -->
+      <a
+        href="{{ url_for('metodos_numericos.regla_falsa') }}"
+        class="card-big transition-transform duration-300 hover:scale-[1.03]"
+        style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
+      >
+        <div>
+          <h4 class="text-2xl font-bold">Método de Regla Falsa</h4>
+          <p class="mt-1 opacity-80 text-slate-100">
+            Usa una línea secante en el intervalo para mejorar la convergencia.
+          </p>
+        </div>
+      </a>
     </div>
-  </a>
+  </section>
+
+  <!-- 2. MÉTODOS ABIERTOS -->
+  <section>
+    <div class="flex items-center gap-3 mb-4">
+      <span
+        class="inline-flex h-9 w-9 items-center justify-center rounded-full
+               bg-rose-500 text-white text-sm font-semibold shadow-md"
+      >
+        2
+      </span>
+      <div>
+        <h3 class="text-2xl font-bold text-slate-800">
+          Métodos abiertos
+        </h3>
+        <p class="text-sm text-slate-500">
+          No requieren un intervalo, sino uno o dos valores iniciales que se van actualizando.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- Newton-Raphson -->
+      <a
+        href="{{ url_for('metodos_numericos.newton_raphson') }}"
+        class="card-big transition-transform duration-300 hover:scale-[1.03]"
+        style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
+      >
+        <div>
+          <h4 class="text-2xl font-bold">Método de Newton-Raphson</h4>
+          <p class="mt-1 opacity-80 text-slate-100">
+            Método abierto que usa la derivada para converger rápidamente a la raíz
+            a partir de un valor inicial x₀.
+          </p>
+        </div>
+      </a>
+
+      <!-- Secante (ruta pendiente) -->
+      <a
+        href="{{url_for('metodos_numericos.secante')}}"
+        class="card-big transition-transform duration-300 hover:scale-[1.03]"
+        style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
+      >
+        <div>
+          <h4 class="text-2xl font-bold">Método de la Secante</h4>
+          <p class="mt-1 opacity-80 text-slate-100">
+            Aproxima la derivada con una secante construida a partir de dos valores iniciales.
+          </p>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- 3. RAÍCES DE POLINOMIOS -->
+  <section>
+    <div class="flex items-center gap-3 mb-4">
+      <span
+        class="inline-flex h-9 w-9 items-center justify-center rounded-full
+               bg-rose-500 text-white text-sm font-semibold shadow-md"
+      >
+        3
+      </span>
+      <div>
+        <h3 class="text-2xl font-bold text-slate-800">
+          Raíces de polinomios
+        </h3>
+        <p class="text-sm text-slate-500">
+          Métodos especializados para polinomios de grado mayor o igual que dos.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:max-w-2xl gap-6">
+      <!-- Lin Bairstow (ruta pendiente) -->
+      <a
+        href="#"
+        class="card-big transition-transform duration-300 hover:scale-[1.03]"
+        style="background: linear-gradient(135deg, #e11d48, #f43f5e); color: white"
+      >
+        <div>
+          <h4 class="text-2xl font-bold">Método de Lin Bairstow</h4>
+          <p class="mt-1 opacity-80 text-slate-100">
+            Técnica iterativa para encontrar pares de raíces reales o complejas en polinomios.
+          </p>
+        </div>
+      </a>
+    </div>
+  </section>
+
 </section>
 
 {% endblock %}

@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request
 from .biseccion import metodo_biseccion, evaluar_funcion
 from .regla_falsa import metodo_regla_falsa
 from .newton_raphson import metodo_newton_raphson 
+from .secante import metodo_secante 
 from sympy import symbols, sympify, diff, latex
 
 import re
@@ -451,4 +452,57 @@ def newton_raphson():
     )
 
 
+@metodos_bp.route("/secante", methods=["GET", "POST"])
+def secante():
+    resultados = None
+    raiz = None
+    n_iter = None
+    error_msg = None
+
+    datos = {
+        "funcion": "",
+        "x0": "",
+        "x1": "",
+        "es": "0.0001",
+        "max_iter": "50",
+    }
+
+    if request.method == "POST":
+        try:
+            # según tu formulario y el JS de traducción
+            expr = request.form.get("funcion_real") or request.form.get("funcion", "")
+
+            x0 = float(request.form.get("x0", "0"))
+            x1 = float(request.form.get("x1", "0"))
+            es = float(request.form.get("es", "0.0001"))
+            max_iter = int(request.form.get("max_iter", "50"))
+
+            datos.update({
+                "funcion": request.form.get("funcion", ""),  # lo que ve el usuario (pretty)
+                "x0": x0,
+                "x1": x1,
+                "es": es,
+                "max_iter": max_iter,
+            })
+
+            # 👈 aquí va el orden CORRECTO
+            resultados, raiz, n_iter, error_msg = metodo_secante(
+                expr,      # expr_str
+                x0,        # x0
+                x1,        # x1
+                es,        # es
+                max_iter,  # max_iter
+            )
+
+        except ValueError:
+            error_msg = "El valor inicial y/o el segundo valor no pueden estar vacíos"
+
+    return render_template(
+        "secante.html",
+        datos=datos,
+        resultados=resultados,
+        raiz=raiz,
+        n_iter=n_iter,
+        error_msg=error_msg,
+    )
 
