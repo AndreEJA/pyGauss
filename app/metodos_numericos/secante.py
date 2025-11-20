@@ -63,7 +63,6 @@ def metodo_secante(expr_str, x0, x1, es=0.0001, max_iter=50):
                 "Prueba con otros valores iniciales."
             )
 
-        # Fórmula EXACTA de tu diapositiva
         x2 = x1 - (f_x1 * (x0 - x1)) / denom
         x2 = float(x2)
 
