@@ -30,6 +30,7 @@ def pretty_to_latex(pretty: str) -> str:
     tex = re.sub(r'\btg\(',  r'\\tan(', tex, flags=re.I)
     tex = re.sub(r'\btan\(', r'\\tan(', tex, flags=re.I)
     tex = re.sub(r'\bcos\(', r'\\cos(', tex, flags=re.I)
+    
 
     # logs
     tex = re.sub(r'\bln\(', r'\\ln(', tex, flags=re.I)
@@ -459,8 +460,11 @@ def secante():
     n_iter = None
     error_msg = None
 
+    # valores por defecto que usamos en el HTML
     datos = {
+        "funcion_pretty": "",
         "funcion": "",
+        "funcion_latex": "",
         "x0": "",
         "x1": "",
         "es": "0.0001",
@@ -469,8 +473,14 @@ def secante():
 
     if request.method == "POST":
         try:
-            # según tu formulario y el JS de traducción
-            expr = request.form.get("funcion_real") or request.form.get("funcion", "")
+            # 1) Lo que el usuario ESCRIBE (bonito)
+            funcion_pretty = request.form.get("funcion_pretty", "")
+
+            # 2) Versión "real" en sintaxis Python (la llena tu JS en el input hidden name="funcion")
+            expr = request.form.get("funcion", "")
+
+            # 3) (opcional) LaTeX, por si lo usas en algún lado
+            funcion_latex = request.form.get("funcion_latex", "")
 
             x0 = float(request.form.get("x0", "0"))
             x1 = float(request.form.get("x1", "0"))
@@ -478,14 +488,16 @@ def secante():
             max_iter = int(request.form.get("max_iter", "50"))
 
             datos.update({
-                "funcion": request.form.get("funcion", ""),  # lo que ve el usuario (pretty)
+                "funcion_pretty": funcion_pretty,  # lo que se ve en el input
+                "funcion": expr,                   # versión Python
+                "funcion_latex": funcion_latex,
                 "x0": x0,
                 "x1": x1,
                 "es": es,
                 "max_iter": max_iter,
             })
 
-            # 👈 aquí va el orden CORRECTO
+            # Llamada correcta a tu método de la secante
             resultados, raiz, n_iter, error_msg = metodo_secante(
                 expr,      # expr_str
                 x0,        # x0
