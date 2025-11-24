@@ -71,7 +71,7 @@ def biseccion():
     raiz = None
     n_iter = None
     error_msg = None
-    grafica_png = None   #aca se guardara la imgen
+    grafica_png = None   # acá se guardará la imagen
 
     # Función de ejemplo SOLO como respaldo interno
     expr_default = "x**4 - 5*x**3 + 0.5*x**2 - 11*x + 10"
@@ -79,6 +79,7 @@ def biseccion():
 
     # Valores iniciales que se muestran en el formulario
     datos = {
+        "funcion_prety": "",
         "funcion_pretty": "",
         "funcion": "",
         "funcion_latex": "",
@@ -90,72 +91,130 @@ def biseccion():
 
     if request.method == "POST":
         try:
-            accion = request.form.get("accion", "biseccion") 
+            accion = request.form.get("accion", "biseccion")  # "graficar" o "biseccion"
 
             func_pretty = request.form.get("funcion_pretty", "").strip()
-            # Lo que enviamos oculto con sintaxis Python
             expr = request.form.get("funcion", "").strip()
 
             if not expr:
                 expr = expr_default
             if not func_pretty:
-                func_pretty = pretty_default
+                func_prety = pretty_default
 
             # Generar LaTeX en el servidor (a partir de func_pretty)
             func_latex = pretty_to_latex(func_pretty)
 
-            # Parámetros numéricos
+            # Parámetros como texto
             xi_str = request.form.get("xi", "").strip()
             xu_str = request.form.get("xu", "").strip()
+            es_str = request.form.get("es", "0.0001").strip()
+            max_iter_str = request.form.get("max_iter", "50").strip()
 
-            # Para la bisección son obligatorios; para "graficar" podemos usar rango por defecto
-            if xi_str == "" or xu_str == "":
-                # Si solo quiere graficar, le damos un rango por defecto
-                if accion == "graficar":
-                    xi = -10.0
-                    xu = 10.0
-                else:
-                    xi = float(xi_str or "0.0")
-                    xu = float(xu_str or "0.0")
-            else:
+            if es_str == "":
+                es_str = "0.0001"
+            if max_iter_str == "":
+                max_iter_str = "50"
+
+            # Guardamos lo que escribió el usuario
+            datos["funcion_pretty"] = func_pretty
+            datos["funcion"] = expr
+            datos["funcion_latex"] = func_latex
+            datos["xi"] = xi_str
+            datos["xu"] = xu_str
+            datos["es"] = es_str
+            datos["max_iter"] = max_iter_str
+
+            # ============================
+            # 1) CÁLCULO POR BISECCIÓN
+            # ============================
+            if accion == "biseccion":
+                # --- validar que haya extremos ---
+                if xi_str == "" or xu_str == "":
+                    datos["xi"] = ""
+                    datos["xu"] = ""
+                    error_msg = (
+                        "Debes ingresar un intervalo [a, b] para aplicar el método "
+                        "de bisección. La raíz no se puede determinar sin un intervalo."
+                    )
+                    return render_template(
+                        "biseccion.html",
+                        datos=datos,
+                        resultados=None,
+                        raiz=None,
+                        n_iter=None,
+                        error_msg=error_msg,
+                        grafica_png=grafica_png,
+                    )
+
                 xi = float(xi_str)
                 xu = float(xu_str)
+                es = float(es_str)
+                max_iter = int(max_iter_str)
 
-            es = float(request.form.get("es", "0.0001"))
-            max_iter = int(request.form.get("max_iter", "50"))
+                # --- validar a < b ---
+                if xi >= xu:
+                    datos["xi"] = ""
+                    datos["xu"] = ""
+                    error_msg = (
+                        "El intervalo no es válido. Debe cumplirse a < b "
+                        "para poder buscar la raíz con el método de bisección."
+                    )
+                    return render_template(
+                        "biseccion.html",
+                        datos=datos,
+                        resultados=None,
+                        raiz=None,
+                        n_iter=None,
+                        error_msg=error_msg,
+                        grafica_png=grafica_png,
+                    )
 
-            # Guardar lo que se volverá a pintar en el formulario / resultados
-            datos["funcion_pretty"] = func_pretty
-            datos["funcion"] = expr          # versión Python
-            datos["funcion_latex"] = func_latex  # versión LaTeX bonita
-            datos["xi"] = "" if accion == "graficar" and (xi_str == "" or xu_str == "") else str(xi)
-            datos["xu"] = "" if accion == "graficar" and (xi_str == "" or xu_str == "") else str(xu)
-            datos["es"] = str(es)
-            datos["max_iter"] = str(max_iter)
-
-            # 1) Si pidió calcular bisección, ejecutamos el método
-            if accion == "biseccion":
-                # Validar que f(a) y f(b) tengan signos opuestos
+                # --- validar cambio de signo ---
                 fa = evaluar_funcion(expr, xi)
                 fb = evaluar_funcion(expr, xu)
                 if fa * fb >= 0:
-                    raise ValueError("La función no tiene signos opuestos en f(a) y f(b). El método no puede continuar.")
+                    datos["xi"] = ""
+                    datos["xu"] = ""
+                    error_msg = (
+                        "La raíz no se encuentra dentro del intervalo seleccionado. "
+                        "El método de bisección requiere que f(a) y f(b) tengan signos opuestos."
+                    )
+                    return render_template(
+                        "biseccion.html",
+                        datos=datos,
+                        resultados=None,
+                        raiz=None,
+                        n_iter=None,
+                        error_msg=error_msg,
+                        grafica_png=grafica_png,
+                    )
 
+                # Si todo es válido, ejecutar método de Bisección
                 resultados, raiz, n_iter = metodo_biseccion(
                     expr, xi, xu, es, max_iter
                 )
 
-            # 2) Siempre que tengamos expr, generamos la gráfica con Matplotlib
-            #    usando el intervalo [xi, xu]
-            if xi == xu:
-                xi -= 5
-                xu += 5
+            # ============================
+            # 2) GRÁFICA (siempre que haya expr)
+            # ============================
+            # Para graficar usamos el intervalo que haya escrito el usuario
+            # o un rango por defecto si está vacío.
+            if xi_str == "" or xu_str == "":
+                gx_i = -10.0
+                gx_u = 10.0
+            else:
+                gx_i = float(xi_str)
+                gx_u = float(xu_str)
+
+            if gx_i == gx_u:
+                gx_i -= 5
+                gx_u += 5
 
             num_puntos = 400
             xs = []
             ys = []
             for i in range(num_puntos + 1):
-                x = xi + (xu - xi) * i / num_puntos
+                x = gx_i + (gx_u - gx_i) * i / num_puntos
                 try:
                     y = evaluar_funcion(expr, x)
                     if not math.isfinite(y):
@@ -168,9 +227,9 @@ def biseccion():
             # Detectar puntos aproximados donde la función corta el eje X
             roots_x = []
             for i in range(1, len(xs)):
-                y1 = ys[i-1]
+                y1 = ys[i - 1]
                 y2 = ys[i]
-                x1 = xs[i-1]
+                x1 = xs[i - 1]
                 x2 = xs[i]
 
                 if not (math.isfinite(y1) and math.isfinite(y2)):
@@ -198,7 +257,6 @@ def biseccion():
             ax.set_xlabel("x")
             ax.set_ylabel("f(x)")
             ax.set_title("Gráfica de f(x)")
-
             ax.grid(True, linestyle=":", linewidth=0.5)
 
             buf = io.BytesIO()
@@ -220,6 +278,7 @@ def biseccion():
         error_msg=error_msg,
         grafica_png=grafica_png,
     )
+
 
 
 @metodos_bp.route("/regla-falsa", methods=["GET", "POST"])
@@ -247,10 +306,9 @@ def regla_falsa():
 
     if request.method == "POST":
         try:
-            accion = request.form.get("accion", "regla_falsa") 
+            accion = request.form.get("accion", "regla_falsa")  # "graficar" o "regla_falsa"
 
             func_pretty = request.form.get("funcion_pretty", "").strip()
-            # Lo que enviamos oculto con sintaxis Python
             expr = request.form.get("funcion", "").strip()
 
             if not expr:
@@ -261,58 +319,110 @@ def regla_falsa():
             # Generar LaTeX en el servidor (a partir de func_pretty)
             func_latex = pretty_to_latex(func_pretty)
 
-            # Parámetros numéricos
+            # Parámetros como texto
             xi_str = request.form.get("xi", "").strip()
             xu_str = request.form.get("xu", "").strip()
+            es_str = request.form.get("es", "0.0001").strip()
+            max_iter_str = request.form.get("max_iter", "50").strip()
 
-            # Para la bisección son obligatorios; para "graficar" podemos usar rango por defecto
-            if xi_str == "" or xu_str == "":
-                # Si solo quiere graficar, le damos un rango por defecto
-                if accion == "graficar":
-                    xi = -10.0
-                    xu = 10.0
-                else:
-                    xi = float(xi_str or "0.0")
-                    xu = float(xu_str or "0.0")
-            else:
+            if es_str == "":
+                es_str = "0.0001"
+            if max_iter_str == "":
+                max_iter_str = "50"
+
+            # Guardamos lo que escribió el usuario
+            datos["funcion_pretty"] = func_pretty
+            datos["funcion"] = expr
+            datos["funcion_latex"] = func_latex
+            datos["xi"] = xi_str
+            datos["xu"] = xu_str
+            datos["es"] = es_str
+            datos["max_iter"] = max_iter_str
+
+            # ============================
+            # 1) CÁLCULO POR REGLA FALSA
+            # ============================
+            if accion == "regla_falsa":
+                # --- validar que haya extremos ---
+                if xi_str == "" or xu_str == "":
+                    datos["xi"] = ""
+                    datos["xu"] = ""
+                    error_msg = "Debes ingresar un intervalo [a, b] válido para aplicar la Regla Falsa."
+                    return render_template(
+                        "regla_falsa.html",
+                        datos=datos,
+                        resultados=None,
+                        raiz=None,
+                        n_iter=None,
+                        error_msg=error_msg,
+                        grafica_png=grafica_png,
+                    )
+
                 xi = float(xi_str)
                 xu = float(xu_str)
+                es = float(es_str)
+                max_iter = int(max_iter_str)
 
-            es = float(request.form.get("es", "0.0001"))
-            max_iter = int(request.form.get("max_iter", "50"))
+                # --- validar a < b ---
+                if xi >= xu:
+                    datos["xi"] = ""
+                    datos["xu"] = ""
+                    error_msg = "El intervalo no es válido. Debe cumplirse a < b."
+                    return render_template(
+                        "regla_falsa.html",
+                        datos=datos,
+                        resultados=None,
+                        raiz=None,
+                        n_iter=None,
+                        error_msg=error_msg,
+                        grafica_png=grafica_png,
+                    )
 
-            # Guardar lo que se volverá a pintar en el formulario / resultados
-            datos["funcion_pretty"] = func_pretty
-            datos["funcion"] = expr          # versión Python
-            datos["funcion_latex"] = func_latex  # versión LaTeX bonita
-            datos["xi"] = "" if accion == "graficar" and (xi_str == "" or xu_str == "") else str(xi)
-            datos["xu"] = "" if accion == "graficar" and (xi_str == "" or xu_str == "") else str(xu)
-            datos["es"] = str(es)
-            datos["max_iter"] = str(max_iter)
-
-            # 1) Si pidió calcular bisección, ejecutamos el método
-            if accion == "regla_falsa":
-                # Validar que f(a) y f(b) tengan signos opuestos
+                # --- validar cambio de signo ---
                 fa = evaluar_funcion(expr, xi)
                 fb = evaluar_funcion(expr, xu)
                 if fa * fb >= 0:
-                    raise ValueError("La función no tiene signos opuestos en f(a) y f(b). El método no puede continuar.")
+                    datos["xi"] = ""
+                    datos["xu"] = ""
+                    error_msg = (
+                        "La raíz no se encuentra dentro del intervalo seleccionado. "
+                        "El método requiere que f(a) y f(b) tengan signos opuestos."
+                    )
+                    return render_template(
+                        "regla_falsa.html",
+                        datos=datos,
+                        resultados=None,
+                        raiz=None,
+                        n_iter=None,
+                        error_msg=error_msg,
+                        grafica_png=grafica_png,
+                    )
 
+                # Si todo es válido, ejecutar método de Regla Falsa
                 resultados, raiz, n_iter = metodo_regla_falsa(
                     expr, xi, xu, es, max_iter
                 )
 
-            # 2) Siempre que tengamos expr, generamos la gráfica con Matplotlib
-            #    usando el intervalo [xi, xu]
-            if xi == xu:
-                xi -= 5
-                xu += 5
+            # ============================
+            # 2) GRÁFICA (siempre que haya expr)
+            # ============================
+            if xi_str == "" or xu_str == "":
+                # rango por defecto si no hay intervalos
+                gx_i = -10.0
+                gx_u = 10.0
+            else:
+                gx_i = float(xi_str)
+                gx_u = float(xu_str)
+
+            if gx_i == gx_u:
+                gx_i -= 5
+                gx_u += 5
 
             num_puntos = 400
             xs = []
             ys = []
             for i in range(num_puntos + 1):
-                x = xi + (xu - xi) * i / num_puntos
+                x = gx_i + (gx_u - gx_i) * i / num_puntos
                 try:
                     y = evaluar_funcion(expr, x)
                     if not math.isfinite(y):
@@ -325,9 +435,9 @@ def regla_falsa():
             # Detectar puntos aproximados donde la función corta el eje X
             roots_x = []
             for i in range(1, len(xs)):
-                y1 = ys[i-1]
+                y1 = ys[i - 1]
                 y2 = ys[i]
-                x1 = xs[i-1]
+                x1 = xs[i - 1]
                 x2 = xs[i]
 
                 if not (math.isfinite(y1) and math.isfinite(y2)):
@@ -355,7 +465,6 @@ def regla_falsa():
             ax.set_xlabel("x")
             ax.set_ylabel("f(x)")
             ax.set_title("Gráfica de f(x)")
-
             ax.grid(True, linestyle=":", linewidth=0.5)
 
             buf = io.BytesIO()
@@ -377,6 +486,8 @@ def regla_falsa():
         error_msg=error_msg,
         grafica_png=grafica_png,
     )
+
+
     
 @metodos_bp.route("/newton-raphson", methods=["GET", "POST"])
 def newton_raphson():
