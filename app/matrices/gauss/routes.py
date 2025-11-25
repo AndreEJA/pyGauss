@@ -16,6 +16,14 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from .pygauss_ext import gauss_solve, gauss_jordan_solve
 from .hf_client import hf_generate, load_hf_config
 
+def pivot_to_1based_int(p):
+    if isinstance(p, int):
+        return p + 1
+    s = str(p).strip().lower()
+    if s.startswith("x"):
+        s = s[1:]
+    return int(s) + 1
+
 def _lineas_a_solucion(lineas):
     """
     Convierte un arreglo de líneas tipo 'x1 = 60 + x6' y 'Variable libre: x6'
@@ -91,16 +99,25 @@ def resolver_gauss_jordan():
     A = [fila[:-1] for fila in matriz_num]
     b = [fila[-1] for fila in matriz_num]
     gj = gauss_jordan_solve(A, b, keep_steps=False)
+    pivotes_raw = gj.get("pivots", [])
+    pivotes_num = [pivot_to_1based_int(p) for p in pivotes_raw]
+    pivotes_vars = [f"x{i}" for i in pivotes_num]    
     # Normaliza estructura
     if isinstance(resultado.get("final"), dict):
         resultado["final"]["lineas"] = gj.get("lines", [])
         resultado["final"]["solucion"] = _lineas_a_solucion(gj.get("lines", []))
-        resultado["final"]["pivotes"] = gj.get("pivots", resultado["final"].get("pivotes", []))
-        # variables libres como 'xk'
+        resultado["final"]["pivotes"] = pivotes_num
+        resultado["final"]["pivotes_vars"] = pivotes_vars
         libres_idx = gj.get("free_vars", [])
         resultado["final"]["variables_libres"] = [f"x{i+1}" for i in libres_idx]
     else:
-        resultado["final"] = {"lineas": gj.get("lines", []), "pivotes": gj.get("pivots", []), "variables_libres": [f"x{i+1}" for i in gj.get("free_vars", [])], "solucion": _lineas_a_solucion(gj.get("lines", []))}
+        resultado["final"] = {
+        "lineas": gj.get("lines", []),
+        "pivotes": pivotes_num,
+        "pivotes_vars": pivotes_vars,
+        "variables_libres": [f"x{i+1}" for i in gj.get("free_vars", [])],
+        "solucion": _lineas_a_solucion(gj.get("lines", [])),
+    }
     return jsonify({"ok": True, **resultado})
 
 @gauss_bp.route("/resolver_simple", methods=["POST"])
@@ -141,16 +158,20 @@ def resolver_gauss_simple():
     A = [fila[:-1] for fila in matriz_num]
     b = [fila[-1] for fila in matriz_num]
     gj = gauss_jordan_solve(A, b, keep_steps=False)
+    pivotes_raw = gj.get("pivots", [])
+    pivotes_num = [pivot_to_1based_int(p) for p in pivotes_raw]
+    pivotes_vars = [f"x{i}" for i in pivotes_num] 
     # Normaliza estructura
     if isinstance(resultado.get("final"), dict):
         resultado["final"]["lineas"] = gj.get("lines", [])
         resultado["final"]["solucion"] = _lineas_a_solucion(gj.get("lines", []))
-        resultado["final"]["pivotes"] = gj.get("pivots", resultado["final"].get("pivotes", []))
+        resultado["final"]["pivotes"] = pivotes_num
+        resultado["final"]["pivotes_vars"] = pivotes_vars
         # variables libres como 'xk'
         libres_idx = gj.get("free_vars", [])
         resultado["final"]["variables_libres"] = [f"x{i+1}" for i in libres_idx]
     else:
-        resultado["final"] = {"lineas": gj.get("lines", []), "pivotes": gj.get("pivots", []), "variables_libres": [f"x{i+1}" for i in gj.get("free_vars", [])], "solucion": _lineas_a_solucion(gj.get("lines", []))}
+        resultado["final"] = {"lineas": gj.get("lines", []), "pivotes": pivotes_num, "pivotes_vars": pivotes_vars, "variables_libres": [f"x{i+1}" for i in gj.get("free_vars", [])], "solucion": _lineas_a_solucion(gj.get("lines", []))}
     return jsonify({"ok": True, **resultado})
 
 @gauss_bp.route("/pdf", methods=["POST"])
@@ -173,7 +194,7 @@ def pdf():
     if final:
         elems.append(Paragraph("<b>Resultado:</b>", estilos["Heading2"]))
         if pivotes:
-            elems.append(Paragraph(f"Columnas pivote: {', '.join('x'+str(p) for p in pivotes)}", estilos["BodyText"]))
+            elems.append(Paragraph(f"Columnas pivote: {", ".join(f"x{i}" for i in range(1, len(pivotes)+1))}", estilos["BodyText"]))
         if libres:
             elems.append(Paragraph(f"Variables libres: {', '.join(libres)}", estilos["BodyText"]))
         desc = final.get("descripcion", "")

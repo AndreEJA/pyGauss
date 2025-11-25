@@ -261,3 +261,5 @@ class ResolverGauss:
             for p in self.pasos
         ]
         return {"pasos": pasos, "final": {"descripcion": "Matriz triangular superior obtenida (lista para sustitución regresiva)."}}
+
+
