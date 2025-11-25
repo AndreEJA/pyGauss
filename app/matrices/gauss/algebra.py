@@ -129,7 +129,7 @@ class ResolverGaussJordan:
         A=matriz.copiar(); m, np1, n = matriz.m, matriz.np1, matriz.n
         if self._es_incompatible(A, m, n):
             return {"pasos": [],
-                    "final": {"tipo": "inconsistente", "descripcion": "El sistema es incompatible (fila 0…0|b con b≠0).", "solucion": None,
+                    "final": {"tipo": "inconsistente", "descripcion": "El sistema es inconsistente (fila 0…0|b con b≠0).", "solucion": None,
                                "pivotes": [], "variables_libres": [f"x{i+1}" for i in range(n)]}}
         fila=0; piv_cols=[]
         for col in range(n):
@@ -156,7 +156,7 @@ class ResolverGaussJordan:
                 if self._es_incompatible(A, m, n):
                     pasos=[{"descripcion":p.descripcion,"matriz":p.matriz,"col_pivote": (p.col_pivote+1 if p.col_pivote is not None else None)} for p in self.pasos]
                     libres=[f"x{i+1}" for i in range(n) if i not in piv_cols]
-                    return {"pasos": pasos, "final": {"tipo": "inconsistente", "descripcion": "El sistema es incompatible (fila 0…0|b con b≠0).", "solucion": None,"pivotes": [c+1 for c in piv_cols], "variables_libres": libres}}
+                    return {"pasos": pasos, "final": {"tipo": "inconsistente", "descripcion": "El sistema es inconsistente (fila 0…0|b con b≠0).", "solucion": None,"pivotes": [c+1 for c in piv_cols], "variables_libres": libres}}
             fila+=1
             if fila==m: break
         tipo, sol, desc, pivotes_detectados = self._analizar(A,m,n)
@@ -168,7 +168,7 @@ class ResolverGaussJordan:
     def _analizar(self,A,m,n):
         for r in range(m):
             if all(es_casi_cero(A[r][c]) for c in range(n)) and not es_casi_cero(A[r][n]):
-                return "inconsistente", None, "El sistema es incompatible (sin solución).", set()
+                return "inconsistente", None, "El sistema es inconsistente (sin solución).", set()
         piv_cols=set()
         for r in range(m):
             for c in range(n):
