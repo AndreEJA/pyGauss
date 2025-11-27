@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, send_file
 from .algebra import (
     
     ResolverGaussJordan,
-    ResolverGauss,            # 🔹 nuevo import
+    ResolverGauss,            
     EvaluadorSeguro,
     MatrizAumentada,
     FormateadorNumeros
