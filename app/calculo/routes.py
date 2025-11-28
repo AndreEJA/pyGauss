@@ -144,15 +144,38 @@ def derivadas():
             x = symbols("x")
             f_sym = sympify(expr)
             
-            fprime_sym = diff(f_sym, x, orden)
-            derivada_latex = latex(fprime_sym)
+            derivadas_pasos = []
+            
+            # Calcular y almacenar todas las derivadas desde 1 hasta el orden solicitado
+            for n in range(1, orden + 1):
+                f_n_sym = diff(f_sym, x, n)
+                derivada_latex = latex(f_n_sym)
+                
+                if n == 1:
+                    expresion = f"f'(x) = {derivada_latex}"
+                elif n == 2:
+                    expresion = f"f''(x) = {derivada_latex}"
+                elif n == 3:
+                    expresion = f"f'''(x) = {derivada_latex}"
+                else:
+                    expresion = f"f^{{({n})}}(x) = {derivada_latex}"
+                
+                derivadas_pasos.append({
+                    "orden": n,
+                    "expresion_latex": expresion,
+                    "es_final": (n == orden)
+                })
 
+            # El resultado final es el último elemento de la lista
+            # fprime_sym = f_n_sym 
+            #Ya está guardado de la última iteración
+            
             if orden == 1:
-                operador_latex = f"\\frac{{d}}{{dx}}"
-                derivada_expresion = f"f'(x) = {derivada_latex}"
+                # La expresión final se toma del último paso calculado
+                derivada_expresion = derivadas_pasos[-1]["expresion_latex"]
             else:
-                 operador_latex = f"\\frac{{d^{{{orden}}}}}{{dx^{{{orden}}}}}"
-                 derivada_expresion = f"f^{{({orden})}}(x) = {derivada_latex}"
+                 # La expresión final se toma del último paso calculado
+                 derivada_expresion = derivadas_pasos[-1]["expresion_latex"]
 
             
             datos.update({
@@ -163,8 +186,9 @@ def derivadas():
             })
             
             resultado_derivada = {
-                "expresion": operador_latex,
-                "derivada_latex": derivada_expresion,
+                # "operador": operador_latex, # Esto ya no se usa
+                "derivada_latex": derivada_expresion, # La derivada final
+                "pasos": derivadas_pasos, # Lista de todas las derivadas
             }
 
         except ValueError as e:
@@ -180,8 +204,94 @@ def derivadas():
     )
 
 
-@calculo_bp.route("/integrales", methods=["GET"])
+@calculo_bp.route("/integrales", methods=["GET", "POST"])
 def integrales():
-    """Placeholder para evitar BuildError en url_for('calculo.integrales')"""
-    # Usaremos un placeholder de HTML simple que diga "En desarrollo"
-    return render_template("integrales.html", title="Integrales (En Desarrollo)")
+    resultado_integral = None
+    error_msg = None
+    
+    # Valores por defecto para el formulario
+    datos = {
+        "funcion_pretty": "",
+        "funcion": "",
+        "funcion_latex": "",
+        "tipo_integral": "indefinida", 
+        "limite_a": "",
+        "limite_b": "",
+    }
+
+    if request.method == "POST":
+        try:
+            func_pretty = request.form.get("funcion_pretty", "").strip()
+            expr = request.form.get("funcion", "").strip()
+            tipo_integral = request.form.get("tipo_integral", "indefinida").strip()
+            limite_a_str = request.form.get("limite_a", "").strip()
+            limite_b_str = request.form.get("limite_b", "").strip()
+
+            if not func_pretty or not expr:
+                raise ValueError("Debes ingresar la función $f(x)$ a integrar.")
+
+            # Validación específica para integral definida
+            if tipo_integral == "definida":
+                if not limite_a_str or not limite_b_str:
+                    raise ValueError("Debes ingresar los límites inferior (a) y superior (b) para una integral definida.")
+            
+            datos.update({
+                "funcion_pretty": func_pretty,
+                "funcion": expr,
+                "funcion_latex": pretty_to_latex(func_pretty),
+                "tipo_integral": tipo_integral,
+                "limite_a": limite_a_str,
+                "limite_b": limite_b_str,
+            })
+
+            x = symbols("x")
+            f_sym = sympify(expr)
+            
+            if tipo_integral == "definida":
+                # Integral Definida: integrate(f, (x, a, b))
+                a_sym = safe_sympify(limite_a_str)
+                b_sym = safe_sympify(limite_b_str)
+                
+                # 1. Cálculo de la integral definida
+                integral_sym = integrate(f_sym, (x, a_sym, b_sym))
+                
+                # 2. Formato LaTeX
+                integral_latex = latex(integral_sym)
+                
+                # Expresión para mostrar en el lado izquierdo de la ecuación
+                expresion_latex = f"\\int_{{{limite_a_str.replace('oo', '\\infty').replace('-', '-')}}}^{{{limite_b_str.replace('oo', '\\infty').replace('-', '-')}}} f(x) \\, dx"
+                
+                # El resultado es el valor numérico/simbólico sin + C
+                resultado_final_latex = integral_latex
+                
+            else:
+                # Integral Indefinida: integrate(f, x)
+                # 1. Cálculo de la integral indefinida
+                integral_sym = integrate(f_sym, x)
+                
+                # 2. Formato LaTeX
+                integral_latex = latex(integral_sym)
+                
+                # Expresión para mostrar en el lado izquierdo de la ecuación
+                expresion_latex = f"\\int f(x) \\, dx"
+                
+                # Añadimos la constante de integración 'C'
+                resultado_final_latex = f"{integral_latex} + C"
+            
+            resultado_integral = {
+                "expresion": expresion_latex,
+                "resultado_latex": resultado_final_latex,
+            }
+
+        except ValueError as e:
+            error_msg = f"Error en los datos de entrada: {e}"
+        except Exception as e:
+            error_msg = f"Error al calcular la integral: {e}"
+            # import traceback; traceback.print_exc() 
+
+    return render_template(
+        "integrales.html",
+        datos=datos,
+        resultado_integral=resultado_integral,
+        error_msg=error_msg,
+    )

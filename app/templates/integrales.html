@@ -1,16 +1,246 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="space-y-8">
-  <section class="panel final-card">
-    <h2 class="panel-title text-rose-600">Integrales: En Desarrollo</h2>
-    <p class="text-slate-600">
-      La funcionalidad para calcular integrales definidas e indefinidas está en curso. Por favor, regresa más tarde.
-    </p>
-    <div class="mt-4">
-        <a href="{{ url_for('principal.unidad_calculo') }}" class="btn-ghost">
-            ← Volver a Cálculo
-        </a>
+
+<script>
+  window.MathJax = window.MathJax || {
+    tex: { inlineMath: [['\\(', '\\)'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+></script>
+
+<header
+  class="text-center py-10 px-4 bg-white rounded-3xl shadow-xl mb-8 border border-slate-200"
+>
+  <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 mb-3">
+    Integrales
+  </h1>
+  <p class="text-slate-600 max-w-2xl mx-auto mb-2">
+    Calcula la integral indefinida o definida.
+  </p>
+  <div class="flex justify-center mt-4">
+    <div class="text-slate-800 text-lg">
+      \[
+        \int f(x) \, dx \quad \text{o} \quad \int_a^b f(x) \, dx
+      \]
     </div>
-  </section>
-</div>
+  </div>
+</header>
+
+<section class="grid gap-6 lg:grid-cols-3 mb-10">
+  <div
+    class="lg:col-span-1 bg-white rounded-3xl shadow-md border border-slate-200 p-6 flex flex-col gap-4"
+  >
+    <h2 class="text-xl font-semibold text-slate-800 mb-4">
+      Datos de entrada
+    </h2>
+
+    {% if error_msg %}
+    <div
+      class="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2"
+    >
+      {{ error_msg }}
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-4">
+
+      {# -------- FUNCIÓN + TECLADO (Igual que antes) -------- #}
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">
+          Función a integrar $f(x)$
+        </label>
+
+        <div class="relative">
+          <div
+            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm transition
+                   focus-within:border-rose-500 focus-within:ring-2 focus-within:ring-rose-500/40"
+          >
+            <span
+              id="funcion_display"
+              class="block text-slate-900 min-h-[1.4rem]"
+            >
+              {{ datos.funcion_pretty|default('') }}
+            </span>
+          </div>
+
+          <input
+            type="text"
+            id="funcion_pretty"
+            name="funcion_pretty"
+            value="{{ datos.funcion_pretty|default('') }}"
+            class="absolute inset-0 w-full h-full bg-transparent border-none outline-none text-transparent caret-slate-800 px-3 py-2"
+            placeholder="Ej: x^2 + cos(x)"
+            autocomplete="off"
+            required
+            spellcheck="false"
+          />
+        </div>
+
+        <input
+          type="hidden"
+          id="funcion_real"
+          name="funcion"
+          value="{{ datos.funcion|default('') }}"
+        />
+        <input
+          type="hidden"
+          id="funcion_latex"
+          name="funcion_latex"
+          value="{{ datos.funcion_latex|default('') }}"
+        />
+
+        <div
+          class="mt-3 bg-white rounded-2xl p-3 border border-slate-200 max-h-64 overflow-y-auto"
+        >
+          <div
+            class="grid grid-cols-4 sm:grid-cols-6 gap-1.5 text-xs sm:text-sm"
+          >
+            {% set btn = "bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight" %}
+
+            <button type="button" class="{{ btn }}" data-insert="x">x</button>
+            <button type="button" class="{{ btn }}" data-insert="y">y</button>
+            <button type="button" class="{{ btn }}" data-insert="π">π</button>
+            <button type="button" class="{{ btn }}" data-insert="e">e</button>
+            <button type="button" class="{{ btn }}" data-insert="(">(</button>
+            <button type="button" class="{{ btn }}" data-insert=")">)</button>
+
+            <button type="button" class="{{ btn }}" data-insert="+">+</button>
+            <button type="button" class="{{ btn }}" data-insert="-">−</button>
+            <button type="button" class="{{ btn }}" data-insert="×">×</button>
+            <button type="button" class="{{ btn }}" data-insert="÷">÷</button>
+            <button type="button" class="{{ btn }}" data-insert="^">^</button>
+            <button type="button" class="{{ btn }}" data-insert="√(">√</button>
+
+            <button type="button" class="{{ btn }}" data-insert="| |">|x|</button>
+            <button type="button" class="{{ btn }} px-1" data-insert="(a)/(b)">a/b</button>
+            <button type="button" class="{{ btn }}" data-insert="^">xⁿ</button>
+
+            <button type="button" class="{{ btn }}" data-insert="sen(">sen</button>
+            <button type="button" class="{{ btn }}" data-insert="cos(">cos</button>
+            <button type="button" class="{{ btn }} py-2 leading-normal" data-insert="tg(">tg</button>
+
+            <button type="button" class="{{ btn }}" data-insert="ln(">ln</button>
+            <button type="button" class="{{ btn }}" data-insert="log10(">log<sub>10</sub></button>
+            <button type="button" class="{{ btn }}" data-insert="e^(">eˣ</button>
+            
+          </div>
+        </div>
+      </div>
+      
+      {# -------- TIPO DE INTEGRAL Y LÍMITES -------- #}
+      <div class="grid gap-4 sm:grid-cols-2 mt-4">
+        <label for="tipo_integral" class="block">
+          <span class="block text-sm font-medium text-slate-700 mb-1">Tipo de Integral</span>
+          <select id="tipo_integral" name="tipo_integral" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm shadow-sm bg-white text-slate-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/40">
+            <option value="indefinida" {% if datos.tipo_integral == "indefinida" %}selected{% endif %}>Indefinida</option>
+            <option value="definida" {% if datos.tipo_integral == "definida" %}selected{% endif %}>Definida</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="limites-section" class="grid gap-4 sm:grid-cols-2" 
+           {% if datos.tipo_integral != "definida" %}style="display: none;"{% endif %}>
+        <label for="limite_a" class="block">
+          <span class="block text-sm font-medium text-slate-700 mb-1">Límite Inferior (a)</span>
+          <input
+            type="text"
+            id="limite_a"
+            name="limite_a"
+            value="{{ datos.limite_a|default('') }}"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm shadow-sm bg-white text-slate-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/40"
+            placeholder="Ej: 0 o -inf"
+          />
+        </label>
+        <label for="limite_b" class="block">
+          <span class="block text-sm font-medium text-slate-700 mb-1">Límite Superior (b)</span>
+          <input
+            type="text"
+            id="limite_b"
+            name="limite_b"
+            value="{{ datos.limite_b|default('') }}"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm shadow-sm bg-white text-slate-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/40"
+            placeholder="Ej: 5 o inf"
+          />
+        </label>
+      </div>
+
+      <div class="mt-4">
+        <button
+          type="submit"
+          class="w-full inline-flex justify-center items-center px-4 py-2 rounded-2xl bg-rose-600 text-white text-sm font-semibold shadow-md hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:ring-offset-white"
+        >
+          Calcular Integral
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div
+    class="lg:col-span-2 bg-white rounded-3xl shadow-md border border-slate-200 p-6 flex flex-col gap-4"
+  >
+    <h2 class="text-lg font-semibold text-slate-800">
+      Resultado de la Integral
+    </h2>
+
+    {% if resultado_integral %}
+    <div class="mb-3 p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800">
+      <p class="font-semibold mb-1">Función a integrar:</p>
+      <div class="text-center text-base">
+        \( f(x) = {{ datos.funcion_latex|safe }} \)
+      </div>
+    </div>
+    
+    <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center">
+        <h3 class="text-base font-semibold text-slate-800 mb-2">
+            {% if datos.tipo_integral == "definida" %} Integral Definida {% else %} Integral Indefinida {% endif %}
+        </h3>
+        <p class="text-sm text-slate-600">
+            El resultado es: 
+        </p>
+        <div class="text-2xl font-extrabold text-slate-900 mt-2">
+            \[ {{ resultado_integral.full_latex|safe }} \]
+        </div>
+        {% if datos.tipo_integral == "definida" %}
+            <p class="mt-3 text-xs text-slate-500">
+                La integral definida se calcula como $F(b) - F(a)$.
+            </p>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <p class="text-sm text-slate-500">
+      Aún no se ha calculado la integral. Ingrese la función $f(x)$ a integrar, seleccione el tipo de integral en 
+      <span class="font-semibold">Datos de entrada</span>
+      y pulsa “Calcular Integral”.
+    </p>
+    {% endif %}
+  </div>
+</section>
+
+<script src="{{ url_for('static', filename='js/biseccion.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipoIntegralSelect = document.getElementById('tipo_integral');
+        const limitesSection = document.getElementById('limites-section');
+        
+        // Función para alternar la visibilidad de los límites
+        function toggleLimites() {
+            if (tipoIntegralSelect.value === 'definida') {
+                limitesSection.style.display = 'grid';
+            } else {
+                limitesSection.style.display = 'none';
+            }
+        }
+
+        // Ejecutar al cargar y al cambiar
+        toggleLimites();
+        tipoIntegralSelect.addEventListener('change', toggleLimites);
+    });
+</script>
 {% endblock %}
