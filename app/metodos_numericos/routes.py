@@ -491,17 +491,14 @@ def regla_falsa():
     
 @metodos_bp.route("/newton-raphson", methods=["GET", "POST"])
 def newton_raphson():
-    from sympy import symbols, sympify, diff, latex
-
     resultados = None
     raiz = None
     n_iter = None
     error_msg = None
     derivada_latex = None
+    ultima_iter = None
 
-    # valores iniciales del formulario (vacíos)
     datos = {
-        "funcion_pretty": "",
         "funcion": "",
         "funcion_latex": "",
         "x0": "",
@@ -510,48 +507,67 @@ def newton_raphson():
     }
 
     if request.method == "POST":
-        try:
-            func_pretty = request.form.get("funcion_pretty", "").strip()
-            expr = request.form.get("funcion", "").strip()
+        expr = (request.form.get("funcion") or "").strip()
+        latex = (request.form.get("funcion_latex") or "").strip()
 
-            # si no hay función, NO ponemos ejemplo, mostramos error
-            if not func_pretty or not expr:
-                raise ValueError("Debes ingresar la función f(x).")
+        x0_str = (request.form.get("x0") or "").strip()
+        es_str = (request.form.get("es") or "0.0001").strip()
+        max_iter_str = (request.form.get("max_iter") or "50").strip()
 
-            # LaTeX bonito desde lo que ve el usuario
-            func_latex = pretty_to_latex(func_pretty)
+        datos.update({
+            "funcion": expr,
+            "funcion_latex": latex,
+            "x0": x0_str,
+            "es": es_str,
+            "max_iter": max_iter_str,
+        })
 
-            # Derivada simbólica
-            x = symbols("x")
-            f_sym = sympify(expr)
-            fprime_sym = diff(f_sym, x)
-            derivada_latex = latex(fprime_sym)
+        if not expr:
+            error_msg = "Debes ingresar la función f(x)."
+        else:
+            try:
+                x0 = float(x0_str)
+                es = float(es_str)
+                max_iter = int(max_iter_str)
 
-            # Parámetros numéricos
-            x0_str = request.form.get("x0", "").strip()
-            if x0_str == "":
-                raise ValueError("Debes ingresar un valor inicial x₀.")
-            x0 = float(x0_str)
+                ret = metodo_newton_raphson(expr, x0, es=es, max_iter=max_iter)
 
-            es = float(request.form.get("es", "0.0001"))
-            max_iter = int(request.form.get("max_iter", "50"))
+                # ---- ACEPTAR DIFERENTES FORMAS DE RETORNO ----
+                if isinstance(ret, dict):
+                    # Lo más probable: { "raiz": ..., "resultados": [...], "derivada_latex": "..." }
+                    raiz = ret.get("raiz") or ret.get("root")
+                    resultados = (
+                        ret.get("resultados")
+                        or ret.get("iteraciones")
+                        or ret.get("tabla")
+                    )
+                    derivada_latex = (
+                        ret.get("derivada_latex")
+                        or ret.get("fprime_latex")
+                        or ret.get("derivada")
+                    )
 
-            # Ejecutar método
-            resultado = metodo_newton_raphson(expr, x0, es, max_iter)
-            resultados = resultado["tabla"]
-            raiz = resultado["raiz"]
-            n_iter = resultado["n_iter"]
+                elif isinstance(ret, tuple):
+                    if len(ret) == 2:
+                        raiz, resultados = ret
+                    elif len(ret) >= 3:
+                        raiz = ret[0]
+                        resultados = ret[1]
+                        derivada_latex = ret[2]
 
-            # Lo que se vuelve a pintar en el form
-            datos["funcion_pretty"] = func_pretty
-            datos["funcion"] = expr
-            datos["funcion_latex"] = func_latex
-            datos["x0"] = x0_str
-            datos["es"] = str(es)
-            datos["max_iter"] = str(max_iter)
+                else:
+                    # caso rarísimo: si devuelve solo una lista
+                    resultados = ret
 
-        except Exception as e:
-            error_msg = f"No se pudo aplicar el método: {e}"
+                # Última iteración + número de iteraciones
+                if isinstance(resultados, (list, tuple)) and resultados:
+                    ultima_iter = resultados[-1]
+                    n_iter = len(resultados)
+                else:
+                    n_iter = 0
+
+            except Exception as e:
+                error_msg = f"No se pudo aplicar el método: {e}"
 
     return render_template(
         "newton_raphson.html",
@@ -559,9 +575,11 @@ def newton_raphson():
         resultados=resultados,
         raiz=raiz,
         n_iter=n_iter,
-        error_msg=error_msg,
         derivada_latex=derivada_latex,
+        ultima_iter=ultima_iter,
+        error_msg=error_msg,
     )
+
 
 
 @metodos_bp.route("/secante", methods=["GET", "POST"])
