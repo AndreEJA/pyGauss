@@ -75,12 +75,10 @@ def biseccion():
 
     # Función de ejemplo SOLO como respaldo interno
     expr_default = "x**4 - 5*x**3 + 0.5*x**2 - 11*x + 10"
-    pretty_default = "x^4 - 5x^3 + 0.5x^2 - 11x + 10"
+    latex_default = r"x^4 - 5x^3 + 0.5x^2 - 11x + 10"
 
     # Valores iniciales que se muestran en el formulario
     datos = {
-        "funcion_prety": "",
-        "funcion_pretty": "",
         "funcion": "",
         "funcion_latex": "",
         "xi": "",
@@ -91,24 +89,24 @@ def biseccion():
 
     if request.method == "POST":
         try:
-            accion = request.form.get("accion", "biseccion")  # "graficar" o "biseccion"
+            # "graficar" o "biseccion"
+            accion = request.form.get("accion", "biseccion")
 
-            func_pretty = request.form.get("funcion_pretty", "").strip()
-            expr = request.form.get("funcion", "").strip()
+            # Lo que viene del formulario (MathLive + JS)
+            expr = (request.form.get("funcion") or "").strip()          # Python/Sympy
+            func_latex = (request.form.get("funcion_latex") or "").strip()  # LaTeX
 
+            # Si está vacío, usamos respaldo por defecto
             if not expr:
                 expr = expr_default
-            if not func_pretty:
-                func_prety = pretty_default
-
-            # Generar LaTeX en el servidor (a partir de func_pretty)
-            func_latex = pretty_to_latex(func_pretty)
+            if not func_latex:
+                func_latex = latex_default
 
             # Parámetros como texto
-            xi_str = request.form.get("xi", "").strip()
-            xu_str = request.form.get("xu", "").strip()
-            es_str = request.form.get("es", "0.0001").strip()
-            max_iter_str = request.form.get("max_iter", "50").strip()
+            xi_str = (request.form.get("xi") or "").strip()
+            xu_str = (request.form.get("xu") or "").strip()
+            es_str = (request.form.get("es") or "0.0001").strip()
+            max_iter_str = (request.form.get("max_iter") or "50").strip()
 
             if es_str == "":
                 es_str = "0.0001"
@@ -116,7 +114,6 @@ def biseccion():
                 max_iter_str = "50"
 
             # Guardamos lo que escribió el usuario
-            datos["funcion_pretty"] = func_pretty
             datos["funcion"] = expr
             datos["funcion_latex"] = func_latex
             datos["xi"] = xi_str
@@ -280,22 +277,15 @@ def biseccion():
     )
 
 
-
 @metodos_bp.route("/regla-falsa", methods=["GET", "POST"])
 def regla_falsa():
     resultados = None
     raiz = None
     n_iter = None
     error_msg = None
-    grafica_png = None   #aca se guardara la imgen
+    grafica_png = None  # para la gráfica como en bisección
 
-    # Función de ejemplo SOLO como respaldo interno
-    expr_default = "x**4 - 5*x**3 + 0.5*x**2 - 11*x + 10"
-    pretty_default = "x^4 - 5x^3 + 0.5x^2 - 11x + 10"
-
-    # Valores iniciales que se muestran en el formulario
     datos = {
-        "funcion_pretty": "",
         "funcion": "",
         "funcion_latex": "",
         "xi": "",
@@ -306,48 +296,55 @@ def regla_falsa():
 
     if request.method == "POST":
         try:
-            accion = request.form.get("accion", "regla_falsa")  # "graficar" o "regla_falsa"
+            # qué quiere hacer el usuario: graficar o aplicar la regla falsa
+            accion = request.form.get("accion", "regla_falsa")
 
-            func_pretty = request.form.get("funcion_pretty", "").strip()
-            expr = request.form.get("funcion", "").strip()
+            expr = (request.form.get("funcion") or "").strip()
+            latex = (request.form.get("funcion_latex") or "").strip()
 
+            xi_str = (request.form.get("xi") or "").strip()
+            xu_str = (request.form.get("xu") or "").strip()
+            es_str = (request.form.get("es") or "0.0001").strip()
+            max_iter_str = (request.form.get("max_iter") or "50").strip()
+
+            datos.update({
+                "funcion": expr,
+                "funcion_latex": latex,
+                "xi": xi_str,
+                "xu": xu_str,
+                "es": es_str,
+                "max_iter": max_iter_str,
+            })
+
+            # ==========================
+            # VALIDACIÓN BÁSICA FUNCIÓN
+            # ==========================
             if not expr:
-                expr = expr_default
-            if not func_pretty:
-                func_pretty = pretty_default
+                error_msg = "Debes ingresar la función f(x)."
+                return render_template(
+                    "regla_falsa.html",
+                    datos=datos,
+                    resultados=resultados,
+                    raiz=raiz,
+                    n_iter=n_iter,
+                    error_msg=error_msg,
+                    grafica_png=grafica_png,
+                )
 
-            # Generar LaTeX en el servidor (a partir de func_pretty)
-            func_latex = pretty_to_latex(func_pretty)
+            # ==========================
+            # PARÁMETROS NUMÉRICOS
+            # ==========================
+            # es y max_iter con valores por defecto
+            es = float(es_str or "0.0001")
+            max_iter = int(max_iter_str or "50")
 
-            # Parámetros como texto
-            xi_str = request.form.get("xi", "").strip()
-            xu_str = request.form.get("xu", "").strip()
-            es_str = request.form.get("es", "0.0001").strip()
-            max_iter_str = request.form.get("max_iter", "50").strip()
-
-            if es_str == "":
-                es_str = "0.0001"
-            if max_iter_str == "":
-                max_iter_str = "50"
-
-            # Guardamos lo que escribió el usuario
-            datos["funcion_pretty"] = func_pretty
-            datos["funcion"] = expr
-            datos["funcion_latex"] = func_latex
-            datos["xi"] = xi_str
-            datos["xu"] = xu_str
-            datos["es"] = es_str
-            datos["max_iter"] = max_iter_str
-
-            # ============================
-            # 1) CÁLCULO POR REGLA FALSA
-            # ============================
+            # ==========================
+            # SI APLICA LA REGLA FALSA
+            # ==========================
             if accion == "regla_falsa":
-                # --- validar que haya extremos ---
+                # intervalo obligatorio
                 if xi_str == "" or xu_str == "":
-                    datos["xi"] = ""
-                    datos["xu"] = ""
-                    error_msg = "Debes ingresar un intervalo [a, b] válido para aplicar la Regla Falsa."
+                    error_msg = "Debes ingresar el intervalo [a,b] para aplicar la regla falsa."
                     return render_template(
                         "regla_falsa.html",
                         datos=datos,
@@ -360,14 +357,11 @@ def regla_falsa():
 
                 xi = float(xi_str)
                 xu = float(xu_str)
-                es = float(es_str)
-                max_iter = int(max_iter_str)
 
-                # --- validar a < b ---
                 if xi >= xu:
+                    error_msg = "El intervalo no es válido. Debe cumplirse a < b."
                     datos["xi"] = ""
                     datos["xu"] = ""
-                    error_msg = "El intervalo no es válido. Debe cumplirse a < b."
                     return render_template(
                         "regla_falsa.html",
                         datos=datos,
@@ -378,16 +372,16 @@ def regla_falsa():
                         grafica_png=grafica_png,
                     )
 
-                # --- validar cambio de signo ---
+                # validar cambio de signo
                 fa = evaluar_funcion(expr, xi)
                 fb = evaluar_funcion(expr, xu)
                 if fa * fb >= 0:
-                    datos["xi"] = ""
-                    datos["xu"] = ""
                     error_msg = (
                         "La raíz no se encuentra dentro del intervalo seleccionado. "
-                        "El método requiere que f(a) y f(b) tengan signos opuestos."
+                        "La regla falsa requiere que f(a) y f(b) tengan signos opuestos."
                     )
+                    datos["xi"] = ""
+                    datos["xu"] = ""
                     return render_template(
                         "regla_falsa.html",
                         datos=datos,
@@ -398,16 +392,15 @@ def regla_falsa():
                         grafica_png=grafica_png,
                     )
 
-                # Si todo es válido, ejecutar método de Regla Falsa
-                resultados, raiz, n_iter = metodo_regla_falsa(
-                    expr, xi, xu, es, max_iter
-                )
+                # Llamamos a tu método numérico
+                # Firma supuesta: resultados, raiz, n_iter = metodo_regla_falsa(expr, xi, xu, es, max_iter)
+                resultados, raiz, n_iter = metodo_regla_falsa(expr, xi, xu, es, max_iter)
 
-            # ============================
-            # 2) GRÁFICA (siempre que haya expr)
-            # ============================
+            # ==========================
+            # GRÁFICA (PARA AMBAS ACCIONES)
+            # ==========================
+            # Usamos el intervalo del usuario si lo dio, o un rango por defecto
             if xi_str == "" or xu_str == "":
-                # rango por defecto si no hay intervalos
                 gx_i = -10.0
                 gx_u = 10.0
             else:
@@ -432,7 +425,7 @@ def regla_falsa():
                 xs.append(x)
                 ys.append(y)
 
-            # Detectar puntos aproximados donde la función corta el eje X
+            # (Opcional) detectar puntos donde se cruza el eje X
             roots_x = []
             for i in range(1, len(xs)):
                 y1 = ys[i - 1]
@@ -443,17 +436,14 @@ def regla_falsa():
                 if not (math.isfinite(y1) and math.isfinite(y2)):
                     continue
 
-                # cruce exacto
                 if y1 == 0:
                     roots_x.append(x1)
 
-                # cambio de signo
                 if y1 * y2 < 0:
-                    # interpolación lineal
                     x0 = x1 - y1 * (x2 - x1) / (y2 - y1)
                     roots_x.append(x0)
 
-            # Crear la figura con Matplotlib
+            # Crear figura con Matplotlib
             fig, ax = plt.subplots(figsize=(6, 3))
             ax.axhline(0, color="black", linewidth=0.8)
             ax.axvline(0, color="black", linewidth=0.8)
@@ -486,7 +476,6 @@ def regla_falsa():
         error_msg=error_msg,
         grafica_png=grafica_png,
     )
-
 
     
 @metodos_bp.route("/newton-raphson", methods=["GET", "POST"])

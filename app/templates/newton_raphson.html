@@ -21,6 +21,42 @@
     display: none;
   }
 </style>
+<style>
+  /* Ocultamos los toggles como ya tenías */
+  math-field::part(virtual-keyboard-toggle),
+  math-field::part(menu-toggle) {
+    display: none;
+  }
+
+  /* 💡 MODO CLARO: fondo blanco, borde clarito, texto oscuro */
+  math-field {
+    border: 1px solid rgb(203 213 225); /* slate-300 */
+    background-color: #ffffff;
+    color: #0f172a; /* slate-900 */
+  }
+
+  /* El contenido interno del mathfield (donde se ve la fórmula) */
+  math-field::part(content) {
+    color: inherit;
+  }
+
+  /* 🖤 MODO OSCURO: fondo oscuro, texto clarito */
+  .dark math-field {
+    background-color: #1e293b; /* slate-800 -> igual al fondo que usas */
+    border-color: #334155;     /* slate-700 para empatar con tus bordes */
+    color: #e2e8f0;            /* texto blanco suave */
+  }
+
+  .dark math-field::part(content) {
+    color: #e5e7eb;
+  }
+
+  /* Placeholder clarito en dark mode (si lo usas) */
+  .dark math-field::part(placeholder) {
+    color: #64748b; /* slate-500 */
+  }
+</style>
+
 
 {# ===================== CABECERA ===================== #}
 <header
@@ -91,12 +127,13 @@
             display: block;
             padding: 0.5rem 0.75rem;
             border-radius: 0.75rem;
-            border: 1px solid rgb(203 213 225);
-            background: white;
             font-size: 0.875rem;
           "
           class="shadow-sm"
-        >{{ datos.funcion_latex|default('')|safe }}</math-field>
+        >
+          {{ datos.funcion_latex|default('')|safe }}
+        </math-field>
+
 
         <!-- ocultos: versión Python y LaTeX que viajan al backend -->
         <input

@@ -1,44 +1,83 @@
+// app/static/js/newton_mathlive.js
 (function () {
-  const prettyInput = document.getElementById("funcion_pretty");
-  const realInput = document.getElementById("funcion_real");
-  const displaySpan = document.getElementById("funcion_display");
+  const mathfield = document.getElementById("funcion_mf");
+  const realInput = document.getElementById("funcion_real");   // Python
+  const latexInput = document.getElementById("funcion_latex"); // LaTeX crudo
 
-  if (!prettyInput || !realInput) {
-    return;
+  // si no hay mathfield, no hacemos nada (otra página)
+  if (!mathfield) return;
+
+  // 1. LaTeX -> "pretty" (sen, tg, √, π, etc.)
+  function latexToPretty(latex) {
+    if (!latex) return "";
+    let s = latex;
+
+    // limpiar \left, \right, espacios, \( \), $$ $$
+    s = s.replace(/\\ /g, " ");
+    s = s.replace(/\\left/g, "").replace(/\\right/g, "");
+    s = s.replace(/\\\(/g, "").replace(/\\\)/g, "");
+    s = s.replace(/\$\$/g, "").replace(/\$/g, "");
+
+    // \frac{a}{b} -> (a)/(b)
+    s = s.replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "($1)/($2)");
+
+    // \sqrt{...} -> √(...)
+    s = s.replace(/\\sqrt\{([^}]*)\}/g, "√($1)");
+
+    // \pi -> π
+    s = s.replace(/\\pi/g, "π");
+
+    // |x|: \left|x\right| -> |x|
+    s = s.replace(/\\left\|/g, "|").replace(/\\right\|/g, "|");
+
+    // potencias: x^{2} -> x^2
+    s = s.replace(/([A-Za-z0-9\)\]])\^\{([^}]*)\}/g, "$1^$2");
+
+    // quitar llaves restantes
+    s = s.replace(/[{}]/g, "");
+
+    // trig: LaTeX -> español pretty
+    s = s.replace(/\\sin/g, "sen");
+    s = s.replace(/\\cos/g, "cos");
+    s = s.replace(/\\tan/g, "tg");
+    s = s.replace(/\\arcsin/g, "asen");
+    s = s.replace(/\\arccos/g, "acos");
+    s = s.replace(/\\arctan/g, "atan");
+
+    // logs
+    s = s.replace(/\\ln/g, "ln");
+    s = s.replace(/\\log_?\{?10\}?/g, "log10");
+
+    return s.trim();
   }
 
-  // ================== TRADUCCIÓN A PYTHON ==================
+  // 2. Pretty -> Python/Sympy
   function translateToReal(pretty) {
-    let real = pretty;
+    let real = pretty || "";
 
     // trig en español -> Python
-    real = real.replace(/sen/gi, "sin");
-    real = real.replace(/tg/gi, "tan");
     real = real.replace(/asen/gi, "asin");
     real = real.replace(/acos/gi, "acos");
     real = real.replace(/atan/gi, "atan");
+    real = real.replace(/sen/gi, "sin");
+    real = real.replace(/tg/gi, "tan");
+    real = real.replace(/cos/gi, "cos");
 
     // logs
     real = real.replace(/\bln\(/gi, "log(");
     real = real.replace(/log10\(/gi, "log10(");
     real = real.replace(/log₁₀\(/gi, "log10(");
-    // log_b(x) -> log(x, b)
-    real = real.replace(
-      /log_([0-9A-Za-z]+)\s*\(\s*([^)]+)\s*\)/g,
-      "log($2, $1)"
-    );
+    real = real.replace(/log_([0-9A-Za-z]+)\s*\(\s*([^)]+)\s*\)/g, "log($2, $1)");
 
     // raíz
     real = real.replace(/√\(/g, "sqrt(");
     real = real.replace(/√([A-Za-z0-9]+)/g, "sqrt($1)");
 
-    // constantes
+    // pi
     real = real.replace(/π/g, "pi");
 
     // operaciones
-    real = real.replace(/×/g, "*");
-    real = real.replace(/·/g, "*");
-    real = real.replace(/÷/g, "/");
+    real = real.replace(/×/g, "*").replace(/·/g, "*").replace(/÷/g, "/");
 
     // potencias
     real = real.replace(/\^/g, "**");
@@ -58,111 +97,94 @@
     return real;
   }
 
-  // ================== TRADUCCIÓN A LaTeX ==================
-  function prettyToLatex(pretty) {
-    if (!pretty) return "";
+  // 3. Sincronizar MathLive -> hidden inputs
+  function syncFromMathfield() {
+    const latex = mathfield.value || "";
 
-    let tex = pretty.trim();
+    if (latexInput) latexInput.value = latex;
 
-    // trig
-    tex = tex.replace(/\bsen\(/gi, "\\sin(");
-    tex = tex.replace(/\btg\(/gi, "\\tan(");
-    tex = tex.replace(/\btan\(/gi, "\\tan(");
-    tex = tex.replace(/\bcos\(/gi, "\\cos(");
-    tex = tex.replace(/\basen\(/gi, "\\arcsin(");
-    tex = tex.replace(/\bacos\(/gi, "\\arccos(");
-    tex = tex.replace(/\batan\(/gi, "\\arctan(");
+    const pretty = latexToPretty(latex);
+    const real = translateToReal(pretty);
 
-    // logs
-    tex = tex.replace(/\bln\(/gi, "\\ln(");
-    tex = tex.replace(/log10\(/gi, "\\log_{10}(");
-    tex = tex.replace(/log₁₀\(/gi, "\\log_{10}(");
-    // log_b( -> \log_{b}(
-    tex = tex.replace(/log_([0-9A-Za-z]+)\s*\(/g, "\\log_{$1}(");
-
-    // raíz
-    tex = tex.replace(/√\(([^)]+)\)/g, "\\sqrt{$1}");
-    tex = tex.replace(/√([A-Za-z0-9]+)/g, "\\sqrt{$1}");
-
-    // constantes
-    tex = tex.replace(/π/g, "\\pi");
-
-    // fracciones
-    tex = tex.replace(/\(([^)]+)\)\s*\/\s*\(([^)]+)\)/g, "\\frac{$1}{$2}");
-    tex = tex.replace(/(\d+)\s*\/\s*(\d+)/g, "\\frac{$1}{$2}");
-
-    // potencias
-    tex = tex.replace(
-      /([A-Za-z0-9\)\]])\^\(([^)]+)\)/g,
-      "$1^{ $2 }"
-    );
-    tex = tex.replace(
-      /([A-Za-z0-9\)\]])\^(-?[A-Za-z0-9]+)/g,
-      "$1^{ $2 }"
-    );
-
-    return tex;
+    if (realInput) realInput.value = real;
   }
 
-  // ================== SINCRONIZAR INPUTS ==================
-  function syncRealAndDisplay() {
-    const pretty = prettyInput.value;
-    realInput.value = translateToReal(pretty);
+  // sincronizar al inicio
+  syncFromMathfield();
+  mathfield.addEventListener("input", syncFromMathfield);
 
-    if (displaySpan) {
-      const latexBody = prettyToLatex(pretty);
+  // 4. Botones del teclado -> insertar LaTeX
+  document.querySelectorAll("[data-insert]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      let ins = btn.dataset.insert || "";
+      if (!mathfield) return;
 
-      if (!latexBody) {
-        displaySpan.textContent = "";
-        return;
+      // caso especial: potencia -> exponente con placeholder
+      if (ins === "^") {
+        ins = "^{\\placeholder{}}";
       }
 
-      const fullLatex = `\\(${latexBody} \\)`;
-      displaySpan.textContent = fullLatex;
+      // normalizar dobles backslash del HTML
+      ins = ins.replace(/\\\\/g, "\\");
 
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        MathJax.typesetPromise([displaySpan]).catch((err) =>
-          console.error("MathJax error:", err)
-        );
+      mathfield.focus();
+
+      if (typeof mathfield.insert === "function") {
+        mathfield.insert(ins, { format: "latex" });
+      } else {
+        mathfield.value = (mathfield.value || "") + ins;
       }
+
+      syncFromMathfield();
+    });
+  });
+
+  // 5. Forzar sync al enviar el formulario
+  const form = mathfield.closest("form");
+  if (form) {
+    form.addEventListener("submit", () => {
+      syncFromMathfield();
+    });
+  }
+
+  // 6. Personalizar menú contextual de MathLive
+  function setupMenu() {
+    const menuItems = mathfield.menuItems;
+    if (!Array.isArray(menuItems) || menuItems.length === 0) return;
+
+    const removeIds = new Set([
+      "insert-matrix",
+      "mode",
+      "ink-color",
+      "background-color",
+      "highlight-color",
+      "color",
+      "outline-color",
+      "border-color",
+    ]);
+
+    const filtered = menuItems.filter((item) => {
+      if (!item || !item.id) return true;
+      return !removeIds.has(item.id);
+    });
+
+    if (filtered.length > 0) {
+      mathfield.menuItems = filtered;
     }
   }
 
-  syncRealAndDisplay();
+  if (mathfield.menuItems && mathfield.menuItems.length > 0) {
+    setupMenu();
+  }
 
-  prettyInput.addEventListener("input", syncRealAndDisplay);
-  prettyInput.addEventListener("paste", function () {
-    setTimeout(syncRealAndDisplay, 0);
+  mathfield.addEventListener("mount", setupMenu);
+
+  const observer = new MutationObserver(() => {
+    if (mathfield.menuItems && mathfield.menuItems.length > 0) {
+      setupMenu();
+      observer.disconnect();
+    }
   });
 
-  // ================== TECLADO ==================
-  document.querySelectorAll("[data-insert]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const ins = btn.dataset.insert || "";
-      if (!prettyInput) return;
-
-      const start = prettyInput.selectionStart || prettyInput.value.length;
-      const end = prettyInput.selectionEnd || start;
-      const v = prettyInput.value;
-
-      let toInsert = ins;
-      let cursorPos = start + toInsert.length;
-
-      // botones que terminan en "(" → dejar cursor dentro
-      if (ins.endsWith("(")) {
-        toInsert = ins;
-        cursorPos = start + toInsert.length;
-      } else if (ins === "| |") {
-        // botón para |x|
-        toInsert = "||";
-        cursorPos = start + 1;
-      }
-
-      prettyInput.value = v.slice(0, start) + toInsert + v.slice(end);
-      prettyInput.focus();
-      prettyInput.setSelectionRange(cursorPos, cursorPos);
-
-      syncRealAndDisplay();
-    });
-  });
+  observer.observe(mathfield, { attributes: true, childList: true, subtree: true });
 })();
