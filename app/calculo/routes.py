@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
-from sympy import symbols, sympify, limit, oo, N, diff, latex 
+from sympy import symbols, sympify, limit, oo, N, latex, diff, integrate
+from builtins import str as py_str
 import re
 import math
 
@@ -47,7 +48,6 @@ def limites():
     resultado_limite = None
     error_msg = None
     datos = {
-        "funcion_pretty": "",
         "funcion": "",
         "funcion_latex": "",
         "a": "",
@@ -56,20 +56,20 @@ def limites():
     
     if request.method == "POST":
         try:
-            func_pretty = request.form.get("funcion_pretty", "").strip()
-            expr = request.form.get("funcion", "").strip()
-            a_str = request.form.get("a", "").strip()
-            dir_str = request.form.get("dir", "").strip()
+            # Lo que viene del MathField + Newton.js
+            expr = (request.form.get("funcion") or "").strip()
+            latex_input = (request.form.get("funcion_latex") or "").strip()
+            a_str = (request.form.get("a") or "").strip()
+            dir_str = (request.form.get("dir") or "").strip()
 
-            if not func_pretty or not expr:
+            if not expr:
                 raise ValueError("Debes ingresar la función f(x).")
             if not a_str:
                 raise ValueError("Debes ingresar el punto de límite 'a'.")
 
             datos.update({
-                "funcion_pretty": func_pretty,
                 "funcion": expr,
-                "funcion_latex": pretty_to_latex(func_pretty),
+                "funcion_latex": latex_input,
                 "a": a_str,
                 "dir": dir_str,
             })
@@ -77,30 +77,40 @@ def limites():
             x = symbols("x")
             f_sym = sympify(expr)
             a_sym = safe_sympify(a_str)
-            
-            dir_calculo = dir_str if dir_str in ["+", "-"] else "+"
-            
-            limite_calculado = limit(f_sym, x, a_sym, dir=dir_calculo)
-            
-            if str(limite_calculado).replace("oo", "∞").replace("-oo", "-∞") in ["∞", "-∞"] or limite_calculado.has(oo):
-                limite_display = str(limite_calculado).replace("oo", "∞")
+
+            # Límite lateral si dir = '+' o '-', bilateral si está vacío
+            if dir_str in ["+", "-"]:
+                limite_calculado = limit(f_sym, x, a_sym, dir=dir_str)
+            else:
+                limite_calculado = limit(f_sym, x, a_sym)
+
+            # ----------------- FORMATO PARA MOSTRAR -----------------
+            s_lim = py_str(limite_calculado)
+
+            if s_lim.replace("oo", "∞").replace("-oo", "-∞") in ["∞", "-∞"] or limite_calculado.has(oo):
+                limite_display = s_lim.replace("oo", "∞")
             else:
                 limite_display = N(limite_calculado, 6)
-                limite_display = str(limite_display).replace("E", "e")
+                limite_display = py_str(limite_display).replace("E", "e")
 
-            if str(a_sym) in ["oo", "-oo"]:
-                limite_expresion = f"\\lim_{{x \\to {a_str.replace('oo', '\\infty').replace('-', '-')}}} f(x)"
+            # LaTeX bonito del valor del límite
+            valor_latex = latex(limite_calculado)
+
+            # Notación LaTeX del límite
+            if py_str(a_sym) in ["oo", "-oo"]:
+                limite_expresion = f"\\lim_{{x \\to {a_str.replace('oo', '\\\\infty')}}} f(x)"
             elif dir_str == "+":
-                 limite_expresion = f"\\lim_{{x \\to {a_str}^+}} f(x)"
+                limite_expresion = f"\\lim_{{x \\to {a_str}^+}} f(x)"
             elif dir_str == "-":
-                 limite_expresion = f"\\lim_{{x \\to {a_str}}}^- f(x)"
+                limite_expresion = f"\\lim_{{x \\to {a_str}^-}} f(x)"
             else:
-                 limite_expresion = f"\\lim_{{x \\to {a_str}}} f(x)"
+                limite_expresion = f"\\lim_{{x \\to {a_str}}} f(x)"
 
             resultado_limite = {
-                "expresion": limite_expresion,
-                "valor_simbolico": str(limite_calculado),
-                "valor_display": str(limite_display),
+                "expresion": limite_expresion,          # LaTeX de la notación de límite
+                "valor_simbolico": s_lim,               # string "y**2 + 3"
+                "valor_display": limite_display,        # número aproximado o ∞
+                "valor_latex": valor_latex,             # LaTeX del resultado (y^{2} + 3)
             }
 
         except ValueError as e:
@@ -115,31 +125,30 @@ def limites():
         error_msg=error_msg,
     )
 
-
 @calculo_bp.route("/derivadas", methods=["GET", "POST"])
 def derivadas():
     resultado_derivada = None
     error_msg = None
     
     datos = {
-        "funcion_pretty": "",
         "funcion": "",
         "funcion_latex": "",
-        "orden": "1"
+        "orden": "1",
     }
 
     if request.method == "POST":
         try:
-            func_pretty = request.form.get("funcion_pretty", "").strip()
-            expr = request.form.get("funcion", "").strip()
-            orden_str = request.form.get("orden", "1").strip()
+            # Lo que viene del MathField + Newton.js
+            expr = (request.form.get("funcion") or "").strip()
+            latex_input = (request.form.get("funcion_latex") or "").strip()
+            orden_str = (request.form.get("orden") or "1").strip()
             
-            if not func_pretty or not expr:
+            if not expr:
                 raise ValueError("Debes ingresar la función f(x).")
             
             orden = int(orden_str)
             if orden < 1:
-                 raise ValueError("El orden de la derivada debe ser al menos 1.")
+                raise ValueError("El orden de la derivada debe ser al menos 1.")
 
             x = symbols("x")
             f_sym = sympify(expr)
@@ -163,32 +172,21 @@ def derivadas():
                 derivadas_pasos.append({
                     "orden": n,
                     "expresion_latex": expresion,
-                    "es_final": (n == orden)
+                    "es_final": (n == orden),
                 })
 
-            # El resultado final es el último elemento de la lista
-            # fprime_sym = f_n_sym 
-            #Ya está guardado de la última iteración
-            
-            if orden == 1:
-                # La expresión final se toma del último paso calculado
-                derivada_expresion = derivadas_pasos[-1]["expresion_latex"]
-            else:
-                 # La expresión final se toma del último paso calculado
-                 derivada_expresion = derivadas_pasos[-1]["expresion_latex"]
-
+            # La expresión final es la del último paso calculado
+            derivada_expresion = derivadas_pasos[-1]["expresion_latex"]
             
             datos.update({
-                "funcion_pretty": func_pretty,
                 "funcion": expr,
-                "funcion_latex": pretty_to_latex(func_pretty),
+                "funcion_latex": latex_input,
                 "orden": orden_str,
             })
             
             resultado_derivada = {
-                # "operador": operador_latex, # Esto ya no se usa
-                "derivada_latex": derivada_expresion, # La derivada final
-                "pasos": derivadas_pasos, # Lista de todas las derivadas
+                "derivada_latex": derivada_expresion,  # La derivada final
+                "pasos": derivadas_pasos,              # Todas las derivadas intermedias
             }
 
         except ValueError as e:
@@ -202,6 +200,7 @@ def derivadas():
         resultado_derivada=resultado_derivada,
         error_msg=error_msg,
     )
+
 
 
 @calculo_bp.route("/integrales", methods=["GET", "POST"])

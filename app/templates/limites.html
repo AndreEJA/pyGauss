@@ -13,6 +13,43 @@
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
 ></script>
 
+<!-- MathLive -->
+<script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
+
+<style>
+  /* Ocultar botones del teclado virtual y menú interno de MathLive */
+  math-field::part(virtual-keyboard-toggle),
+  math-field::part(menu-toggle) {
+    display: none !important;
+  }
+
+  /* ===== MODO CLARO ===== */
+  math-field {
+    border: 1px solid rgb(203 213 225);  /* slate-300 */
+    background-color: #ffffff;
+    color: #0f172a; /* slate-900 */
+  }
+
+  math-field::part(content) {
+    color: inherit;
+  }
+
+  /* ===== MODO OSCURO ===== */
+  .dark math-field {
+    background-color: #1e293b; /* slate-800 */
+    border-color: #334155;     /* slate-700 */
+    color: #e2e8f0;            /* slate-200 */
+  }
+
+  .dark math-field::part(content) {
+    color: #e2e8f0;
+  }
+
+  .dark math-field::part(placeholder) {
+    color: #64748b; /* slate-500 */
+  }
+</style>
+
 <header
   class="text-center py-10 px-4 bg-white rounded-3xl shadow-xl mb-8 border border-slate-200"
 >
@@ -49,36 +86,28 @@
 
     <form method="POST" class="space-y-4">
 
-      {# -------- FUNCIÓN + TECLADO -------- #}
+      {# -------- FUNCIÓN + TECLADO (MathLive) -------- #}
       <div>
         <label class="block text-sm font-medium text-slate-700 mb-1">
           Función f(x)
         </label>
 
-        <div class="relative">
-          <div
-            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm transition
-                   focus-within:border-rose-500 focus-within:ring-2 focus-within:ring-rose-500/40"
-          >
-            <span
-              id="funcion_display"
-              class="block text-slate-900 min-h-[1.4rem]"
-            ></span>
-          </div>
+        <!-- Campo MathLive -->
+        <math-field
+          id="funcion_mf"
+          math-virtual-keyboard-policy="manual"
+          style="
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+          "
+          class="shadow-sm"
+        >
+          {{ datos.funcion_latex|default('')|safe }}
+        </math-field>
 
-          <input
-            type="text"
-            id="funcion_pretty"
-            name="funcion_pretty"
-            value="{{ datos.funcion_pretty|default('') }}"
-            class="absolute inset-0 w-full h-full bg-transparent border-none outline-none text-transparent caret-slate-800 px-3 py-2"
-            placeholder="Ej: (x^2 - 4) / (x - 2)"
-            autocomplete="off"
-            required
-            spellcheck="false"
-          />
-        </div>
-
+        <!-- ocultos: versión Python y LaTeX que viajan al backend -->
         <input
           type="hidden"
           id="funcion_real"
@@ -92,6 +121,7 @@
           value="{{ datos.funcion_latex|default('') }}"
         />
 
+        <!-- TECLADO MATEMÁTICO PERSONALIZADO (como Newton/Bisección) -->
         <div
           class="mt-3 bg-white rounded-2xl p-3 border border-slate-200 max-h-64 overflow-y-auto"
         >
@@ -102,30 +132,32 @@
 
             <button type="button" class="{{ btn }}" data-insert="x">x</button>
             <button type="button" class="{{ btn }}" data-insert="y">y</button>
-            <button type="button" class="{{ btn }}" data-insert="π">π</button>
+            <button type="button" class="{{ btn }}" data-insert="\\pi">π</button>
             <button type="button" class="{{ btn }}" data-insert="e">e</button>
             <button type="button" class="{{ btn }}" data-insert="(">(</button>
             <button type="button" class="{{ btn }}" data-insert=")">)</button>
 
             <button type="button" class="{{ btn }}" data-insert="+">+</button>
             <button type="button" class="{{ btn }}" data-insert="-">−</button>
-            <button type="button" class="{{ btn }}" data-insert="×">×</button>
-            <button type="button" class="{{ btn }}" data-insert="÷">÷</button>
+            <button type="button" class="{{ btn }}" data-insert="\\cdot">×</button>
+            <button type="button" class="{{ btn }}" data-insert="\\frac{}{}">÷</button>
             <button type="button" class="{{ btn }}" data-insert="^">^</button>
-            <button type="button" class="{{ btn }}" data-insert="√(">√</button>
+            <button type="button" class="{{ btn }}" data-insert="\\sqrt{}">√</button>
 
-            <button type="button" class="{{ btn }}" data-insert="| |">|x|</button>
-            <button type="button" class="{{ btn }}" data-insert="oo">∞</button>
-            <button type="button" class="{{ btn }} px-1" data-insert="(a)/(b)">a/b</button>
+            <button type="button" class="{{ btn }}" data-insert="\\left|\\right|">|x|</button>
+            <button type="button" class="{{ btn }}" data-insert="\\infty">∞</button>
+            <button type="button" class="{{ btn }} px-1" data-insert="\\frac{a}{b}">a/b</button>
+            <button type="button" class="{{ btn }}" data-insert="a + \\frac{b}{c}">a b/c</button>
+            <button type="button" class="{{ btn }}" data-insert="^">xⁿ</button>
 
-            <button type="button" class="{{ btn }}" data-insert="sen(">sen</button>
-            <button type="button" class="{{ btn }}" data-insert="cos(">cos</button>
-            <button type="button" class="{{ btn }} py-2 leading-normal" data-insert="tg(">tg</button>
+            <button type="button" class="{{ btn }}" data-insert="\\sin(">sen</button>
+            <button type="button" class="{{ btn }}" data-insert="\\cos(">cos</button>
+            <button type="button" class="{{ btn }} py-2 leading-normal" data-insert="\\tan(">tg</button>
 
-            <button type="button" class="{{ btn }}" data-insert="ln(">ln</button>
-            <button type="button" class="{{ btn }}" data-insert="log10(">log<sub>10</sub></button>
-            <button type="button" class="{{ btn }}" data-insert="e^(">eˣ</button>
-            
+            <button type="button" class="{{ btn }}" data-insert="\\ln(">ln</button>
+            <button type="button" class="{{ btn }}" data-insert="\\log_{10}(">log<sub>10</sub></button>
+            <button type="button" class="{{ btn }}" data-insert="e^">eˣ</button>
+            <button type="button" class="{{ btn }}" data-insert="10^">10ˣ</button>
           </div>
         </div>
       </div>
@@ -193,16 +225,18 @@
     <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center">
         <h3 class="text-base font-semibold text-slate-800 mb-2">Límite Calculado</h3>
         <div class="text-2xl font-extrabold text-slate-900">
-            \[ {{ resultado_limite.expresion|safe }} = {{ resultado_limite.valor_display|safe }} \]
+          \[ {{ resultado_limite.expresion|safe }} = {{ resultado_limite.valor_latex|safe }} \]
         </div>
         <p class="mt-3 text-xs text-slate-500">
-            Valor simbólico exacto: <code class="bg-white px-1 py-0.5 rounded border border-slate-200">{{ resultado_limite.valor_simbolico }}</code>
+          Valor simbólico exacto:
+          <code class="bg-white px-1 py-0.5 rounded border border-slate-200">
+            {{ resultado_limite.valor_simbolico }}
+          </code>
         </p>
-    </div>
 
     {% else %}
     <p class="text-sm text-slate-500">
-      Aún no se ha calculado el límite. Ingrese la función y el punto de límite en 
+      Aún no se ha calculado el límite. Ingresa la función y el punto de límite en 
       <span class="font-semibold">Datos de entrada</span>
       y pulsa “Calcular Límite”.
     </p>
@@ -210,6 +244,7 @@
   </div>
 </section>
 
-<script src="{{ url_for('static', filename='js/biseccion.js') }}"></script>
+<!-- JS común de MathLive (el mismo que Newton/Bisección/Regla Falsa) -->
+<script defer src="{{ url_for('static', filename='js/Newton.js') }}"></script>
 
 {% endblock %}

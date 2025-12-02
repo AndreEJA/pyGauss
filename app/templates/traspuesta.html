@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 {% block content %}
 <div class="space-y-8">
@@ -25,19 +24,21 @@
       <table id="tabla-A" class="matrix-table w-full"></table>
     </div>
 
-    <div class="kbd-row mt-3">
-      <button class="kbd" data-ins="pi">π</button>
-      <button class="kbd" data-ins="e">e</button>
-      <button class="kbd" data-ins="sqrt()">√</button>
-      <button class="kbd" data-ins="sin()">sin</button>
-      <button class="kbd" data-ins="cos()">cos</button>
-      <button class="kbd" data-ins="tan()">tan</button>
-      <button class="kbd" data-ins="^">x^</button>
-      <button class="kbd" data-ins="/">/</button>
-      <button class="kbd" data-ins="(">(</button>
-      <button class="kbd" data-ins=")">)</button>
-      <button class="kbd" data-ins="+">+</button>
-      <button class="kbd" data-ins="-">-</button>
+    <!-- TECLADO: AHORA CON ESTILO TIPO "KEY" -->
+    <div class="keypad mt-3">
+      <button class="key" data-ins="(">(</button>
+      <button class="key" data-ins=")">)</button>
+      <button class="key" data-ins="+">+</button>
+      <button class="key" data-ins="-">−</button>
+      <button class="key" data-ins="*">×</button>
+      <button class="key" data-ins="/">÷</button>
+      <button class="key" data-ins="^">x^</button>
+      <button class="key" data-ins="sqrt()">√</button>
+      <button class="key" data-ins="sin()">sin</button>
+      <button class="key" data-ins="cos()">cos</button>
+      <button class="key" data-ins="tan()">tan</button>
+      <button class="key" data-ins="pi">π</button>
+      <button class="key" data-ins="e">e</button>
     </div>
 
     <div class="mt-4 flex gap-3">

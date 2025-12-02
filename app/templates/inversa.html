@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 {% block content %}
 <div class="space-y-8">
@@ -13,7 +12,9 @@
         <button id="btn-crear" class="btn-primary w-full">Crear Matriz</button>
       </div>
     </div>
-    <p class="text-sm text-slate-600 mt-2">n ≥ 2. Para 2×2 se aplica la fórmula explícita; para n &gt; 2 se usa Gauss‑Jordan sobre [A | I].</p>
+    <p class="text-sm text-slate-600 mt-2">
+      n ≥ 2. Para 2×2 se aplica la fórmula explícita; para n &gt; 2 se usa Gauss-Jordan sobre [A | I].
+    </p>
   </section>
 
   <section id="zona-matriz" class="panel hidden">
@@ -22,19 +23,20 @@
       <table id="tabla-A" class="matrix-table w-full"></table>
     </div>
 
-    <div class="kbd-row mt-3">
-      <button class="kbd" data-ins="pi">π</button>
-      <button class="kbd" data-ins="e">e</button>
-      <button class="kbd" data-ins="sqrt()">√</button>
-      <button class="kbd" data-ins="sin()">sin</button>
-      <button class="kbd" data-ins="cos()">cos</button>
-      <button class="kbd" data-ins="tan()">tan</button>
-      <button class="kbd" data-ins="^">x^</button>
-      <button class="kbd" data-ins="/">/</button>
-      <button class="kbd" data-ins="(">(</button>
-      <button class="kbd" data-ins=")">)</button>
-      <button class="kbd" data-ins="+">+</button>
-      <button class="kbd" data-ins="-">-</button>
+    <!-- TECLADO: .kbd (para JS) + .key (para estilo) -->
+    <div class="kbd-row keypad mt-3">
+      <button class="kbd key" data-ins="(">(</button>
+      <button class="kbd key" data-ins=")">)</button>
+      <button class="kbd key" data-ins="+">+</button>
+      <button class="kbd key" data-ins="-">−</button>
+      <button class="kbd key" data-ins="^">x^</button>
+      <button class="kbd key" data-ins="sqrt()">√</button>
+      <button class="kbd key" data-ins="sin()">sin</button>
+      <button class="kbd key" data-ins="cos()">cos</button>
+      <button class="kbd key" data-ins="tan()">tan</button>
+      <button class="kbd key" data-ins="/">÷</button>
+      <button class="kbd key" data-ins="pi">π</button>
+      <button class="kbd key" data-ins="e">e</button>
     </div>
 
     <div class="mt-4 flex gap-3">
