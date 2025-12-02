@@ -201,81 +201,86 @@ def derivadas():
         error_msg=error_msg,
     )
 
-
-
 @calculo_bp.route("/integrales", methods=["GET", "POST"])
 def integrales():
     resultado_integral = None
     error_msg = None
     
-    # Valores por defecto para el formulario
     datos = {
-        "funcion_pretty": "",
         "funcion": "",
         "funcion_latex": "",
         "tipo_integral": "indefinida", 
         "limite_a": "",
         "limite_b": "",
+        "funcion_pretty": "" 
     }
 
     if request.method == "POST":
         try:
-            func_pretty = request.form.get("funcion_pretty", "").strip()
             expr = request.form.get("funcion", "").strip()
+            func_pretty = request.form.get("funcion_pretty", "").strip()
+            
+            if not expr and func_pretty:
+                expr = func_pretty
+
+            # --- LIMPIEZA DE ENTRADA (INT / DX) ---
+            expr = re.sub(r'^\\int(?:_\{.*?\}\^\{.*?\})?\s*', '', expr)
+            expr = re.sub(r'(\*|\\,)?\s*d[a-zA-Z]\s*$', '', expr)
+            expr = expr.strip()
+
+            if not expr:
+                raise ValueError("Debes ingresar la función $f(x)$ a integrar.")
+
             tipo_integral = request.form.get("tipo_integral", "indefinida").strip()
             limite_a_str = request.form.get("limite_a", "").strip()
             limite_b_str = request.form.get("limite_b", "").strip()
+            latex_input = request.form.get("funcion_latex", "").strip()
 
-            if not func_pretty or not expr:
-                raise ValueError("Debes ingresar la función $f(x)$ a integrar.")
-
-            # Validación específica para integral definida
-            if tipo_integral == "definida":
-                if not limite_a_str or not limite_b_str:
-                    raise ValueError("Debes ingresar los límites inferior (a) y superior (b) para una integral definida.")
-            
             datos.update({
-                "funcion_pretty": func_pretty,
                 "funcion": expr,
-                "funcion_latex": pretty_to_latex(func_pretty),
+                "funcion_latex": latex_input if latex_input else pretty_to_latex(expr),
                 "tipo_integral": tipo_integral,
                 "limite_a": limite_a_str,
                 "limite_b": limite_b_str,
+                "funcion_pretty": func_pretty
             })
 
             x = symbols("x")
             f_sym = sympify(expr)
             
             if tipo_integral == "definida":
-                # Integral Definida: integrate(f, (x, a, b))
+                if not limite_a_str or not limite_b_str:
+                    raise ValueError("Debes ingresar los límites inferior (a) y superior (b).")
+                
                 a_sym = safe_sympify(limite_a_str)
                 b_sym = safe_sympify(limite_b_str)
                 
-                # 1. Cálculo de la integral definida
                 integral_sym = integrate(f_sym, (x, a_sym, b_sym))
+                resultado_final_latex = latex(integral_sym, ln_notation=True)
                 
-                # 2. Formato LaTeX
-                integral_latex = latex(integral_sym)
+                # Intentamos también poner valor absoluto en el resultado definido si fuera simbólico
+                resultado_final_latex = re.sub(r"\\ln\s*\\{\\left\((.*?)\\right\)\\}", r"\\ln{\\left|\1\\right|}", resultado_final_latex)
+
+                la = limite_a_str.replace('oo', '\\infty').replace('inf', '\\infty')
+                lb = limite_b_str.replace('oo', '\\infty').replace('inf', '\\infty')
                 
-                # Expresión para mostrar en el lado izquierdo de la ecuación
-                expresion_latex = f"\\int_{{{limite_a_str.replace('oo', '\\infty').replace('-', '-')}}}^{{{limite_b_str.replace('oo', '\\infty').replace('-', '-')}}} f(x) \\, dx"
-                
-                # El resultado es el valor numérico/simbólico sin + C
-                resultado_final_latex = integral_latex
+                expresion_latex = f"\\int_{{{la}}}^{{{lb}}} {latex(f_sym, ln_notation=True)} \\, dx"
                 
             else:
-                # Integral Indefinida: integrate(f, x)
-                # 1. Cálculo de la integral indefinida
+                # INTEGRAL INDEFINIDA
                 integral_sym = integrate(f_sym, x)
                 
-                # 2. Formato LaTeX
-                integral_latex = latex(integral_sym)
+                # 1. Obtenemos LaTeX base con notación 'ln'
+                raw_latex = latex(integral_sym, ln_notation=True)
                 
-                # Expresión para mostrar en el lado izquierdo de la ecuación
-                expresion_latex = f"\\int f(x) \\, dx"
+                # 2. TRUCO DE VALOR ABSOLUTO:
+                # Reemplazamos \ln{\left( ... \right)} por \ln{\left| ... \right|}
+                # Esto convierte ln(u) en ln|u| visualmente.
+                final_latex = re.sub(r"\\ln\s*\\{\\left\((.*?)\\right\)\\}", r"\\ln{\\left|\1\\right|}", raw_latex)
                 
-                # Añadimos la constante de integración 'C'
-                resultado_final_latex = f"{integral_latex} + C"
+                resultado_final_latex = f"{final_latex} + C"
+                
+                expresion_latex = f"\\int {latex(f_sym, ln_notation=True)} \\, dx"
             
             resultado_integral = {
                 "expresion": expresion_latex,
@@ -286,7 +291,6 @@ def integrales():
             error_msg = f"Error en los datos de entrada: {e}"
         except Exception as e:
             error_msg = f"Error al calcular la integral: {e}"
-            # import traceback; traceback.print_exc() 
 
     return render_template(
         "integrales.html",

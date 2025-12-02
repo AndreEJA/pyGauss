@@ -13,6 +13,58 @@
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
 ></script>
 
+<script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
+
+<style>
+  /* Ocultar teclado virtual nativo de MathLive y menú */
+  math-field::part(virtual-keyboard-toggle),
+  math-field::part(menu-toggle) {
+    display: none !important;
+  }
+
+  /* ===== MODO CLARO ===== */
+  math-field {
+    display: block;             /* <--- FORZAR BLOQUE */
+    width: 100%;                /* <--- OCUPAR TODO EL ANCHO */
+    box-sizing: border-box;     /* <--- EVITAR DESBORDES */
+    border: 1px solid rgb(203 213 225);
+    background-color: #ffffff;
+    color: #0f172a;
+    padding: 0.6rem 0.75rem;    /* Un poco más de aire */
+    border-radius: 0.75rem;
+    font-size: 1rem;            /* Texto un poco más grande para leer mejor */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease-in-out;
+  }
+
+  /* Efecto de foco para que se vea activo */
+  math-field:focus-within {
+    outline: none;
+    border-color: #f43f5e;      /* Color de acento (rose-500) */
+    ring: 2px solid rgba(244, 63, 94, 0.2); 
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1);
+  }
+
+  math-field::part(content) {
+    color: inherit;
+  }
+
+  /* ===== MODO OSCURO ===== */
+  .dark math-field {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+  }
+
+  .dark math-field::part(content) {
+    color: #e2e8f0;
+  }
+
+  .dark math-field::part(placeholder) {
+    color: #64748b;
+  }
+</style>
+
 <header
   class="text-center py-10 px-4 bg-white rounded-3xl shadow-xl mb-8 border border-slate-200"
 >
@@ -20,7 +72,7 @@
     Integrales
   </h1>
   <p class="text-slate-600 max-w-2xl mx-auto mb-2">
-    Calcula la integral indefinida o definida.
+    Calcula la integral indefinida o definida usando notación matemática real.
   </p>
   <div class="flex justify-center mt-4">
     <div class="text-slate-800 text-lg">
@@ -49,49 +101,28 @@
 
     <form method="POST" class="space-y-4">
 
-      {# -------- FUNCIÓN + TECLADO (Igual que antes) -------- #}
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">
-          Función a integrar $f(x)$
+        <label class="block text-sm font-medium text-slate-700 mb-1" title="Inserta el simbolo de la integral">
+          Función a integrar f(x).
         </label>
 
-        <div class="relative">
-          <div
-            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm transition
-                   focus-within:border-rose-500 focus-within:ring-2 focus-within:ring-rose-500/40"
-          >
-            <span
-              id="funcion_display"
-              class="block text-slate-900 min-h-[1.4rem]"
-            >
-              {{ datos.funcion_pretty|default('') }}
-            </span>
-          </div>
-
-          <input
-            type="text"
-            id="funcion_pretty"
-            name="funcion_pretty"
-            value="{{ datos.funcion_pretty|default('') }}"
-            class="absolute inset-0 w-full h-full bg-transparent border-none outline-none text-transparent caret-slate-800 px-3 py-2"
-            placeholder="Ej: x^2 + cos(x)"
-            autocomplete="off"
-            required
-            spellcheck="false"
-          />
-        </div>
+        <math-field id="funcion_mf" math-virtual-keyboard-policy="manual">
+          {{ datos.funcion_latex|default('')|safe }}
+        </math-field>
 
         <input
           type="hidden"
           id="funcion_real"
           name="funcion"
           value="{{ datos.funcion|default('') }}"
+          title="Inserta el simbolo de la integral"
         />
         <input
           type="hidden"
           id="funcion_latex"
           name="funcion_latex"
           value="{{ datos.funcion_latex|default('') }}"
+          title="Inserta el simbolo de la integral"
         />
 
         <div
@@ -104,35 +135,36 @@
 
             <button type="button" class="{{ btn }}" data-insert="x">x</button>
             <button type="button" class="{{ btn }}" data-insert="y">y</button>
-            <button type="button" class="{{ btn }}" data-insert="π">π</button>
+            <button type="button" class="{{ btn }}" data-insert="\pi">π</button>
             <button type="button" class="{{ btn }}" data-insert="e">e</button>
             <button type="button" class="{{ btn }}" data-insert="(">(</button>
             <button type="button" class="{{ btn }}" data-insert=")">)</button>
 
             <button type="button" class="{{ btn }}" data-insert="+">+</button>
             <button type="button" class="{{ btn }}" data-insert="-">−</button>
-            <button type="button" class="{{ btn }}" data-insert="×">×</button>
-            <button type="button" class="{{ btn }}" data-insert="÷">÷</button>
+            <button type="button" class="{{ btn }}" data-insert="\cdot">×</button>
+            <button type="button" class="{{ btn }}" data-insert="\frac{}{}">÷</button>
             <button type="button" class="{{ btn }}" data-insert="^">^</button>
-            <button type="button" class="{{ btn }}" data-insert="√(">√</button>
+            <button type="button" class="{{ btn }}" data-insert="\sqrt{}">√</button>
 
-            <button type="button" class="{{ btn }}" data-insert="| |">|x|</button>
-            <button type="button" class="{{ btn }} px-1" data-insert="(a)/(b)">a/b</button>
+            <button type="button" class="{{ btn }}" data-insert="\int \left( \placeholder{} \right) dx">∫</button>
+
+            <button type="button" class="{{ btn }}" data-insert="\left|\right|">|x|</button>
+            <button type="button" class="{{ btn }} px-1" data-insert="\frac{a}{b}">a/b</button>
             <button type="button" class="{{ btn }}" data-insert="^">xⁿ</button>
 
-            <button type="button" class="{{ btn }}" data-insert="sen(">sen</button>
-            <button type="button" class="{{ btn }}" data-insert="cos(">cos</button>
-            <button type="button" class="{{ btn }} py-2 leading-normal" data-insert="tg(">tg</button>
+            <button type="button" class="{{ btn }}" data-insert="\sin(">sen</button>
+            <button type="button" class="{{ btn }}" data-insert="\cos(">cos</button>
+            <button type="button" class="{{ btn }} py-2 leading-normal" data-insert="\tan(">tg</button>
 
-            <button type="button" class="{{ btn }}" data-insert="ln(">ln</button>
-            <button type="button" class="{{ btn }}" data-insert="log10(">log<sub>10</sub></button>
-            <button type="button" class="{{ btn }}" data-insert="e^(">eˣ</button>
+            <button type="button" class="{{ btn }}" data-insert="\ln(">ln</button>
+            <button type="button" class="{{ btn }}" data-insert="\log_{10}(">log<sub>10</sub></button>
+            <button type="button" class="{{ btn }}" data-insert="e^">eˣ</button>
             
           </div>
         </div>
       </div>
       
-      {# -------- TIPO DE INTEGRAL Y LÍMITES -------- #}
       <div class="grid gap-4 sm:grid-cols-2 mt-4">
         <label for="tipo_integral" class="block">
           <span class="block text-sm font-medium text-slate-700 mb-1">Tipo de Integral</span>
@@ -203,18 +235,18 @@
             El resultado es: 
         </p>
         <div class="text-2xl font-extrabold text-slate-900 mt-2">
-            \[ {{ resultado_integral.full_latex|safe }} \]
+            \[ {{ resultado_integral.expresion|safe }} = {{ resultado_integral.resultado_latex|safe }} \]
         </div>
         {% if datos.tipo_integral == "definida" %}
             <p class="mt-3 text-xs text-slate-500">
-                La integral definida se calcula como $F(b) - F(a)$.
+                La integral definida se calcula como <em>F(b) - F(a)</em>.
             </p>
         {% endif %}
     </div>
 
     {% else %}
     <p class="text-sm text-slate-500">
-      Aún no se ha calculado la integral. Ingrese la función $f(x)$ a integrar, seleccione el tipo de integral en 
+      Aún no se ha calculado la integral. Ingrese la función a integrar, seleccione el tipo de integral en 
       <span class="font-semibold">Datos de entrada</span>
       y pulsa “Calcular Integral”.
     </p>
@@ -222,7 +254,7 @@
   </div>
 </section>
 
-<script src="{{ url_for('static', filename='js/biseccion.js') }}"></script>
+<script src="{{ url_for('static', filename='js/newton.js') }}"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -239,8 +271,10 @@
         }
 
         // Ejecutar al cargar y al cambiar
-        toggleLimites();
-        tipoIntegralSelect.addEventListener('change', toggleLimites);
+        if (tipoIntegralSelect && limitesSection) {
+            toggleLimites();
+            tipoIntegralSelect.addEventListener('change', toggleLimites);
+        }
     });
 </script>
 {% endblock %}

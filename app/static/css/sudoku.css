@@ -1,0 +1,84 @@
+.sudoku-container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+#tablero-sudoku {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 0;
+    border: 2px solid var(--primary); /* Borde exterior grueso */
+    background-color: var(--border);
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.sudoku-celda {
+    aspect-ratio: 1;
+    background-color: var(--panel); /* Se adapta a modo claro/oscuro */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    position: relative;
+}
+
+/* Inputs dentro de las celdas */
+.sudoku-input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    background: transparent;
+    color: var(--primary); /* Color de texto adaptativo */
+    outline: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    caret-color: var(--accent);
+}
+
+/* Hover y Focus */
+.sudoku-celda:hover {
+    background-color: var(--soft);
+}
+
+.sudoku-input:focus {
+    background-color: rgba(225, 29, 72, 0.1); /* Tinte suave del accent */
+}
+
+/* Celdas predefinidas (pistas iniciales) */
+.sudoku-input.fija {
+    font-weight: 800;
+    color: var(--muted); /* Un color diferente para distinguir */
+    cursor: default;
+}
+
+/* Bordes gruesos para separar los cuadrantes 3x3 */
+.sudoku-celda:nth-child(3n) {
+    border-right: 2px solid var(--primary);
+}
+.sudoku-celda:nth-child(9n) {
+    border-right: none; /* El borde del contenedor ya lo cubre */
+}
+
+/* Bordes inferiores gruesos para filas 3 y 6 */
+/* Filas 3 (índices 19-27) y 6 (índices 46-54) son difíciles de seleccionar con nth-child simple en grid plano.
+   Usaremos una clase helper inyectada por JS o CSS Grid tricks. 
+   Aquí usaremos una solución robusta basada en la posición: */
+.borde-abajo {
+    border-bottom: 2px solid var(--primary) !important;
+}
+
+/* Validaciones */
+.sudoku-input.error {
+    color: #ef4444; /* Rojo error */
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.sudoku-input.exito {
+    color: #10b981; /* Verde éxito */
+    background-color: rgba(16, 185, 129, 0.1);
+}

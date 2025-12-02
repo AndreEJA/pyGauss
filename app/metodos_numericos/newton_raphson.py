@@ -1,43 +1,53 @@
-# app/metodos_numericos/newton_raphson.py
-from sympy import symbols, sympify, diff, lambdify
-
+from sympy import symbols, sympify, diff, lambdify, E
+import math
 
 def metodo_newton_raphson(expr_python, x0, es=1e-4, max_iter=50):
     """
-    Aplica el método de Newton-Raphson para encontrar una raíz de f(x) = 0.
-
-    expr_python: cadena con la función en sintaxis Python (x**2, sin(x), etc.)
-    x0: valor inicial (float)
-    es: error de convergencia (por ejemplo 0.0001)
-    max_iter: número máximo de iteraciones
+    Aplica el método de Newton-Raphson.
     """
     x = symbols('x')
 
-    # Expresión simbólica de la función
-    f_sym = sympify(expr_python)
+    # 1. Interpretar la función
+    try:
+        # Usamos locals para asegurar que 'e' se interprete como la constante matemática
+        f_sym = sympify(expr_python, locals={"e": E})
+    except Exception as e:
+        return {"error": f"Error de sintaxis en la función: {e}"}
 
-    # Derivada simbólica
+    # 2. Calcular derivada
     fprime_sym = diff(f_sym, x)
 
-    # Funciones numéricas para evaluar f(x) y f'(x)
-    f = lambdify(x, f_sym, 'math')
-    fprime = lambdify(x, fprime_sym, 'math')
+    # 3. Crear funciones numéricas (AQUÍ ESTABA EL ERROR ANTERIOR)
+    # Usamos modules=['math'] para forzar el uso de Python math standard
+    try:
+        f = lambdify(x, f_sym, modules=['math'])
+        fprime = lambdify(x, fprime_sym, modules=['math'])
+    except Exception as e:
+        return {"error": f"No se pudo compilar la función: {e}"}
 
     xi = float(x0)
     tabla = []
-    ea = None  # error aproximado
+    ea = None
 
     for i in range(1, max_iter + 1):
-        fx = f(xi)
-        fpx = fprime(xi)
+        try:
+            fx = f(xi)
+            fpx = fprime(xi)
+        except Exception as e:
+            # Capturamos errores como división por cero matemática o dominio
+            return {"error": f"Error matemático al evaluar en {xi:.4f}: {e}"}
 
+        # Evitar división por cero en el método
         if fpx == 0:
-            # Se detiene si la derivada es 0 para evitar división por 0
-            raise ValueError("La derivada f'(x) se hizo cero; el método no puede continuar.")
+            return {
+                "tabla": tabla, 
+                "raiz": None, 
+                "n_iter": i,
+                "error_metodo": "La derivada se hizo cero (división por cero). No se puede continuar."
+            }
 
         xi1 = xi - fx / fpx
 
-        # Error aproximado relativo
         if xi1 != 0:
             ea = abs((xi1 - xi) / xi1)
         else:
@@ -52,17 +62,17 @@ def metodo_newton_raphson(expr_python, x0, es=1e-4, max_iter=50):
             "ea": ea,
         })
 
-        # Criterio de parada
-        if ea is not None and ea < es:
+        if ea < es:
             xi = xi1
             break
 
         xi = xi1
 
-    resultado = {
+    # Retornamos un diccionario limpio
+    return {
         "tabla": tabla,
         "raiz": xi,
         "n_iter": len(tabla),
         "converge": (ea is not None and ea < es),
+        "derivada_latex": str(diff(f_sym, x)) # Simplificado para evitar errores de importación
     }
-    return resultado

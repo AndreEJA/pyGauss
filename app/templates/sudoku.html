@@ -1,10 +1,83 @@
-{% extends "base.html" %}
-{% block content %}
-<h1 class="text-2xl font-bold mb-4">Sudoku: Desafío de Matrices (9x9)</h1>
+{% extends "base.html" %} {% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+  <section
+    class="panel text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-6"
+  >
+    <div>
+      <h1 class="text-3xl font-extrabold text-slate-900 mb-2">
+        Sudoku Matricial
+      </h1>
+      <p class="text-slate-600 text-sm max-w-md">
+        Completa la matriz 9×9 de modo que cada fila, columna y submatriz 3×3
+        contenga los dígitos del 1 al 9.
+      </p>
+    </div>
 
-<div class="space-y-8">
-  <section class="panel final-card">
-    <h2 class="panel-title text-red-600">En Desarrollo</h2>
+    <div class="flex flex-col items-end gap-3 w-full md:w-auto">
+      <div class="flex items-center gap-2 w-full md:w-auto">
+        <span class="lbl mb-0">Pistas:</span>
+        <select id="sel-dificultad" class="input py-1 w-32">
+          <option value="45">Fácil (45)</option>
+          <option value="35" selected>Medio (35)</option>
+          <option value="25">Difícil (25)</option>
+        </select>
+      </div>
+      <div class="flex gap-2 w-full md:w-auto">
+        <button id="btn-nuevo" class="btn-primary flex-1 md:flex-none">
+          Nuevo Juego
+        </button>
+        <button
+          id="btn-resolver"
+          class="btn-ghost flex-1 md:flex-none text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+        >
+          Rendirse
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel flex flex-col items-center">
+    <div id="tablero-sudoku"></div>
+
+    <div class="flex flex-col items-center gap-4 w-full">
+      <button
+        id="btn-validar"
+        class="btn-accent w-full max-w-xs text-lg py-3 shadow-lg hover:scale-105 transition-transform"
+      >
+        ✓ Verificar Solución
+      </button>
+      <div id="estado-msg" class="h-6 font-semibold"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title">Conceptos de Álgebra</h2>
+    <div class="text-slate-700 space-y-3 text-sm">
+      <p>
+        El Sudoku es un ejemplo de
+        <strong>Restricción de Satisfacción</strong> en una matriz.
+      </p>
+      <ul class="list-disc ml-5 space-y-1">
+        <li>
+          <strong>Espacio Vectorial:</strong> El tablero es una matriz 9x9.
+        </li>
+        <li>
+          <strong>Restricciones Lineales:</strong> Para cada fila <em>i</em>, la suma
+          de elementos debe ser <em>45</em> (y deben ser únicos).
+          Lo mismo aplica para columnas y submatrices.
+        </li>
+        <li>
+          <strong>Permutaciones:</strong> Cada fila y columna válida es una
+          permutación del vector (1, 2, ..., 9).
+        </li>
+      </ul>
+    </div>
   </section>
 </div>
+{% endblock %} {% block extra_js %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/sudoku.css') }}"
+/>
+<script src="{{ url_for('static', filename='js/sudoku.js') }}"></script>
 {% endblock %}

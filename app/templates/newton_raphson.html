@@ -1,10 +1,14 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %} {% block content %}
 
 <script>
   window.MathJax = window.MathJax || {
-    tex: { inlineMath: [['\\(', '\\)'], ['\\[', '\\]']] },
-    svg: { fontCache: 'global' }
+    tex: {
+      inlineMath: [
+        ["\\(", "\\)"],
+        ["\\[", "\\]"],
+      ],
+    },
+    svg: { fontCache: "global" },
   };
 </script>
 <script
@@ -12,105 +16,126 @@
   async
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
 ></script>
-
 <script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
 
 <style>
-  /* Ocultamos toggles */
   math-field::part(virtual-keyboard-toggle),
   math-field::part(menu-toggle) {
-    display: none;
+    display: none !important;
   }
 
-  /* 💡 MODO CLARO */
+  /* MODO CLARO */
   math-field {
-    border: 1px solid rgb(203 213 225); /* slate-300 */
+    border: 1px solid rgb(203 213 225);
     background-color: #ffffff;
-    color: #0f172a; /* slate-900 */
+    color: #0f172a;
   }
-
   math-field::part(content) {
     color: inherit;
   }
 
-  /* 🖤 MODO OSCURO */
+  /* MODO OSCURO */
   .dark math-field {
-    background-color: #1e293b; /* slate-800 */
-    border-color: #334155;     /* slate-700 */
-    color: #e2e8f0;            /* texto claro */
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
   }
-
   .dark math-field::part(content) {
-    color: #e5e7eb;
+    color: #e2e8f0;
   }
-
   .dark math-field::part(placeholder) {
-    color: #64748b; /* slate-500 */
+    color: #64748b;
   }
 </style>
 
-{# ===================== CABECERA ===================== #}
 <header
-  class="text-center py-10 px-4
-         bg-white
-         rounded-3xl shadow-xl mb-8
-         border border-slate-200"
+  class="text-center py-10 px-4 bg-white rounded-3xl shadow-xl mb-8 border border-slate-200"
 >
   <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 mb-3">
     Método de Newton-Raphson
   </h1>
-
   <p class="text-slate-600 max-w-2xl mx-auto mb-2">
-    Si <span class="font-semibold">f</span> es derivable en un entorno de la raíz y
-    <span class="font-semibold">f'(x) ≠ 0</span>, a partir de un valor inicial
-    <span class="font-semibold">x₀</span> cercano podemos aproximar una raíz de la
-    ecuación <span class="font-semibold">f(x) = 0</span> iterando:
+    Aproxima una raíz iterando con la fórmula:
   </p>
-
   <div class="flex justify-center mt-4">
     <div class="text-slate-800 text-lg">
-      \[
-        x_{i+1} = x_i - \frac{f(x_i)}{f'(x_i)}
-      \]
+      \[ x_{i+1} = x_i - \frac{f(x_i)}{f'(x_i)} \]
     </div>
   </div>
-
-  <p class="text-xs text-slate-500 max-w-xl mx-auto mt-3">
-    El proceso se detiene cuando el error aproximado relativo
-    <span class="font-semibold">e<sub>a</sub></span> es menor que la tolerancia
-    <span class="font-semibold">e<sub>s</sub></span> o cuando se alcanza el número
-    máximo de iteraciones.
-  </p>
 </header>
 
-{# ==== PROPORCIÓN 1/3 + 2/3 ==== #}
 <section class="grid gap-6 lg:grid-cols-3 mb-10">
-  {# ===================== COL 1: DATOS DE ENTRADA ===================== #}
   <div
     class="lg:col-span-1 bg-white rounded-3xl shadow-md border border-slate-200 p-6 flex flex-col gap-4"
   >
-    <h2 class="text-xl font-semibold text-slate-800 mb-4">
-      Datos de entrada
-    </h2>
+    <h2 class="text-xl font-semibold text-slate-800 mb-4">Datos de entrada</h2>
 
-    {% if error_msg %}
-    <div
-      class="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2"
-    >
-      {{ error_msg }}
+    <div id="alert-container">
+      {% if error_msg %}
+      <div
+        id="backend-msg"
+        class="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2"
+      >
+        {{ error_msg }}
+      </div>
+      {% endif %}
+
+      <div
+        id="warning-box"
+        class="hidden mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl shadow-sm"
+      >
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-2 text-amber-700 font-bold text-sm">
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              ></path>
+            </svg>
+            Advertencia
+          </div>
+          <p class="text-xs text-amber-800 leading-relaxed">
+            La función no parece cruzar el eje X en la gráfica. El método podría
+            no converger.
+          </p>
+          <p class="text-xs font-semibold text-amber-900">
+            ¿Deseas calcular de todas formas?
+          </p>
+          <div class="grid grid-cols-2 gap-2 mt-2">
+            <button
+              type="button"
+              id="btn-cancel"
+              class="py-2 px-3 rounded-xl border border-slate-300 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 transition"
+            >
+              No, cancelar
+            </button>
+            <button
+              type="button"
+              id="btn-confirm"
+              class="py-2 px-3 rounded-xl bg-amber-500 text-white text-xs font-bold shadow-md hover:bg-amber-600 transition"
+            >
+              Sí, calcular
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-    {% endif %}
+    <form method="POST" id="main-form" class="space-y-4">
+      <input type="hidden" id="force_calc" name="force_calc" value="" />
+      <input type="hidden" name="accion" id="accion-input" value="newton" />
 
-    <form method="POST" class="space-y-4">
-      {{ csrf_field() if csrf_field is defined }}
-
-      {# -------- FUNCIÓN + TECLADO (MathLive) -------- #}
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">
-          Función f(x)
-        </label>
+        <label class="block text-sm font-medium text-slate-700 mb-1"
+          >Función f(x)</label
+        >
 
-        <!-- MathLive -->
         <math-field
           id="funcion_mf"
           math-virtual-keyboard-policy="manual"
@@ -125,7 +150,6 @@
           {{ datos.funcion_latex|default('')|safe }}
         </math-field>
 
-        <!-- ocultos: versión Python y LaTeX -->
         <input
           type="hidden"
           id="funcion_real"
@@ -146,44 +170,102 @@
           <div
             class="grid grid-cols-4 sm:grid-cols-6 gap-1.5 text-xs sm:text-sm"
           >
-            {% set btn = "bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100 transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-tight" %}
+            {% set btn = "bg-white text-slate-800 rounded-xl border
+            border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-300
+            active:bg-rose-100 transition-all duration-150 px-2 py-1.5
+            text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium
+            leading-tight" %}
 
             <button type="button" class="{{ btn }}" data-insert="x">x</button>
             <button type="button" class="{{ btn }}" data-insert="y">y</button>
-            <button type="button" class="{{ btn }}" data-insert="\\pi">π</button>
+            <button type="button" class="{{ btn }}" data-insert="\\pi">
+              π
+            </button>
             <button type="button" class="{{ btn }}" data-insert="e">e</button>
             <button type="button" class="{{ btn }}" data-insert="(">(</button>
             <button type="button" class="{{ btn }}" data-insert=")">)</button>
 
             <button type="button" class="{{ btn }}" data-insert="+">+</button>
             <button type="button" class="{{ btn }}" data-insert="-">−</button>
-            <button type="button" class="{{ btn }}" data-insert="\\cdot">×</button>
-            <button type="button" class="{{ btn }}" data-insert="\\frac{}{}">÷</button>
+            <button type="button" class="{{ btn }}" data-insert="\\cdot">
+              ×
+            </button>
+            <button type="button" class="{{ btn }}" data-insert="\\frac{}{}">
+              ÷
+            </button>
             <button type="button" class="{{ btn }}" data-insert="^">^</button>
-            <button type="button" class="{{ btn }}" data-insert="\\sqrt{}">√</button>
+            <button type="button" class="{{ btn }}" data-insert="\\sqrt{}">
+              √
+            </button>
 
-            <button type="button" class="{{ btn }}" data-insert="\\left|\\right|">|x|</button>
-            <button type="button" class="{{ btn }}" data-insert="<">&lt;</button>
-            <button type="button" class="{{ btn }}" data-insert=">">&gt;</button>
-            <button type="button" class="{{ btn }} px-1" data-insert="\\frac{a}{b}">a/b</button>
-            <button type="button" class="{{ btn }}" data-insert="a + \\frac{b}{c}">a b/c</button>
+            <button
+              type="button"
+              class="{{ btn }}"
+              data-insert="\\left|\\right|"
+            >
+              |x|
+            </button>
+            <button type="button" class="{{ btn }}" data-insert="<">
+              &lt;
+            </button>
+            <button type="button" class="{{ btn }}" data-insert=">">
+              &gt;
+            </button>
+            <button
+              type="button"
+              class="{{ btn }} px-1"
+              data-insert="\\frac{a}{b}"
+            >
+              a/b
+            </button>
+            <button
+              type="button"
+              class="{{ btn }}"
+              data-insert="a + \\frac{b}{c}"
+            >
+              a b/c
+            </button>
             <button type="button" class="{{ btn }}" data-insert="^">xⁿ</button>
 
             <!-- TRIG -->
-            <button type="button" class="{{ btn }}" data-insert="\\sin(">sen</button>
-            <button type="button" class="{{ btn }}" data-insert="\\cos(">cos</button>
-            <button type="button" class="{{ btn }} py-2 leading-normal" data-insert="\\tan(">tg</button>
-            <button type="button" class="{{ btn }}" data-insert="\\arcsin(">sen⁻¹</button>
-            <button type="button" class="{{ btn }}" data-insert="\\arccos(">cos⁻¹</button>
-            <button type="button" class="{{ btn }}" data-insert="\\arctan(">tg⁻¹</button>
+            <button type="button" class="{{ btn }}" data-insert="\\sin(">
+              sen
+            </button>
+            <button type="button" class="{{ btn }}" data-insert="\\cos(">
+              cos
+            </button>
+            <button
+              type="button"
+              class="{{ btn }} py-2 leading-normal"
+              data-insert="\\tan("
+            >
+              tg
+            </button>
+            <button type="button" class="{{ btn }}" data-insert="\\arcsin(">
+              sen⁻¹
+            </button>
+            <button type="button" class="{{ btn }}" data-insert="\\arccos(">
+              cos⁻¹
+            </button>
+            <button type="button" class="{{ btn }}" data-insert="\\arctan(">
+              tg⁻¹
+            </button>
 
-            <button type="button" class="{{ btn }}" data-insert="\\ln(">ln</button>
-            <button type="button" class="{{ btn }}" data-insert="\\log_{10}(">log<sub>10</sub></button>
-            <span class="bg-white text-slate-400 rounded-xl border border-slate-200 shadow-sm px-1 py-2 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-normal">log<sub>n</sub></span>
+            <button type="button" class="{{ btn }}" data-insert="\\ln(">
+              ln
+            </button>
+            <button type="button" class="{{ btn }}" data-insert="\\log_{10}(">
+              log<sub>10</sub>
+            </button>
+            <span
+              class="bg-white text-slate-400 rounded-xl border border-slate-200 shadow-sm px-1 py-2 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-normal"
+              >log<sub>n</sub></span
+            >
             <button type="button" class="{{ btn }}" data-insert="e^">eˣ</button>
-            <button type="button" class="{{ btn }}" data-insert="10^">10ˣ</button>
+            <button type="button" class="{{ btn }}" data-insert="10^">
+              10ˣ
+            </button>
             <span></span>
-
           </div>
         </div>
       </div>
@@ -220,7 +302,10 @@
         </div>
 
         <div>
-          <label for="max_iter" class="block text-sm font-medium text-slate-700 mb-1">
+          <label
+            for="max_iter"
+            class="block text-sm font-medium text-slate-700 mb-1"
+          >
             Máx. iteraciones
           </label>
           <input
@@ -255,185 +340,123 @@
     </form>
   </div>
 
-  {# ===================== COL 2: ITERACIONES + DERIVADA ===================== #}
   <div
     class="lg:col-span-2 bg-white rounded-3xl shadow-md border border-slate-200 p-6 flex flex-col gap-4"
   >
-    <h2 class="text-lg font-semibold text-slate-800">
-      Iteraciones de Newton-Raphson
-    </h2>
-
-    {% if datos.funcion_latex %}
-    <div class="mb-2 text-sm text-slate-700">
-      <span class="font-semibold">Función:</span>
-      <span class="ml-2"> \( f(x) = {{ datos.funcion_latex|safe }} \) </span>
-    </div>
-    {% endif %}
+    <h2 class="text-lg font-semibold text-slate-800">Resultados</h2>
 
     {% if grafica_png %}
     <div class="mt-3">
-      <h3 class="text-lg font-semibold text-slate-800 mb-1">Gráfica de f(x)</h3>
-      <p class="text-xs text-slate-500 mb-2">
-        Usa esta gráfica para elegir un buen valor inicial \(x_0\), cerca de donde f(x) corta el eje X.
-      </p>
+      <h3 class="text-sm font-semibold text-slate-800 mb-1">Gráfica de f(x)</h3>
       <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3">
         <img
           src="data:image/png;base64,{{ grafica_png }}"
-          alt="Gráfica de f(x)"
+          alt="Gráfica"
           class="w-full rounded-xl"
         />
       </div>
     </div>
-    {% endif %}
-
-    {# ---- Derivada simbólica en una sola línea ---- #}
-    <div class="mb-3">
-      <h3 class="text-sm font-semibold text-slate-800">
-        Derivada simbólica
-      </h3>
-      <p class="text-xs text-slate-600">
-        Aquí se muestra la derivada \( f'(x) \) calculada simbólicamente a partir
-        de la función que ingreses en los datos de entrada.
-      </p>
-
-      {% if derivada_latex %}
-      <div class="mt-2 flex justify-center">
-        <div
-          class="inline-flex flex-wrap items-center gap-x-2 w-full max-w-xl
-                 p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800"
-        >
-          {% if datos.funcion_latex %}
-            <span>Si</span>
-            <span>\( f(x) = {{ datos.funcion_latex|safe }} \)</span>
-            <span>, entonces</span>
-            <span>\( f'(x) = {{ derivada_latex|safe }} \)</span>
-          {% else %}
-            <span>\( f'(x) = {{ derivada_latex|safe }} \)</span>
-          {% endif %}
-        </div>
-      </div>
-      {% else %}
-      <p class="mt-2 text-[11px] text-slate-500">
-        Cuando ingreses una función y ejecutes el método, aquí aparecerá
-        la derivada simbólica \( f'(x) \)
-      </p>
-      {% endif %}
-    </div>
-
-    {% if resultados %}
-    <div class="mb-3 p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800">
-      <p class="font-semibold mb-1">Resumen de la solución</p>
+    {% endif %} {% if resultados %}
+    <div
+      class="mb-3 p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800"
+    >
+      <p class="font-semibold">Resumen:</p>
       {% if raiz is not none %}
-      <p>Raíz aproximada: <span class="font-semibold">{{ raiz|round(8) }}</span></p>
-      {% endif %}
-      <p>Iteraciones realizadas: <span class="font-semibold">{{ n_iter }}</span></p>
-
-      {% if ultima_iter %}
-      <p class="mt-2 text-xs text-slate-600">
-        Última iteración: \( x_i = {{ ultima_iter.xi|round(6) }} \)
-        \( x_{i+1} = {{ ultima_iter.xi1|round(6) }} \)
-        \( e_a \approx {{ (ultima_iter.ea * 100)|round(4) }}\% \)
+      <p>
+        Raíz: <span class="font-bold text-rose-600">{{ raiz|round(8) }}</span>
       </p>
+      {% endif %}
+      <p>Iteraciones: {{ n_iter }}</p>
+      {% if error_msg and not resultados %}
+      <p class="text-red-500">{{ error_msg }}</p>
       {% endif %}
     </div>
 
     <div class="overflow-x-auto rounded-xl border border-slate-200">
       <table class="min-w-full text-sm text-left">
-        <thead class="bg-slate-50">
-          <tr class="border-b border-slate-200">
-            <th class="px-4 py-3 text-center text-[13px] font-semibold text-slate-700 tracking-wide">
-              Iteración
-            </th>
-            <th class="px-4 py-3 text-center text-[13px] font-semibold text-slate-700 tracking-wide">
-              \( x_i \)
-            </th>
-            <th class="px-4 py-3 text-center text-[13px] font-semibold text-slate-700 tracking-wide">
-              \( f(x_i) \)
-            </th>
-            <th class="px-4 py-3 text-center text-[13px] font-semibold text-slate-700 tracking-wide">
-              \( f'(x_i) \)
-            </th>
-            <th class="px-4 py-3 text-center text-[13px] font-semibold text-slate-700 tracking-wide">
-              \( x_{i+1} \)
-            </th>
-            <th class="px-4 py-3 text-center text-[13px] font-semibold text-slate-700 tracking-wide">
-              \( e_a \)
-            </th>
+        <thead
+          class="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold"
+        >
+          <tr>
+            <th class="px-4 py-2 text-center">Iter</th>
+            <th class="px-4 py-2 text-center">\( x_i \)</th>
+            <th class="px-4 py-2 text-center">\( f(x_i) \)</th>
+            <th class="px-4 py-2 text-center">\( f'(x_i) \)</th>
+            <th class="px-4 py-2 text-center">\( e_a \)</th>
           </tr>
         </thead>
-        
-        <tbody class="bg-white">
+        <tbody>
           {% for fila in resultados %}
-          <tr class="border-t border-slate-100">
-            <td class="px-3 py-2 text-slate-800 text-center">{{ fila.iter }}</td>
-            <td class="px-3 py-2 text-slate-800 text-center">{{ fila.xi|round(6) }}</td>
-            <td class="px-3 py-2 text-slate-800 text-center">{{ fila.fx|round(6) }}</td>
-            <td class="px-3 py-2 text-slate-800 text-center">{{ fila.fpx|round(6) }}</td>
-            <td class="px-3 py-2 text-slate-800 text-center">{{ fila.xi1|round(6) }}</td>
-            <td class="px-3 py-2 text-slate-800 text-center">
-              {% if fila.ea is not none %}
-                {{ (fila.ea * 100)|round(4) }} %
-              {% else %}
-                —
-              {% endif %}
+          <tr class="border-t border-slate-100 hover:bg-slate-50">
+            <td class="px-3 py-2 text-center">{{ fila.iter }}</td>
+            <td class="px-3 py-2 text-center">{{ fila.xi|round(6) }}</td>
+            <td class="px-3 py-2 text-center">{{ fila.fx|round(6) }}</td>
+            <td class="px-3 py-2 text-center">{{ fila.fpx|round(6) }}</td>
+            <td class="px-3 py-2 text-center">
+              {% if fila.ea is not none %}{{ (fila.ea * 100)|round(4) }}%{% else
+              %}—{% endif %}
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-    {% else %}
-    <p class="text-sm text-slate-500">
-      Aún no hay iteraciones. Ingresa la función y los parámetros en
-      <span class="font-semibold">Datos de entrada</span>,
-      pulsa “Graficar función” para explorar f(x) y elegir un buen \(x_0\),
-      y luego “Calcular Newton-Raphson”.
+    {% elif not error_msg and not grafica_png %}
+    <p class="text-sm text-slate-500 mt-4">
+      Ingresa los datos para ver el cálculo paso a paso.
     </p>
     {% endif %}
   </div>
 </section>
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const mf = document.getElementById("funcion_mf");
-
-    if (!mf) return;
-
-    mf.options = {
-        contextMenuItems: [
-            {
-                label: "Insert",
-                submenu: [
-                    { command: "insert", label: "Symbol…" },
-                    { command: "insertFraction", label: "Fraction" },
-                    { command: "insertSquareRoot", label: "Square Root" },
-                    { command: "insertSubscript", label: "Subscript" },
-                    { command: "insertSuperscript", label: "Superscript" }
-                ]
-            },
-            {
-                label: "Font Style",
-                submenu: [
-                    { command: "toggleBold", label: "Bold" },
-                    { command: "toggleItalic", label: "Italic" },
-                    { command: "toggleCalligraphic", label: "Calligraphic" },
-                    { command: "toggleSansSerif", label: "Sans Serif" }
-                ]
-            },
-            { command: "cut", label: "Cut" },
-            {
-                label: "Copy",
-                submenu: [
-                    { command: "copyToClipboard", label: "Copy as LaTeX" },
-                ]
-            },
-            { command: "paste", label: "Paste" },
-            { command: "selectAll", label: "Select All" },
-        ]
-    };
-});
-</script>
-
 <script defer src="{{ url_for('static', filename='js/Newton.js') }}"></script>
+
+<script>
+  function showModal(msg) {
+    const m = document.getElementById("app-modal");
+    const t = document.getElementById("modal-text");
+    if (m && t) {
+      t.textContent = msg;
+      m.classList.remove("hidden");
+      setTimeout(() => m.classList.add("show"), 10);
+    } else {
+      alert(msg);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const backendMsg = document.getElementById("backend-msg");
+    const warningBox = document.getElementById("warning-box");
+
+    // Detectar si el mensaje del servidor empieza con "ADVERTENCIA:"
+    if (
+      backendMsg &&
+      backendMsg.textContent.trim().startsWith("ADVERTENCIA:")
+    ) {
+      backendMsg.style.display = "none"; // Ocultar el texto plano
+      warningBox.classList.remove("hidden"); // Mostrar la caja bonita
+    }
+
+    // Botón: SÍ, CALCULAR
+    document.getElementById("btn-confirm").addEventListener("click", () => {
+      document.getElementById("force_calc").value = "true";
+      document.getElementById("accion-input").value = "newton";
+      document.getElementById("main-form").submit();
+    });
+
+    // Botón: NO, CANCELAR
+    document.getElementById("btn-cancel").addEventListener("click", () => {
+      warningBox.classList.add("hidden");
+      // Limpiar inputs
+      document.getElementById("force_calc").value = "";
+      document.getElementById("x0").value = "";
+
+      const mf = document.getElementById("funcion_mf");
+      if (mf) mf.value = "";
+
+      showModal("Cálculo cancelado. Se han limpiado los campos.");
+    });
+  });
+</script>
 
 {% endblock %}
