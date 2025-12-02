@@ -16,47 +16,38 @@
 <script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
 
 <style>
-  /* Oculta el botón de toggle del teclado virtual de MathLive */
-  math-field::part(virtual-keyboard-toggle) {
-    display: none;
-  }
-</style>
-<style>
-  /* Ocultamos los toggles como ya tenías */
+  /* Ocultamos toggles */
   math-field::part(virtual-keyboard-toggle),
   math-field::part(menu-toggle) {
     display: none;
   }
 
-  /* 💡 MODO CLARO: fondo blanco, borde clarito, texto oscuro */
+  /* 💡 MODO CLARO */
   math-field {
     border: 1px solid rgb(203 213 225); /* slate-300 */
     background-color: #ffffff;
     color: #0f172a; /* slate-900 */
   }
 
-  /* El contenido interno del mathfield (donde se ve la fórmula) */
   math-field::part(content) {
     color: inherit;
   }
 
-  /* 🖤 MODO OSCURO: fondo oscuro, texto clarito */
+  /* 🖤 MODO OSCURO */
   .dark math-field {
-    background-color: #1e293b; /* slate-800 -> igual al fondo que usas */
-    border-color: #334155;     /* slate-700 para empatar con tus bordes */
-    color: #e2e8f0;            /* texto blanco suave */
+    background-color: #1e293b; /* slate-800 */
+    border-color: #334155;     /* slate-700 */
+    color: #e2e8f0;            /* texto claro */
   }
 
   .dark math-field::part(content) {
     color: #e5e7eb;
   }
 
-  /* Placeholder clarito en dark mode (si lo usas) */
   .dark math-field::part(placeholder) {
     color: #64748b; /* slate-500 */
   }
 </style>
-
 
 {# ===================== CABECERA ===================== #}
 <header
@@ -92,7 +83,7 @@
   </p>
 </header>
 
-{# ==== AQUÍ CAMBIA LA PROPORCIÓN: 1/3 + 2/3 ==== #}
+{# ==== PROPORCIÓN 1/3 + 2/3 ==== #}
 <section class="grid gap-6 lg:grid-cols-3 mb-10">
   {# ===================== COL 1: DATOS DE ENTRADA ===================== #}
   <div
@@ -119,7 +110,7 @@
           Función f(x)
         </label>
 
-        <!-- MathLive: campo de entrada matemático -->
+        <!-- MathLive -->
         <math-field
           id="funcion_mf"
           math-virtual-keyboard-policy="manual"
@@ -134,8 +125,7 @@
           {{ datos.funcion_latex|default('')|safe }}
         </math-field>
 
-
-        <!-- ocultos: versión Python y LaTeX que viajan al backend -->
+        <!-- ocultos: versión Python y LaTeX -->
         <input
           type="hidden"
           id="funcion_real"
@@ -149,7 +139,7 @@
           value="{{ datos.funcion_latex|default('') }}"
         />
 
-        <!-- TECLADO ALGEBRAICO -->
+        <!-- TECLADO -->
         <div
           class="mt-3 bg-white rounded-2xl p-3 border border-slate-200 max-h-64 overflow-y-auto"
         >
@@ -179,7 +169,7 @@
             <button type="button" class="{{ btn }}" data-insert="a + \\frac{b}{c}">a b/c</button>
             <button type="button" class="{{ btn }}" data-insert="^">xⁿ</button>
 
-            <!-- TRIG EN LA INTERFAZ, LaTeX POR DENTRO -->
+            <!-- TRIG -->
             <button type="button" class="{{ btn }}" data-insert="\\sin(">sen</button>
             <button type="button" class="{{ btn }}" data-insert="\\cos(">cos</button>
             <button type="button" class="{{ btn }} py-2 leading-normal" data-insert="\\tan(">tg</button>
@@ -190,8 +180,8 @@
             <button type="button" class="{{ btn }}" data-insert="\\ln(">ln</button>
             <button type="button" class="{{ btn }}" data-insert="\\log_{10}(">log<sub>10</sub></button>
             <span class="bg-white text-slate-400 rounded-xl border border-slate-200 shadow-sm px-1 py-2 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-normal">log<sub>n</sub></span>
-            <button type="button" class="{{ btn }}" data-insert="e^(">eˣ</button>
-            <button type="button" class="{{ btn }}" data-insert="10^(">10ˣ</button>
+            <button type="button" class="{{ btn }}" data-insert="e^">eˣ</button>
+            <button type="button" class="{{ btn }}" data-insert="10^">10ˣ</button>
             <span></span>
 
           </div>
@@ -243,10 +233,21 @@
         </div>
       </div>
 
-      <div class="mt-4">
+      <div class="mt-4 flex flex-col sm:flex-row gap-2">
         <button
           type="submit"
-          class="w-full inline-flex justify-center items-center px-4 py-2 rounded-2xl bg-rose-600 text-white text-sm font-semibold shadow-md hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:ring-offset-white"
+          name="accion"
+          value="graficar"
+          class="w-full sm:w-1/2 inline-flex justify-center items-center px-4 py-2 rounded-2xl bg-white text-slate-800 text-sm font-semibold shadow-md border border-slate-300 hover:bg-slate-50"
+        >
+          Graficar función
+        </button>
+
+        <button
+          type="submit"
+          name="accion"
+          value="newton"
+          class="w-full sm:w-1/2 inline-flex justify-center items-center px-4 py-2 rounded-2xl bg-rose-600 text-white text-sm font-semibold shadow-md hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:ring-offset-white"
         >
           Calcular Newton-Raphson
         </button>
@@ -261,6 +262,29 @@
     <h2 class="text-lg font-semibold text-slate-800">
       Iteraciones de Newton-Raphson
     </h2>
+
+    {% if datos.funcion_latex %}
+    <div class="mb-2 text-sm text-slate-700">
+      <span class="font-semibold">Función:</span>
+      <span class="ml-2"> \( f(x) = {{ datos.funcion_latex|safe }} \) </span>
+    </div>
+    {% endif %}
+
+    {% if grafica_png %}
+    <div class="mt-3">
+      <h3 class="text-lg font-semibold text-slate-800 mb-1">Gráfica de f(x)</h3>
+      <p class="text-xs text-slate-500 mb-2">
+        Usa esta gráfica para elegir un buen valor inicial \(x_0\), cerca de donde f(x) corta el eje X.
+      </p>
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+        <img
+          src="data:image/png;base64,{{ grafica_png }}"
+          alt="Gráfica de f(x)"
+          class="w-full rounded-xl"
+        />
+      </div>
+    </div>
+    {% endif %}
 
     {# ---- Derivada simbólica en una sola línea ---- #}
     <div class="mb-3">
@@ -313,7 +337,6 @@
       {% endif %}
     </div>
 
-
     <div class="overflow-x-auto rounded-xl border border-slate-200">
       <table class="min-w-full text-sm text-left">
         <thead class="bg-slate-50">
@@ -342,12 +365,12 @@
         <tbody class="bg-white">
           {% for fila in resultados %}
           <tr class="border-t border-slate-100">
-            <td class="px-3 py-2 text-slate-800">{{ fila.iter }}</td>
-            <td class="px-3 py-2 text-slate-800">{{ fila.xi|round(6) }}</td>
-            <td class="px-3 py-2 text-slate-800">{{ fila.fx|round(6) }}</td>
-            <td class="px-3 py-2 text-slate-800">{{ fila.fpx|round(6) }}</td>
-            <td class="px-3 py-2 text-slate-800">{{ fila.xi1|round(6) }}</td>
-            <td class="px-3 py-2 text-slate-800">
+            <td class="px-3 py-2 text-slate-800 text-center">{{ fila.iter }}</td>
+            <td class="px-3 py-2 text-slate-800 text-center">{{ fila.xi|round(6) }}</td>
+            <td class="px-3 py-2 text-slate-800 text-center">{{ fila.fx|round(6) }}</td>
+            <td class="px-3 py-2 text-slate-800 text-center">{{ fila.fpx|round(6) }}</td>
+            <td class="px-3 py-2 text-slate-800 text-center">{{ fila.xi1|round(6) }}</td>
+            <td class="px-3 py-2 text-slate-800 text-center">
               {% if fila.ea is not none %}
                 {{ (fila.ea * 100)|round(4) }} %
               {% else %}
@@ -362,12 +385,14 @@
     {% else %}
     <p class="text-sm text-slate-500">
       Aún no hay iteraciones. Ingresa la función y los parámetros en
-      <span class="font-semibold">Datos de entrada</span>
-      y pulsa “Calcular Newton-Raphson”.
+      <span class="font-semibold">Datos de entrada</span>,
+      pulsa “Graficar función” para explorar f(x) y elegir un buen \(x_0\),
+      y luego “Calcular Newton-Raphson”.
     </p>
     {% endif %}
   </div>
 </section>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const mf = document.getElementById("funcion_mf");
@@ -376,7 +401,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     mf.options = {
         contextMenuItems: [
-            // --- Insert ---
             {
                 label: "Insert",
                 submenu: [
@@ -387,8 +411,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     { command: "insertSuperscript", label: "Superscript" }
                 ]
             },
-
-            // --- Font Style ---
             {
                 label: "Font Style",
                 submenu: [
@@ -398,8 +420,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     { command: "toggleSansSerif", label: "Sans Serif" }
                 ]
             },
-
-            // --- Edición ---
             { command: "cut", label: "Cut" },
             {
                 label: "Copy",

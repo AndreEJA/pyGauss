@@ -486,6 +486,7 @@ def newton_raphson():
     error_msg = None
     derivada_latex = None
     ultima_iter = None
+    grafica_png = None
 
     datos = {
         "funcion": "",
@@ -496,67 +497,135 @@ def newton_raphson():
     }
 
     if request.method == "POST":
-        expr = (request.form.get("funcion") or "").strip()
-        latex = (request.form.get("funcion_latex") or "").strip()
+        try:
+            accion = (request.form.get("accion") or "newton").strip()
 
-        x0_str = (request.form.get("x0") or "").strip()
-        es_str = (request.form.get("es") or "0.0001").strip()
-        max_iter_str = (request.form.get("max_iter") or "50").strip()
+            expr = (request.form.get("funcion") or "").strip()
+            latex = (request.form.get("funcion_latex") or "").strip()
 
-        datos.update({
-            "funcion": expr,
-            "funcion_latex": latex,
-            "x0": x0_str,
-            "es": es_str,
-            "max_iter": max_iter_str,
-        })
+            x0_str = (request.form.get("x0") or "").strip()
+            es_str = (request.form.get("es") or "0.0001").strip()
+            max_iter_str = (request.form.get("max_iter") or "50").strip()
 
-        if not expr:
-            error_msg = "Debes ingresar la función f(x)."
-        else:
-            try:
-                x0 = float(x0_str)
-                es = float(es_str)
-                max_iter = int(max_iter_str)
+            datos.update({
+                "funcion": expr,
+                "funcion_latex": latex,
+                "x0": x0_str,
+                "es": es_str,
+                "max_iter": max_iter_str,
+            })
 
-                ret = metodo_newton_raphson(expr, x0, es=es, max_iter=max_iter)
+            if not expr:
+                error_msg = "Debes ingresar la función f(x)."
+            else:
+                # =========================
+                # 1) MÉTODO DE NEWTON (solo si accion == newton)
+                # =========================
+                if accion == "newton":
+                    if not x0_str:
+                        raise ValueError("Debes ingresar un valor inicial x₀.")
 
-                # ---- ACEPTAR DIFERENTES FORMAS DE RETORNO ----
-                if isinstance(ret, dict):
-                    # Lo más probable: { "raiz": ..., "resultados": [...], "derivada_latex": "..." }
-                    raiz = ret.get("raiz") or ret.get("root")
-                    resultados = (
-                        ret.get("resultados")
-                        or ret.get("iteraciones")
-                        or ret.get("tabla")
-                    )
-                    derivada_latex = (
-                        ret.get("derivada_latex")
-                        or ret.get("fprime_latex")
-                        or ret.get("derivada")
-                    )
+                    x0 = float(x0_str)
+                    es = float(es_str or "0.0001")
+                    max_iter = int(max_iter_str or "50")
 
-                elif isinstance(ret, tuple):
-                    if len(ret) == 2:
-                        raiz, resultados = ret
-                    elif len(ret) >= 3:
-                        raiz = ret[0]
-                        resultados = ret[1]
-                        derivada_latex = ret[2]
+                    ret = metodo_newton_raphson(expr, x0, es=es, max_iter=max_iter)
 
+                    if isinstance(ret, dict):
+                        raiz = ret.get("raiz") or ret.get("root")
+                        resultados = (
+                            ret.get("resultados")
+                            or ret.get("iteraciones")
+                            or ret.get("tabla")
+                        )
+                        derivada_latex = (
+                            ret.get("derivada_latex")
+                            or ret.get("fprime_latex")
+                            or ret.get("derivada")
+                        )
+
+                    elif isinstance(ret, tuple):
+                        if len(ret) == 2:
+                            raiz, resultados = ret
+                        elif len(ret) >= 3:
+                            raiz = ret[0]
+                            resultados = ret[1]
+                            derivada_latex = ret[2]
+                    else:
+                        resultados = ret
+
+                    if isinstance(resultados, (list, tuple)) and resultados:
+                        ultima_iter = resultados[-1]
+                        n_iter = len(resultados)
+                    else:
+                        n_iter = 0
+
+                # =========================
+                # 2) GRÁFICA (siempre que haya expr)
+                # =========================
+                # Rango en torno a x0 si existe, si no, [-10, 10]
+                if x0_str:
+                    centro = float(x0_str)
+                    gx_i = centro - 5
+                    gx_u = centro + 5
                 else:
-                    # caso rarísimo: si devuelve solo una lista
-                    resultados = ret
+                    gx_i = -10.0
+                    gx_u = 10.0
 
-                # Última iteración + número de iteraciones
-                if isinstance(resultados, (list, tuple)) and resultados:
-                    ultima_iter = resultados[-1]
-                    n_iter = len(resultados)
-                else:
-                    n_iter = 0
+                num_puntos = 400
+                xs = []
+                ys = []
+                for i in range(num_puntos + 1):
+                    x = gx_i + (gx_u - gx_i) * i / num_puntos
+                    try:
+                        y = evaluar_funcion(expr, x)
+                        if not math.isfinite(y):
+                            y = float("nan")
+                    except Exception:
+                        y = float("nan")
+                    xs.append(x)
+                    ys.append(y)
 
-            except Exception as e:
-                error_msg = f"No se pudo aplicar el método: {e}"
+                # Intento de localizar cortes con el eje X
+                roots_x = []
+                for i in range(1, len(xs)):
+                    y1 = ys[i - 1]
+                    y2 = ys[i]
+                    x1 = xs[i - 1]
+                    x2 = xs[i]
+
+                    if not (math.isfinite(y1) and math.isfinite(y2)):
+                        continue
+
+                    if y1 == 0:
+                        roots_x.append(x1)
+
+                    if y1 * y2 < 0:
+                        x0_root = x1 - y1 * (x2 - x1) / (y2 - y1)
+                        roots_x.append(x0_root)
+
+                fig, ax = plt.subplots(figsize=(6, 3))
+                ax.axhline(0, color="black", linewidth=0.8)
+                ax.axvline(0, color="black", linewidth=0.8)
+
+                ax.plot(xs, ys, linewidth=1.8)
+                if roots_x:
+                    ax.scatter(roots_x, [0] * len(roots_x), s=25)
+
+                ax.set_xlabel("x")
+                ax.set_ylabel("f(x)")
+                ax.set_title("Gráfica de f(x)")
+                ax.grid(True, linestyle=":", linewidth=0.5)
+
+                buf = io.BytesIO()
+                fig.tight_layout()
+                fig.savefig(buf, format="png")
+                buf.seek(0)
+                grafica_png = base64.b64encode(buf.getvalue()).decode("utf-8")
+                plt.close(fig)
+
+        except Exception as e:
+            error_msg = f"No se pudo aplicar el método: {e}"
 
     return render_template(
         "newton_raphson.html",
@@ -567,6 +636,7 @@ def newton_raphson():
         derivada_latex=derivada_latex,
         ultima_iter=ultima_iter,
         error_msg=error_msg,
+        grafica_png=grafica_png,
     )
 
 
@@ -577,10 +647,9 @@ def secante():
     raiz = None
     n_iter = None
     error_msg = None
+    grafica_png = None
 
-    # valores por defecto que usamos en el HTML
     datos = {
-        "funcion_pretty": "",
         "funcion": "",
         "funcion_latex": "",
         "x0": "",
@@ -591,41 +660,168 @@ def secante():
 
     if request.method == "POST":
         try:
-            # 1) Lo que el usuario ESCRIBE (bonito)
-            funcion_pretty = request.form.get("funcion_pretty", "")
+            accion = (request.form.get("accion") or "secante").strip()
 
-            # 2) Versión "real" en sintaxis Python (la llena tu JS en el input hidden name="funcion")
-            expr = request.form.get("funcion", "")
+            expr = (request.form.get("funcion") or "").strip()
+            latex = (request.form.get("funcion_latex") or "").strip()
 
-            # 3) (opcional) LaTeX, por si lo usas en algún lado
-            funcion_latex = request.form.get("funcion_latex", "")
-
-            x0 = float(request.form.get("x0", "0"))
-            x1 = float(request.form.get("x1", "0"))
-            es = float(request.form.get("es", "0.0001"))
-            max_iter = int(request.form.get("max_iter", "50"))
+            x0_str = (request.form.get("x0") or "").strip()
+            x1_str = (request.form.get("x1") or "").strip()
+            es_str = (request.form.get("es") or "0.0001").strip()
+            max_iter_str = (request.form.get("max_iter") or "50").strip()
 
             datos.update({
-                "funcion_pretty": funcion_pretty,  # lo que se ve en el input
-                "funcion": expr,                   # versión Python
-                "funcion_latex": funcion_latex,
-                "x0": x0,
-                "x1": x1,
-                "es": es,
-                "max_iter": max_iter,
+                "funcion": expr,
+                "funcion_latex": latex,
+                "x0": x0_str,
+                "x1": x1_str,
+                "es": es_str,
+                "max_iter": max_iter_str,
             })
 
-            # Llamada correcta a tu método de la secante
-            resultados, raiz, n_iter, error_msg = metodo_secante(
-                expr,      # expr_str
-                x0,        # x0
-                x1,        # x1
-                es,        # es
-                max_iter,  # max_iter
-            )
+            if not expr:
+                error_msg = "Debes ingresar la función f(x)."
+                return render_template(
+                    "secante.html",
+                    datos=datos,
+                    resultados=resultados,
+                    raiz=raiz,
+                    n_iter=n_iter,
+                    error_msg=error_msg,
+                    grafica_png=grafica_png,
+                )
 
-        except ValueError:
-            error_msg = "El valor inicial y/o el segundo valor no pueden estar vacíos"
+            # =========================
+            # 1) CÁLCULO DEL MÉTODO
+            # =========================
+            if accion == "secante":
+                if x0_str == "" or x1_str == "":
+                    error_msg = "Debes ingresar x₀ y x₁ para aplicar el método de la secante."
+                    return render_template(
+                        "secante.html",
+                        datos=datos,
+                        resultados=None,
+                        raiz=None,
+                        n_iter=None,
+                        error_msg=error_msg,
+                        grafica_png=grafica_png,
+                    )
+
+                x0 = float(x0_str)
+                x1 = float(x1_str)
+                es = float(es_str or "0.0001")
+                max_iter = int(max_iter_str or "50")
+
+                if x0 == x1:
+                    error_msg = "x₀ y x₁ deben ser distintos para aplicar la secante."
+                    datos["x0"] = ""
+                    datos["x1"] = ""
+                    return render_template(
+                        "secante.html",
+                        datos=datos,
+                        resultados=None,
+                        raiz=None,
+                        n_iter=None,
+                        error_msg=error_msg,
+                        grafica_png=grafica_png,
+                    )
+
+                # Llamar a tu método numérico (aceptando varias formas de retorno)
+                ret = metodo_secante(expr, x0, x1, es, max_iter)
+
+                if isinstance(ret, dict):
+                    resultados = ret.get("resultados") or ret.get("iteraciones") or ret.get("tabla")
+                    raiz = ret.get("raiz") or ret.get("root")
+                    n_iter = ret.get("n_iter") or ret.get("iteraciones_totales")
+
+                elif isinstance(ret, (list, tuple)):
+                    if len(ret) == 3:
+                        resultados, raiz, n_iter = ret
+                    elif len(ret) == 2:
+                        resultados, raiz = ret
+                        n_iter = len(resultados) if isinstance(resultados, (list, tuple)) else None
+                    elif len(ret) >= 4:
+                        resultados = ret[0]
+                        raiz = ret[1]
+                        n_iter = ret[2]
+                    else:
+                        resultados = ret[0]
+                        raiz = None
+                        n_iter = len(resultados) if isinstance(resultados, (list, tuple)) else None
+                else:
+                    resultados = ret
+                    raiz = None
+                    n_iter = len(resultados) if isinstance(resultados, (list, tuple)) else None
+
+                if n_iter is None and isinstance(resultados, (list, tuple)):
+                    n_iter = len(resultados)
+
+            # =========================
+            # 2) GRÁFICA SIEMPRE QUE HAYA expr
+            # =========================
+            if x0_str and x1_str:
+                gx_i = float(x0_str)
+                gx_u = float(x1_str)
+                if gx_i == gx_u:
+                    gx_i -= 5
+                    gx_u += 5
+            else:
+                gx_i = -10.0
+                gx_u = 10.0
+
+            num_puntos = 400
+            xs = []
+            ys = []
+            for i in range(num_puntos + 1):
+                x = gx_i + (gx_u - gx_i) * i / num_puntos
+                try:
+                    y = evaluar_funcion(expr, x)
+                    if not math.isfinite(y):
+                        y = float("nan")
+                except Exception:
+                    y = float("nan")
+                xs.append(x)
+                ys.append(y)
+
+            roots_x = []
+            for i in range(1, len(xs)):
+                y1 = ys[i - 1]
+                y2 = ys[i]
+                x1 = xs[i - 1]
+                x2 = xs[i]
+
+                if not (math.isfinite(y1) and math.isfinite(y2)):
+                    continue
+
+                if y1 == 0:
+                    roots_x.append(x1)
+
+                if y1 * y2 < 0:
+                    x0_root = x1 - y1 * (x2 - x1) / (y2 - y1)
+                    roots_x.append(x0_root)
+
+            fig, ax = plt.subplots(figsize=(6, 3))
+            ax.axhline(0, color="black", linewidth=0.8)
+            ax.axvline(0, color="black", linewidth=0.8)
+
+            ax.plot(xs, ys, linewidth=1.8)
+            if roots_x:
+                ax.scatter(roots_x, [0] * len(roots_x), s=25)
+
+            ax.set_xlabel("x")
+            ax.set_ylabel("f(x)")
+            ax.set_title("Gráfica de f(x)")
+            ax.grid(True, linestyle=":", linewidth=0.5)
+
+            buf = io.BytesIO()
+            fig.tight_layout()
+            fig.savefig(buf, format="png")
+            buf.seek(0)
+            grafica_png = base64.b64encode(buf.getvalue()).decode("utf-8")
+            plt.close(fig)
+
+        except Exception as e:
+            error_msg = f"Ocurrió un error: {e}"
 
     return render_template(
         "secante.html",
@@ -634,5 +830,5 @@ def secante():
         raiz=raiz,
         n_iter=n_iter,
         error_msg=error_msg,
+        grafica_png=grafica_png,
     )
-

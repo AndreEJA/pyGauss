@@ -13,6 +13,43 @@
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
 ></script>
 
+<!-- MathLive -->
+<script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
+
+<style>
+  /* Ocultar botón de teclado y menú interno de MathLive */
+  math-field::part(virtual-keyboard-toggle),
+  math-field::part(menu-toggle) {
+    display: none !important;
+  }
+
+  /* ===== MODO CLARO ===== */
+  math-field {
+    border: 1px solid rgb(203 213 225);  /* slate-300 */
+    background-color: #ffffff;
+    color: #0f172a; /* slate-900 */
+  }
+
+  math-field::part(content) {
+    color: inherit;
+  }
+
+  /* ===== MODO OSCURO ===== */
+  .dark math-field {
+    background-color: #1e293b; /* slate-800 */
+    border-color: #334155;     /* slate-700 */
+    color: #e2e8f0;            /* slate-200 */
+  }
+
+  .dark math-field::part(content) {
+    color: #e2e8f0;
+  }
+
+  .dark math-field::part(placeholder) {
+    color: #64748b; /* slate-500 */
+  }
+</style>
+
 <header
   class="text-center py-10 px-4 bg-white rounded-3xl shadow-xl mb-8 border border-slate-200"
 >
@@ -44,8 +81,7 @@
 </header>
 
 <section class="grid gap-6 lg:grid-cols-3 mb-10">
-
-
+  <!-- =================== COL 1: DATOS DE ENTRADA =================== -->
   <div class="lg:col-span-1 bg-white rounded-3xl shadow-md border border-slate-200 p-6 flex flex-col gap-4">
 
     <h2 class="text-xl font-semibold text-slate-800 mb-4">
@@ -61,36 +97,28 @@
     <form method="POST" class="space-y-4">
       {{ csrf_field() if csrf_field is defined }}
 
-      <!-- FUNCIÓN -->
+      <!-- FUNCIÓN + MATHLIVE -->
       <div>
         <label class="block text-sm font-medium text-slate-700 mb-1">
           Función f(x)
         </label>
 
-        <div class="relative">
-          <div class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
-            <span
-              id="funcion_display"
-              class="block text-slate-900 min-h-[1.4rem]"
-            >
-              {{ datos.funcion_pretty|default('') }}
-            </span>
-          </div>
+        <!-- Campo MathLive -->
+        <math-field
+          id="funcion_mf"
+          math-virtual-keyboard-policy="manual"
+          style="
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+          "
+          class="shadow-sm"
+        >
+          {{ datos.funcion_latex|default('')|safe }}
+        </math-field>
 
-          <input
-            type="text"
-            id="funcion_pretty"
-            name="funcion_pretty"
-            value="{{ datos.funcion_pretty|default('') }}"
-            class="absolute inset-0 w-full h-full bg-transparent border-none outline-none text-transparent caret-slate-800 px-3 py-2"
-            placeholder="Ingrese su función"
-            autocomplete="off"
-            required
-            spellcheck="false"
-          />
-        </div>
-
-        <!-- Hidden inputs -->
+        <!-- Hidden inputs: Python + LaTeX -->
         <input type="hidden" id="funcion_real" name="funcion" value="{{ datos.funcion|default('') }}" />
         <input type="hidden" id="funcion_latex" name="funcion_latex" value="{{ datos.funcion_latex|default('') }}" />
 
@@ -102,45 +130,41 @@
 
             <button type="button" class="{{ btn }}" data-insert="x">x</button>
             <button type="button" class="{{ btn }}" data-insert="y">y</button>
-            <button type="button" class="{{ btn }}" data-insert="π">π</button>
+            <button type="button" class="{{ btn }}" data-insert="\\pi">π</button>
             <button type="button" class="{{ btn }}" data-insert="e">e</button>
             <button type="button" class="{{ btn }}" data-insert="(">(</button>
             <button type="button" class="{{ btn }}" data-insert=")">)</button>
 
             <button type="button" class="{{ btn }}" data-insert="+">+</button>
             <button type="button" class="{{ btn }}" data-insert="-">−</button>
-            <button type="button" class="{{ btn }}" data-insert="×">×</button>
-            <button type="button" class="{{ btn }}" data-insert="÷">÷</button>
+            <button type="button" class="{{ btn }}" data-insert="\\cdot">×</button>
+            <button type="button" class="{{ btn }}" data-insert="\\frac{}{}">÷</button>
             <button type="button" class="{{ btn }}" data-insert="^">^</button>
-            <button type="button" class="{{ btn }}" data-insert="√(">√</button>
+            <button type="button" class="{{ btn }}" data-insert="\\sqrt{}">√</button>
 
-            <button type="button" class="{{ btn }}" data-insert="| |">|x|</button>
+            <button type="button" class="{{ btn }}" data-insert="\\left|\\right|">|x|</button>
             <button type="button" class="{{ btn }}" data-insert="<">&lt;</button>
             <button type="button" class="{{ btn }}" data-insert=">">&gt;</button>
-            <button type="button" class="{{ btn }}" data-insert="(a)/(b)">a/b</button>
-            <button type="button" class="{{ btn }}" data-insert="a b/c">a b/c</button>
-            <button type="button" class="{{ btn }}" data-insert="x^">xⁿ</button>
+            <button type="button" class="{{ btn }} px-1" data-insert="\\frac{a}{b}">a/b</button>
+            <button type="button" class="{{ btn }}" data-insert="a + \\frac{b}{c}">a b/c</button>
+            <button type="button" class="{{ btn }}" data-insert="^">xⁿ</button>
 
-            <button type="button" class="{{ btn }}" data-insert="sen(">sen</button>
-            <button type="button" class="{{ btn }}" data-insert="cos(">cos</button>
-            <button type="button" class="{{ btn }}" data-insert="tg(">tg</button>
-            <button type="button" class="{{ btn }}" data-insert="asen(">sen⁻¹</button>
-            <button type="button" class="{{ btn }}" data-insert="acos(">cos⁻¹</button>
-            <button type="button" class="{{ btn }}" data-insert="atan(">tg⁻¹</button>
+            <button type="button" class="{{ btn }}" data-insert="\\sin(">sen</button>
+            <button type="button" class="{{ btn }}" data-insert="\\cos(">cos</button>
+            <button type="button" class="{{ btn }}" data-insert="\\tan(">tg</button>
+            <button type="button" class="{{ btn }}" data-insert="\\arcsin(">sen⁻¹</button>
+            <button type="button" class="{{ btn }}" data-insert="\\arccos(">cos⁻¹</button>
+            <button type="button" class="{{ btn }}" data-insert="\\arctan(">tg⁻¹</button>
 
-            <button type="button" class="{{ btn }}" data-insert="ln(">ln</button>
-            <button type="button" class="{{ btn }}" data-insert="log10(">log₁₀</button>
-            <button type="button"
-            class="bg-white text-slate-800 rounded-xl border border-slate-200 shadow-sm
-                   hover:bg-rose-50 hover:border-rose-300 active:bg-rose-100
-                   transition-all duration-150 px-2 py-1.5 text-center min-w-[2.25rem]
-                   text-[0.7rem] sm:text-xs font-medium leading-tight"
-            data-insert="log_b(x)">
-            log<sub>b</sub>
-          </button>
-          
-            <button type="button" class="{{ btn }}" data-insert="e^(">eˣ</button>
-            <button type="button" class="{{ btn }}" data-insert="10^(">10ˣ</button>
+            <button type="button" class="{{ btn }}" data-insert="\\ln(">ln</button>
+            <button type="button" class="{{ btn }}" data-insert="\\log_{10}(">log<sub>10</sub></button>
+            <span
+              class="bg-white text-slate-400 rounded-xl border border-slate-200 shadow-sm px-1 py-2 text-center min-w-[2.25rem] text-[0.7rem] sm:text-xs font-medium leading-normal">
+              log<sub>b</sub>
+            </span>
+
+            <button type="button" class="{{ btn }}" data-insert="e^">eˣ</button>
+            <button type="button" class="{{ btn }}" data-insert="10^">10ˣ</button>
           </div>
         </div>
       </div>
@@ -154,7 +178,7 @@
           <input
             type="number" step="any" id="x0" name="x0"
             value="{{ datos.x0|default('') }}"
-            class="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white text-slate-900"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white text-slate-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/40"
           />
         </div>
 
@@ -165,7 +189,7 @@
           <input
             type="number" step="any" id="x1" name="x1"
             value="{{ datos.x1|default('') }}"
-            class="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white text-slate-900"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white text-slate-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/40"
           />
         </div>
       </div>
@@ -178,7 +202,7 @@
           <input
             type="number" step="any" id="es" name="es"
             value="{{ datos.es|default('0.0001') }}"
-            class="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white text-slate-900"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white text-slate-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/40"
           />
         </div>
 
@@ -189,28 +213,62 @@
           <input
             type="number" id="max_iter" name="max_iter"
             value="{{ datos.max_iter|default('50') }}"
-            class="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white text-slate-900"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2 bg-white text-slate-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/40"
           />
         </div>
       </div>
 
-      <button
-        type="submit"
-        class="w-full px-4 py-2 rounded-2xl bg-rose-600 text-white font-semibold shadow-md hover:bg-rose-700"
-      >
-        Calcular Método de la Secante
-      </button>
+      <div class="mt-4 flex flex-col sm:flex-row gap-2">
+        <button
+          type="submit"
+          name="accion"
+          value="graficar"
+          class="w-full sm:w-1/2 inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold shadow-sm border border-slate-300 text-slate-800 bg-white hover:bg-slate-50 transition"
+        >
+          Graficar función
+        </button>
+
+        <button
+          type="submit"
+          name="accion"
+          value="secante"
+          class="w-full sm:w-1/2 inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold shadow-sm border border-rose-500 text-white bg-rose-500 hover:bg-rose-600 transition"
+        >
+          Calcular método de la secante
+        </button>
+      </div>
     </form>
   </div>
 
-  <!-- ===================================================== -->
-  <!-- ================== RESULTADOS ======================== -->
-  <!-- ===================================================== -->
+  <!-- =================== COL 2: RESULTADOS =================== -->
   <div class="lg:col-span-2 bg-white rounded-3xl shadow-md border border-slate-200 p-6 flex flex-col gap-4">
 
     <h2 class="text-lg font-semibold text-slate-800">
       Iteraciones del Método de la Secante
     </h2>
+
+    {% if datos.funcion_latex %}
+    <div class="mb-2 text-sm text-slate-700">
+      <span class="font-semibold">Función:</span>
+      <span class="ml-2"> \( f(x) = {{ datos.funcion_latex|safe }} \) </span>
+    </div>
+    {% endif %}
+
+    {% if grafica_png %}
+    <div class="mt-3">
+      <h3 class="text-lg font-semibold text-slate-800 mb-1">Gráfica de f(x)</h3>
+      <p class="text-xs text-slate-500 mb-2">
+        Usa esta gráfica para visualizar dónde corta el eje X la función y elegir buenos valores iniciales \(x_0\) y \(x_1\).
+      </p>
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3">
+        <img
+          src="data:image/png;base64,{{ grafica_png }}"
+          alt="Gráfica de f(x)"
+          class="w-full rounded-xl"
+        />
+      </div>
+    </div>
+    {% endif %}
 
     {% if resultados %}
     <div class="mb-3 p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800">
@@ -225,9 +283,9 @@
       {% set ultima = resultados[-1] %}
       <p class="mt-2 text-xs text-slate-600">
         Última iteración:
-        \( x_{i-1} = {{ ultima.x_im1|round(6) }} \)
-        \( x_i = {{ ultima.x_i|round(6) }} \)
-        \( x_{i+1} = {{ ultima.x_ip1|round(6) }} \)
+        \( x_{i-1} = {{ ultima.x_im1|round(6) }} \),
+        \( x_i = {{ ultima.x_i|round(6) }} \),
+        \( x_{i+1} = {{ ultima.x_ip1|round(6) }} \),
         \( e_a \approx {{ ultima.ea|round(4) }}\% \)
       </p>
     </div>
@@ -256,7 +314,7 @@
             <td class="px-3 py-2 text-center">{{ fila.f_x_i|round(6) }}</td>
             <td class="px-3 py-2 text-center">{{ fila.x_ip1|round(6) }}</td>
             <td class="px-3 py-2 text-center">
-              {% if fila.ea %} {{ fila.ea|round(4) }}% {% else %} — {% endif %}
+              {% if fila.ea is not none %} {{ fila.ea|round(4) }}% {% else %} — {% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -265,14 +323,17 @@
     </div>
 
     {% else %}
-    <p class="text-sm text-slate-500">
-      Aún no hay iteraciones. Ingrese la función y los parámetros en
-      <strong>Datos de entrada</strong>.
+    <p class="text-sm text-slate-500 mt-4">
+      Aún no hay iteraciones. Ingresa la función y los parámetros en
+      <strong>Datos de entrada</strong>, luego pulsa
+      <span class="font-semibold">“Graficar función”</span> para explorar la gráfica
+      o <span class="font-semibold">“Calcular método de la secante”</span> para ver el procedimiento iterativo.
     </p>
     {% endif %}
   </div>
 </section>
 
-<script src="{{ url_for('static', filename='js/biseccion.js') }}"></script>
+<!-- JS común de MathLive -->
+<script defer src="{{ url_for('static', filename='js/Newton.js') }}"></script>
 
 {% endblock %}
