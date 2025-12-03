@@ -12,13 +12,31 @@
     class="card-method"
   >
     <div class="text-lg font-semibold">Operaciones</div>
-    <div class="text-sm opacity-80">Calcular determinantes y sistemas de ecuaciones. Suma y Multiplicación de matrices.</div>
+    <div class="text-sm opacity-80">
+      Calcular determinantes y sistemas de ecuaciones. Suma y Multiplicación de
+      matrices.
+    </div>
   </a>
   <a href="{{ url_for('gauss.vista_gauss_simple') }}" class="card-method">
-  <div class="text-lg font-semibold">Método de Gauss</div>
-  <div class="text-sm opacity-80">
-    Eliminación hacia adelante (matriz triangular superior).
-  </div>
-</a>
+    <div class="text-lg font-semibold">Método de Gauss</div>
+    <div class="text-sm opacity-80">
+      Eliminación hacia adelante (matriz triangular superior).
+    </div>
+  </a>
+  <a href="{{ url_for('operaciones.vista_cramer') }}" class="card-method">
+    <div class="text-lg font-semibold">Regla de Cramer</div>
+    <div class="text-sm opacity-80">
+      Resuelve Ax=b calculando determinantes.
+    </div>
+  </a>
+  <a
+    href="{{ url_for('aplicaciones.vista_economia') }}"
+    class="card-method border-l-green-500 hover:border-r-green-500"
+  >
+    <div class="text-lg font-semibold">Aplicaciones Económicas</div>
+    <div class="text-sm opacity-80">
+      Modelos de Intercambio (Leontief). Encuentra precios de equilibrio.
+    </div>
+  </a>
 </div>
 {% endblock %}

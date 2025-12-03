@@ -1,0 +1,114 @@
+{% extends "base.html" %} {% block content %}
+<div class="space-y-8">
+  <section class="panel">
+    <h2 class="panel-title text-slate-900">Modelo Económico (Input-Output)</h2>
+    <p class="text-slate-600 text-sm mb-4 max-w-2xl">
+      Calcula los <strong>precios de equilibrio</strong> para una economía de
+      intercambio. Los ingresos de cada sector deben cubrir exactamente sus
+      gastos.
+    </p>
+
+    <div class="flex flex-wrap items-end gap-6">
+      <label class="block">
+        <span class="lbl">Cantidad de Sectores</span>
+        <input
+          id="inp-sectores"
+          type="number"
+          min="2"
+          max="6"
+          value="3"
+          class="input w-32 font-bold"
+        />
+      </label>
+
+      <button id="btn-generar" class="btn-primary">Reiniciar Tabla</button>
+    </div>
+  </section>
+
+  <section id="zona-tabla" class="panel hidden">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">
+        Tabla de Intercambio
+      </h3>
+
+      <label class="inline-flex items-center cursor-pointer">
+        <span
+          class="mr-3 text-sm font-medium text-slate-600 dark:text-slate-400"
+          >Ver en decimales</span
+        >
+        <input type="checkbox" id="check-decimales" class="sr-only peer" />
+        <div
+          class="relative w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-rose-300 dark:peer-focus:ring-rose-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-rose-600"
+        ></div>
+      </label>
+    </div>
+
+    <p class="text-xs text-slate-500 mb-2">
+      Modifica los nombres de los sectores (cabeceras) y los valores de
+      distribución (columnas).
+    </p>
+
+    <div
+      class="overflow-x-auto rounded-xl border border-slate-300 dark:border-slate-600 shadow-sm mb-6"
+    >
+      <table id="tabla-economia" class="w-full text-sm text-center"></table>
+    </div>
+
+    <div class="flex justify-end">
+      <button
+        id="btn-resolver"
+        class="btn-accent px-8 py-3 text-base shadow-lg hover:shadow-rose-500/20 transition-all"
+      >
+        Calcular Precios de Equilibrio
+      </button>
+    </div>
+  </section>
+
+  <section
+    id="zona-resultado"
+    class="panel hidden border-l-4 border-l-rose-500 bg-slate-50 dark:bg-slate-800/50"
+  >
+    <div class="flex items-start gap-4">
+      <div
+        class="bg-rose-100 p-2 rounded-full text-rose-600 dark:bg-rose-900/30"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-6 h-6"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+          />
+        </svg>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">
+          Resultados del Análisis
+        </h3>
+
+        <div
+          id="txt-interpretacion"
+          class="text-slate-700 dark:text-slate-300 text-sm mb-4 leading-relaxed"
+        ></div>
+
+        <div
+          class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-5 rounded-xl shadow-sm"
+        >
+          <ul
+            id="lista-solucion"
+            class="space-y-3 font-mono text-base text-slate-800 dark:text-slate-200"
+          ></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="{{ url_for('static', filename='js/economia.js') }}"></script>
+{% endblock %}

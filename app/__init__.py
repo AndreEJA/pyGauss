@@ -12,6 +12,7 @@ def crear_app():
     from app.ocio.routes import ocio_bp
     from app.metodos_numericos.routes import metodos_bp   
     from app.calculo.routes import calculo_bp
+    from app.matrices.aplicaciones.routes import aplicaciones_bp
     
     app.register_blueprint(principal_bp)
     app.register_blueprint(gauss_bp, url_prefix="/matrices/gauss")
@@ -20,5 +21,6 @@ def crear_app():
     app.register_blueprint(ocio_bp, url_prefix="/ocio")
     app.register_blueprint(metodos_bp)  
     app.register_blueprint(calculo_bp)
+    app.register_blueprint(aplicaciones_bp, url_prefix="/matrices/aplicaciones")
     
     return app
