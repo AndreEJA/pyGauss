@@ -204,3 +204,86 @@ def resolver_economia_abierto():
         import traceback
         traceback.print_exc()
         return jsonify({"ok": False, "error": str(e)}), 400
+
+
+@aplicaciones_bp.route("/leontief-demanda", methods=["GET"])
+def vista_leontief_demanda():
+    return render_template("leontief_demanda.html", title="Leontief: Demanda Interna")
+
+@aplicaciones_bp.route("/leontief-demanda/resolver", methods=["POST"])
+def resolver_leontief_demanda():
+    datos = request.get_json(force=True)
+    matriz_C_raw = datos.get("matriz_C", []) # Matriz Insumo-Producto
+    vector_X_raw = datos.get("vector_X", []) # Producción Total
+    nombres = datos.get("nombres", [])
+    usar_decimales = datos.get("usar_decimales", False)
+
+    if not matriz_C_raw or not vector_X_raw:
+        return jsonify({"ok": False, "error": "Faltan datos (Matriz C o Vector X)"}), 400
+
+    try:
+        n = len(matriz_C_raw)
+        evaluador = EvaluadorSeguro()
+
+        # 1. Evaluar Matriz C y Vector X
+        C = []
+        for fila in matriz_C_raw:
+            C.append([evaluador.evaluar(str(val)) for val in fila])
+        
+        X = [evaluador.evaluar(str(val)) for val in vector_X_raw]
+
+        # 2. Calcular Demanda Interna (DI = C * X)
+        # DI[i] = Sum(C[i][j] * X[j])
+        demanda_interna = []
+        detalles_calculo = []
+
+        for i in range(n):
+            suma = 0
+            pasos_fila = []
+            for j in range(n):
+                val = C[i][j] * X[j]
+                suma += val
+                # Guardamos el detalle: "0.2 * 100"
+                nombre_dest = nombres[j] if j < len(nombres) else f"Sec.{j+1}"
+                pasos_fila.append({
+                    "coef": float(C[i][j]),
+                    "prod": float(X[j]),
+                    "sector_origen": nombres[i],
+                    "sector_destino": nombre_dest
+                })
+            
+            demanda_interna.append(suma)
+            detalles_calculo.append(pasos_fila)
+
+        # 3. Formatear Salida
+        resultados = []
+        for i in range(n):
+            nombre_sec = nombres[i] if i < len(nombres) else f"Sector {i+1}"
+            
+            # Formatear valor final
+            val_final = float(demanda_interna[i])
+            val_str = f"{val_final:.2f}" if usar_decimales else str(val_final)
+            
+            # Interpretación textual específica
+            interpretacion = (
+                f"El sector <strong>{nombre_sec}</strong> debe suministrar un total de "
+                f"<strong>{val_str}</strong> unidades a las demás industrias (consumo interindustrial) "
+                f"para sostener la producción total dada."
+            )
+
+            resultados.append({
+                "sector": nombre_sec,
+                "valor": val_str,
+                "texto": interpretacion,
+                "produccion_total": float(X[i])
+            })
+
+        return jsonify({
+            "ok": True,
+            "resultados": resultados
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"ok": False, "error": str(e)}), 400

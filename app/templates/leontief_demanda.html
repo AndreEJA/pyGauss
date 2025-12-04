@@ -1,0 +1,326 @@
+{% extends "base.html" %} {% block content %}
+<div class="space-y-8">
+  <section class="panel">
+    <h2 class="panel-title text-slate-900">
+      Cálculo de Demanda Interna (Leontief)
+    </h2>
+    <p class="text-slate-600 text-sm mb-4 max-w-3xl">
+      Dada la <strong>Matriz de Insumo-Producto (C)</strong> y la
+      <strong>Producción Total (X)</strong>, calcula cuánto de esa producción se
+      consume internamente entre las industrias.
+      <br />
+      Fórmula: <strong>Demanda Interna = C · X</strong>
+    </p>
+
+    <div class="flex items-end gap-4">
+      <label class="block">
+        <span class="lbl">Industrias</span>
+        <input
+          id="inp-sectores"
+          type="number"
+          min="2"
+          max="10"
+          value="2"
+          class="input w-24 font-bold"
+        />
+      </label>
+      <button id="btn-generar" class="btn-primary">Generar Tabla</button>
+    </div>
+  </section>
+
+  <section id="zona-tabla" class="panel hidden">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-bold text-slate-800">Definir Modelo</h3>
+      <label class="inline-flex items-center cursor-pointer">
+        <span class="mr-3 text-sm font-medium text-slate-600">Decimales</span>
+        <input
+          type="checkbox"
+          id="check-decimales"
+          class="sr-only peer"
+          checked
+        />
+        <div
+          class="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:bg-rose-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
+        ></div>
+      </label>
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-8 items-start">
+      <div class="flex-1 overflow-x-auto">
+        <h4 class="text-sm font-bold text-slate-500 mb-2 text-center">
+          Matriz Insumo-Producto (C)
+        </h4>
+        <table id="tabla-C" class="matrix-table w-full"></table>
+      </div>
+
+      <div class="hidden md:flex items-center justify-center h-full pt-10">
+        <span class="text-2xl text-slate-400 font-bold">×</span>
+      </div>
+
+      <div class="w-full md:w-48">
+        <h4 class="text-sm font-bold text-slate-500 mb-2 text-center">
+          Prod. Total (X)
+        </h4>
+        <table id="tabla-X" class="matrix-table w-full"></table>
+      </div>
+    </div>
+
+    <div class="mt-6 flex justify-end">
+      <button
+        id="btn-resolver"
+        class="btn-accent px-8 py-2 text-base shadow-lg"
+      >
+        Calcular Demanda Interna
+      </button>
+    </div>
+  </section>
+
+  <section
+    id="zona-resultado"
+    class="panel hidden border-l-4 border-l-purple-500 bg-slate-50"
+  >
+    <h3 class="text-xl font-bold text-slate-900 mb-4">
+      Análisis de Resultados
+    </h3>
+
+    <div class="grid grid-cols-1 gap-4" id="contenedor-tarjetas"></div>
+  </section>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  console.log("Script de Leontief cargado correctamente");
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const btnGenerar = document.getElementById("btn-generar");
+    const btnResolver = document.getElementById("btn-resolver");
+    const tablaC = document.getElementById("tabla-C");
+    const tablaX = document.getElementById("tabla-X");
+    const checkDecimales = document.getElementById("check-decimales");
+
+    let numSectores = 2;
+
+    // Verificar si los elementos existen antes de usarlos
+    if (!btnGenerar || !btnResolver || !tablaC || !tablaX) {
+      console.error(
+        "Error: No se encontraron algunos elementos del DOM (botones o tablas)."
+      );
+      return;
+    }
+
+    btnGenerar.addEventListener("click", () => {
+      console.log("Botón Generar clickeado");
+      generarTablas();
+    });
+
+    function generarTablas() {
+      const inpSectores = document.getElementById("inp-sectores");
+      if (!inpSectores) return;
+
+      const val = parseInt(inpSectores.value);
+      if (!val || val < 2) {
+        alert("Por favor ingresa al menos 2 industrias.");
+        return;
+      }
+      numSectores = val;
+
+      // --- 1. MATRIZ C (Insumo-Producto) ---
+      tablaC.innerHTML = "";
+      const theadC = document.createElement("thead");
+      const trHeadC = document.createElement("tr");
+
+      // Esquina vacía
+      const thCorner = document.createElement("th");
+      thCorner.className = "row-head";
+      trHeadC.appendChild(thCorner);
+
+      // Columnas
+      for (let i = 0; i < numSectores; i++) {
+        const th = document.createElement("th");
+        const inputName = document.createElement("input");
+        inputName.type = "text";
+
+        // --- CAMBIO AQUÍ: Nombres genéricos Ind. A, Ind. B, etc. ---
+        inputName.value = `Ind. ${String.fromCharCode(65 + i)}`;
+
+        inputName.className =
+          "w-full bg-transparent text-center font-bold outline-none border-b border-transparent focus:border-rose-500 placeholder-slate-400 text-slate-700";
+        inputName.dataset.idx = i;
+
+        inputName.addEventListener("input", (e) =>
+          actualizarNombres(e.target.value, i)
+        );
+
+        th.appendChild(inputName);
+        trHeadC.appendChild(th);
+      }
+      theadC.appendChild(trHeadC);
+      tablaC.appendChild(theadC);
+
+      const tbodyC = document.createElement("tbody");
+      for (let r = 0; r < numSectores; r++) {
+        const tr = document.createElement("tr");
+        const thRow = document.createElement("th");
+        thRow.className = "row-head text-left px-3";
+        thRow.id = `row-name-${r}`;
+
+        // --- CAMBIO AQUÍ: Nombres genéricos para filas también ---
+        thRow.textContent = `Ind. ${String.fromCharCode(65 + r)}`;
+
+        tr.appendChild(thRow);
+
+        for (let c = 0; c < numSectores; c++) {
+          const td = document.createElement("td");
+          td.className = "celda";
+          const inp = document.createElement("input");
+          inp.type = "text";
+          inp.placeholder = "0";
+          inp.className =
+            "w-full h-full !bg-transparent text-center outline-none";
+          td.appendChild(inp);
+          tr.appendChild(td);
+        }
+        tbodyC.appendChild(tr);
+      }
+      tablaC.appendChild(tbodyC);
+
+      // --- 2. VECTOR X (Producción Total) ---
+      tablaX.innerHTML = "";
+      const tbodyX = document.createElement("tbody");
+      const trSpacer = document.createElement("tr");
+      trSpacer.innerHTML = '<td class="p-2 bg-transparent border-none"></td>';
+      tablaX.appendChild(document.createElement("thead")).appendChild(trSpacer);
+
+      for (let r = 0; r < numSectores; r++) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.className = "celda border-2 border-slate-300";
+        const inp = document.createElement("input");
+        inp.type = "text";
+        inp.placeholder = "Total";
+        inp.className =
+          "w-full h-full !bg-transparent text-center outline-none font-semibold text-blue-600";
+        td.appendChild(inp);
+        tr.appendChild(td);
+        tbodyX.appendChild(tr);
+      }
+      tablaX.appendChild(tbodyX);
+
+      document.getElementById("zona-tabla").classList.remove("hidden");
+      document.getElementById("zona-resultado").classList.add("hidden");
+    }
+
+    function actualizarNombres(nuevoNombre, idx) {
+      const rowHeader = document.getElementById(`row-name-${idx}`);
+      if (rowHeader) rowHeader.textContent = nuevoNombre;
+    }
+
+    btnResolver.addEventListener("click", async () => {
+      console.log("Botón Resolver clickeado");
+
+      // Recolectar Nombres
+      const nombres = [];
+      tablaC
+        .querySelectorAll("thead input")
+        .forEach((inp) => nombres.push(inp.value));
+
+      // Recolectar Matriz C
+      const matrizC = [];
+      tablaC.querySelectorAll("tbody tr").forEach((tr) => {
+        const fila = [];
+        tr.querySelectorAll("td input").forEach((inp) =>
+          fila.push(inp.value.trim() || "0")
+        );
+        matrizC.push(fila);
+      });
+
+      // Recolectar Vector X
+      const vectorX = [];
+      tablaX
+        .querySelectorAll("tbody input")
+        .forEach((inp) => vectorX.push(inp.value.trim() || "0"));
+
+      const usarDecimales = checkDecimales ? checkDecimales.checked : false;
+
+      try {
+        const originalText = btnResolver.textContent;
+        btnResolver.textContent = "Calculando...";
+        btnResolver.disabled = true;
+
+        const resp = await fetch(
+          "/matrices/aplicaciones/leontief-demanda/resolver",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              matriz_C: matrizC,
+              vector_X: vectorX,
+              nombres: nombres,
+              usar_decimales: usarDecimales,
+            }),
+          }
+        );
+
+        // Verificar si la respuesta es válida antes de convertir a JSON
+        if (!resp.ok) {
+          const text = await resp.text();
+          throw new Error(`Error del servidor (${resp.status}): ${text}`);
+        }
+
+        const json = await resp.json();
+        btnResolver.textContent = originalText;
+        btnResolver.disabled = false;
+
+        if (!json.ok) {
+          alert("Error: " + (json.error || "Desconocido"));
+          return;
+        }
+
+        renderizarResultados(json.resultados);
+      } catch (e) {
+        console.error(e);
+        alert(
+          "Error: Revisa la consola (F12) para más detalles.\n" + e.message
+        );
+        btnResolver.textContent = "Calcular Demanda Interna";
+        btnResolver.disabled = false;
+      }
+    });
+
+    function renderizarResultados(resultados) {
+      const contenedor = document.getElementById("contenedor-tarjetas");
+      contenedor.innerHTML = "";
+
+      resultados.forEach((item) => {
+        const card = document.createElement("div");
+        card.className =
+          "bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row gap-4 items-center";
+
+        const left = document.createElement("div");
+        left.className = "text-center md:text-left min-w-[120px]";
+        left.innerHTML = `
+                <div class="text-xs text-slate-500 uppercase tracking-wide mb-1">Demanda Interna</div>
+                <div class="text-3xl font-extrabold text-rose-600">${item.valor}</div>
+                <div class="text-xs text-slate-400 mt-1">de ${item.produccion_total} Total</div>
+            `;
+
+        const right = document.createElement("div");
+        right.className = "flex-1 text-sm text-slate-700 leading-relaxed";
+        right.innerHTML = `
+                <div class="flex gap-2">
+                    <span class="text-xl">🏭</span>
+                    <p>${item.texto}</p>
+                </div>
+            `;
+
+        card.appendChild(left);
+        card.appendChild(right);
+        contenedor.appendChild(card);
+      });
+
+      const zonaRes = document.getElementById("zona-resultado");
+      zonaRes.classList.remove("hidden");
+      zonaRes.scrollIntoView({ behavior: "smooth" });
+    }
+  });
+</script>
+{% endblock %}

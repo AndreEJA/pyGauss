@@ -41,11 +41,20 @@
 
   <a
     href="{{ url_for('aplicaciones.vista_economia_abierto') }}"
-    class="card-method border-l-green-500 hover:border-r-blue-500"
+    class="card-method border-l-green-500 hover:border-r-green-500"
   >
     <div class="text-lg font-semibold">Modelo Abierto (Producción)</div>
     <div class="text-sm opacity-80">
       Producción necesaria para satisfacer demanda externa.
+    </div>
+  </a>
+  <a
+    href="{{ url_for('aplicaciones.vista_leontief_demanda') }}"
+    class="card-method border-l-green-500 hover:border-r-green-500"
+  >
+    <div class="text-lg font-semibold">Consumo Interindustrial (Leontief)</div>
+    <div class="text-sm opacity-80">
+      Calcula la Demanda Interna (CX) dada la matriz C y la producción X.
     </div>
   </a>
 </div>
