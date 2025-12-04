@@ -1,20 +1,30 @@
-// app/static/js/cramer.js
-
 let ultimaCeldaActiva = null;
 
-function crearTabla(filas, columnas, idTabla){
+// --- FUNCIONES DE TABLA ---
+
+function crearTabla(filas, columnas, idTabla) {
   const tabla = document.getElementById(idTabla);
+  if (!tabla) return;
+
   tabla.innerHTML = '';
   const tbody = document.createElement('tbody');
+
   for (let r = 0; r < filas; r++) {
     const tr = document.createElement('tr');
     for (let c = 0; c < columnas; c++) {
       const td = document.createElement('td');
       td.className = 'celda';
+
       const input = document.createElement('input');
       input.type = 'text';
       input.placeholder = '0';
+      // Clases de estructura + conexión directa a variables de texto
+      input.className = "w-full h-full bg-transparent text-center outline-none font-medium";
+      // Forzamos el color del texto a la variable del tema
+      input.style.color = "var(--text)";
+
       input.addEventListener('focus', () => ultimaCeldaActiva = input);
+
       td.appendChild(input);
       tr.appendChild(td);
     }
@@ -23,271 +33,314 @@ function crearTabla(filas, columnas, idTabla){
   tabla.appendChild(tbody);
 }
 
-function leerTabla(idTabla){
+function leerTabla(idTabla) {
   const tabla = document.getElementById(idTabla);
+  if (!tabla) return [];
   const filas = [...tabla.querySelectorAll('tbody tr')];
-  return filas.map(tr => [...tr.querySelectorAll('input')].map(inp => (inp.value || '0')));
+  return filas.map(tr => [...tr.querySelectorAll('input')].map(inp => (inp.value.trim() || '0')));
 }
 
-function setMsg(t){ 
-  document.getElementById('msg').textContent = t || ''; 
+function setMsg(t) {
+  const el = document.getElementById('msg');
+  if (el) el.textContent = t || '';
 }
 
-function showModal(message){
-  const modal = document.getElementById('app-modal'); 
-  const txt   = document.getElementById('modal-text');
-  txt.textContent = message; 
-  modal.classList.remove('hidden'); 
-  setTimeout(() => modal.classList.add('show'), 10);
+function showModal(message) {
+  const modal = document.getElementById('app-modal');
+  const txt = document.getElementById('modal-text');
+  if (modal && txt) {
+    txt.textContent = message;
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('show'), 10);
+  } else {
+    alert(message);
+  }
 }
 
-// Reutiliza la lógica de renderizado de pasos del determinante (det.js)
-function renderPasoDet(p, idx){
+// --- RENDERIZADO DE PASOS ---
+
+function renderPasoDet(p, idx) {
   const wrap = document.createElement('div');
-  wrap.className = 'rounded-xl border border-slate-200 overflow-auto';
-  
-  const head = document.createElement('div');
-  head.className = 'px-3 py-2 text-slate-700 bg-slate-50 border-b border-slate-200 text-sm font-semibold';
-  head.textContent = `Paso ${idx}: ${p.op.split('. det(A)')[0].split('. Factor')[0]}`;
-  
-  const body = document.createElement('div');
-  body.className = 'grid sm:grid-cols-2 gap-4 p-3 items-start';
+  wrap.className = 'rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden mb-3';
+  // Forzamos el fondo usando variables del sistema (se ve un poco más oscuro que el panel para contraste)
+  wrap.style.backgroundColor = "rgba(148, 163, 184, 0.05)"; 
 
-  const leftCont = document.createElement('div');
-  leftCont.className = 'space-y-2';
-  const leftHead = document.createElement('h4'); 
-  leftHead.className = 'text-sm font-medium';
-  leftHead.textContent = "Matriz";
-  const left = document.createElement('table'); 
-  left.className = 'matrix-table w-full';
+  const head = document.createElement('div');
+  head.className = 'px-3 py-2 border-b border-slate-200 dark:border-slate-600 text-sm font-bold';
+  head.style.color = "var(--muted)"; // Color de texto secundario
   
-  const rightCont = document.createElement('div');
-  rightCont.className = 'space-y-2';
-  const rightHead = document.createElement('h4'); 
-  rightHead.className = 'text-sm font-medium';
-  rightHead.textContent = "Operación / Factor";
-  const right = document.createElement('table'); 
-  right.className = 'matrix-table w-full';
-  
-  const render = (M, tbl) => {
-    const tbody = document.createElement('tbody');
+  let tituloOp = `Paso ${idx}`;
+  if (p.op) {
+    tituloOp += `: ${p.op.split('. det(A)')[0].split('. Factor')[0]}`;
+  }
+  head.textContent = tituloOp;
+
+  const body = document.createElement('div');
+  body.className = 'grid sm:grid-cols-2 gap-4 p-3';
+  // El cuerpo hereda el color de texto del padre
+
+  // Función interna para dibujar matriz pequeña
+  const renderMat = (M, title) => {
+    const container = document.createElement('div');
+    container.className = 'space-y-1';
+
+    if (title) {
+      const h = document.createElement('h5');
+      h.className = 'text-xs font-bold uppercase tracking-wide';
+      h.style.color = "var(--muted)";
+      h.textContent = title;
+      container.appendChild(h);
+    }
+
+    const tbl = document.createElement('table');
+    tbl.className = 'matrix-table w-full text-center text-sm';
+    const tb = document.createElement('tbody');
+
     M.forEach(fila => {
       const tr = document.createElement('tr');
-      fila.forEach(celda => {
-        const td = document.createElement('td'); 
-        td.className = 'celda'; 
-        const div = document.createElement('div'); 
-        div.textContent = celda; 
-        td.appendChild(div); 
+      fila.forEach(val => {
+        const td = document.createElement('td');
+        td.className = 'p-2 border border-slate-300 dark:border-slate-600';
+        // Texto conectado a variable
+        td.style.color = "var(--text)";
+        td.textContent = val;
         tr.appendChild(td);
       });
-      tbody.appendChild(tr);
+      tb.appendChild(tr);
     });
-    tbl.appendChild(tbody);
+    tbl.appendChild(tb);
+    container.appendChild(tbl);
+    return container;
   };
 
-  render(p.matriz_izq, left);
-  render(p.matriz_der, right);
-  
-  leftCont.appendChild(leftHead); 
-  leftCont.appendChild(left);
-  rightCont.appendChild(rightHead); 
-  rightCont.appendChild(right);
-  
-  body.appendChild(leftCont); 
+  if (p.matriz_izq) body.appendChild(renderMat(p.matriz_izq, "Matriz"));
   if (p.matriz_der && p.matriz_der.length > 0 && p.matriz_der[0].length > 0) {
-    body.appendChild(rightCont);
+    body.appendChild(renderMat(p.matriz_der, "Operación / Factor"));
   }
-  
-  wrap.appendChild(head); 
+
+  wrap.appendChild(head);
   wrap.appendChild(body);
   return wrap;
 }
 
 function renderCramerStep(p, idx) {
   const card = document.createElement('div');
-  card.className = 'card-paso';
+  
+  // ESTRUCTURA BASE
+  card.className = 'mb-8 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 transition-colors duration-200';
+  
+  // 🔥 FIX CRÍTICO: Conexión directa a tus variables CSS globales
+  // Esto hace que si cambias el tema, la tarjeta cambie INSTANTÁNEAMENTE
+  card.style.backgroundColor = "var(--panel)";
+  card.style.color = "var(--text)";
 
-  const title = document.createElement('div');
-  title.className = 'text-lg font-semibold text-slate-900 mb-3';
-  title.textContent = `Cálculo para ${p.variable}`;
+  const title = document.createElement('h3');
+  title.className = 'text-xl font-extrabold mb-4 flex items-center gap-2';
+  // El color acento (rosa) suele funcionar en ambos modos, pero aseguramos
+  title.style.color = "var(--accent)"; 
+  
+  title.innerHTML = `<span class="text-xs px-2 py-1 rounded-full" style="background: rgba(225, 29, 72, 0.1);">Var</span> ${p.variable}`;
   card.appendChild(title);
 
   // 1. Matriz A_i(b)
-  const h4_mat = document.createElement('h4');
-  h4_mat.className = 'text-base font-medium text-slate-700 mb-2';
-  h4_mat.textContent = `Matriz ${p.variable.replace('x', 'A')}(b): Columna ${idx} reemplazada.`;
-  card.appendChild(h4_mat);
+  if (p.A_i_b) {
+    const subTitle = document.createElement('div');
+    subTitle.className = 'text-sm font-semibold mb-2';
+    subTitle.style.color = "var(--muted)";
+    subTitle.textContent = `1. Matriz asociada (columna ${idx} reemplazada por b):`;
+    card.appendChild(subTitle);
 
-  const wrapMat = document.createElement('div');
-  wrapMat.className = 'overflow-auto mb-4 rounded-lg border border-slate-200';
-  const tablaMat = document.createElement('table'); 
-  tablaMat.className = 'matrix-table w-full';
-  p.A_i_b.forEach(fila => {
-    const tr = document.createElement('tr');
-    fila.forEach(celda => {
-      const td = document.createElement('td'); 
-      td.textContent = celda; 
-      tr.appendChild(td);
+    const divMat = document.createElement('div');
+    divMat.className = 'overflow-x-auto mb-6 inline-block rounded-lg border border-slate-200 dark:border-slate-600';
+    const tbl = document.createElement('table');
+    tbl.className = 'text-center border-collapse';
+    const tb = document.createElement('tbody');
+    p.A_i_b.forEach(fila => {
+      const tr = document.createElement('tr');
+      fila.forEach(val => {
+        const td = document.createElement('td');
+        td.className = 'px-4 py-2 border border-slate-200 dark:border-slate-600 font-mono text-sm';
+        // Forzamos contraste en las celdas
+        td.style.color = "var(--text)";
+        td.style.backgroundColor = "var(--bg)"; // Fondo ligeramente distinto al panel
+        td.textContent = val;
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
     });
-    tablaMat.appendChild(tr);
-  });
-  wrapMat.appendChild(tablaMat);
-  card.appendChild(wrapMat);
+    tbl.appendChild(tb);
+    divMat.appendChild(tbl);
+    card.appendChild(divMat);
+  }
 
-  // 2. Pasos del determinante de A_i(b)
-  const h4_det = document.createElement('h4');
-  h4_det.className = 'text-base font-medium text-slate-700 mt-4 mb-2';
-  h4_det.textContent = `Pasos para det(${p.variable.replace('x', 'A')}(b)) = ${p.det_Ai_valor}`;
-  card.appendChild(h4_det);
+  // 2. Pasos del determinante
+  if (p.det_Ai_pasos && p.det_Ai_pasos.length > 0) {
+    const detTitle = document.createElement('div');
+    detTitle.className = 'text-sm font-semibold mb-3';
+    detTitle.style.color = "var(--muted)";
+    detTitle.textContent = `2. Desarrollo del determinante:`;
+    card.appendChild(detTitle);
 
-  const detStepsContainer = document.createElement('div');
-  detStepsContainer.className = 'space-y-3';
-  p.det_Ai_pasos.forEach((detPaso, i) => {
-    detStepsContainer.appendChild(renderPasoDet(detPaso, i + 1));
-  });
-  card.appendChild(detStepsContainer);
-  
-  // 3. Cálculo final de la variable
-  const finalCalc = document.createElement('div');
-  finalCalc.className = 'mt-4 pt-3 border-t border-slate-200';
-  finalCalc.innerHTML = `
-    <div class="text-base font-medium mb-1">${p.formula}</div>
-    <div class="text-xl font-bold">${p.calculo}</div>
+    const detContainer = document.createElement('div');
+    detContainer.className = 'space-y-4 pl-4 border-l-2 border-slate-200 dark:border-slate-700';
+    p.det_Ai_pasos.forEach((paso, i) => {
+      detContainer.appendChild(renderPasoDet(paso, i + 1));
+    });
+    card.appendChild(detContainer);
+  }
+
+  // 3. Resultado Final del Paso
+  const finalDiv = document.createElement('div');
+  finalDiv.className = 'mt-6 pt-4 border-t border-slate-100 dark:border-slate-700';
+  finalDiv.innerHTML = `
+      <div class="text-xs uppercase tracking-wide font-bold mb-1" style="color: var(--muted)">Resultado Parcial</div>
+      <div class="flex flex-col sm:flex-row sm:items-baseline gap-2">
+        <span class="text-2xl font-bold" style="color: var(--text)">
+            ${p.variable} = <span style="color: var(--accent)">${p.calculo.split('=')[2] || p.calculo}</span>
+        </span>
+        <span class="text-sm font-mono px-2 py-1 rounded" style="background: rgba(148,163,184,0.1); color: var(--muted)">
+            (${p.formula})
+        </span>
+      </div>
   `;
-  card.appendChild(finalCalc);
+  card.appendChild(finalDiv);
 
   return card;
 }
 
+// --- EVENTOS ---
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('btn-crear').addEventListener('click', () => {
-    const n = parseInt(document.getElementById('inp-orden').value, 10);
-    if (!Number.isInteger(n) || n < 2) { 
-      showModal('n debe ser un entero ≥ 2'); 
-      return; 
-    }
-    
-    // Matriz A (n x n)
-    crearTabla(n, n, 'tabla-A');
-    // Vector b (n x 1)
-    crearTabla(n, 1, 'tabla-b');
-    
-    document.getElementById('zona-matrices').classList.remove('hidden');
-    document.getElementById('zona-detA').classList.add('hidden');
-    document.getElementById('zona-cramer').classList.add('hidden');
-    document.getElementById('zona-resultado').classList.add('hidden');
-  });
+  const btnCrear = document.getElementById('btn-crear');
+  const btnResolver = document.getElementById('btn-resolver');
 
-  document.getElementById('btn-resolver').addEventListener('click', async () => {
-    const matriz_A = leerTabla('tabla-A');
-    const vector_b = leerTabla('tabla-b'); 
-    const modo = document.getElementById('sel-modo').value;
-    const decimales = parseInt(document.getElementById('inp-decimales').value, 10) || 6;
-    setMsg('Calculando...');
-    
-    try {
-      const resp = await fetch('/matrices/operaciones/cramer/resolver', {
-        method: 'POST', 
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ 
-          matriz_A_str: matriz_A, 
-          vector_b_str: vector_b, 
-          modo_precision: modo, 
-          decimales 
-        })
-      });
-      const js = await resp.json();
-      
-      document.getElementById('zona-detA').classList.add('hidden');
-      document.getElementById('zona-cramer').classList.add('hidden');
-      document.getElementById('zona-resultado').classList.add('hidden');
-
-      if (js.ok) {
-        // 1. Mostrar det(A) y sus pasos
-        document.getElementById('valor-detA').textContent = `det(A) = ${js.det_A}`;
-        if (js.pasos && js.pasos.length) {
-          const listaDetA = document.getElementById('lista-pasos-detA'); 
-          listaDetA.innerHTML = '';
-          js.pasos.forEach((p, i) => listaDetA.appendChild(renderPasoDet(p, i + 1)));
-        }
-        document.getElementById('zona-detA').classList.remove('hidden');
-
-        // 2. Mostrar mensaje y pasos de Cramer
-        const mensaje     = document.getElementById('cramer-message');
-        const listaCramer = document.getElementById('lista-pasos-cramer'); 
-        listaCramer.innerHTML = '';
-
-        if (js.solucion) {
-          mensaje.textContent = js.mensaje;
-          js.pasos_cramer.forEach((p, i) => listaCramer.appendChild(renderCramerStep(p, i + 1)));
-          document.getElementById('zona-cramer').classList.remove('hidden');
-          
-          // 3. Mostrar solución final
-          const ulSolucion = document.getElementById('resultado-solucion'); 
-          ulSolucion.innerHTML = '';
-          Object.entries(js.solucion).forEach(([k, v]) => {
-            const li = document.createElement('li');
-            li.className = 'sol-item text-slate-800 font-semibold';
-            li.textContent = `${k} = ${v}`;
-            ulSolucion.appendChild(li);
-          });
-          document.getElementById('zona-resultado').classList.remove('hidden');
-        } else {
-          // Caso no invertible
-          mensaje.textContent = js.mensaje;
-          document.getElementById('zona-cramer').classList.remove('hidden');
-        }
-
-        setMsg('Listo.');
-        
-      } else {
-        setMsg('');
-        showModal(js.error || 'Error desconocido');
+  // Crear Matriz
+  if (btnCrear) {
+    btnCrear.addEventListener('click', () => {
+      const n = parseInt(document.getElementById('inp-orden').value, 10);
+      if (!Number.isInteger(n) || n < 2) {
+        showModal('n debe ser un entero ≥ 2');
+        return;
       }
-    } catch (e) { 
-      setMsg('');
-      showModal('Error al conectar con el servidor: ' + e.message); 
-    }
-  });
 
-  /* ============================
-        TECLADO REPARADO
-     ============================ */
+      crearTabla(n, n, 'tabla-A');
+      crearTabla(n, 1, 'tabla-b');
 
+      document.getElementById('zona-matrices').classList.remove('hidden');
+
+      ['zona-detA', 'zona-cramer', 'zona-resultado'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+    });
+  }
+
+  // Resolver
+  if (btnResolver) {
+    btnResolver.addEventListener('click', async () => {
+      const matriz_A = leerTabla('tabla-A');
+      const vector_b = leerTabla('tabla-b');
+      const modo = document.getElementById('sel-modo').value;
+      const decimales = parseInt(document.getElementById('inp-decimales').value, 10) || 6;
+
+      setMsg('Calculando...');
+
+      try {
+        const resp = await fetch('/matrices/operaciones/cramer/resolver', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            matriz_A_str: matriz_A,
+            vector_b_str: vector_b,
+            modo_precision: modo,
+            decimales
+          })
+        });
+        const js = await resp.json();
+
+        document.getElementById('zona-detA').classList.add('hidden');
+        document.getElementById('zona-cramer').classList.add('hidden');
+        document.getElementById('zona-resultado').classList.add('hidden');
+
+        if (js.ok) {
+          // 1. Determinante A
+          const divDetA = document.getElementById('valor-detA');
+          divDetA.textContent = `det(A) = ${js.det_A}`;
+          const listaDetA = document.getElementById('lista-pasos-detA');
+          listaDetA.innerHTML = '';
+          if (js.pasos) {
+            js.pasos.forEach((p, i) => listaDetA.appendChild(renderPasoDet(p, i + 1)));
+          }
+          document.getElementById('zona-detA').classList.remove('hidden');
+
+          // 2. Cramer
+          const msgCramer = document.getElementById('cramer-message');
+          if (msgCramer) msgCramer.textContent = js.mensaje;
+
+          const listaCramer = document.getElementById('lista-pasos-cramer');
+          listaCramer.innerHTML = '';
+
+          if (js.pasos_cramer) {
+            js.pasos_cramer.forEach((p, i) => listaCramer.appendChild(renderCramerStep(p, i + 1)));
+            document.getElementById('zona-cramer').classList.remove('hidden');
+          }
+
+          // 3. Solución Final
+          if (js.solucion) {
+            const ul = document.getElementById('resultado-solucion');
+            ul.innerHTML = '';
+            Object.entries(js.solucion).forEach(([k, v]) => {
+              const li = document.createElement('li');
+              // Usar clase 'panel' para heredar tema
+              li.className = 'panel p-4 border rounded-xl shadow-sm text-center'; 
+              li.style.borderColor = "var(--border)";
+              li.innerHTML = `<span class="font-bold mr-2" style="color: var(--text)">${k} =</span> <span class="text-xl font-extrabold" style="color: var(--accent)">${v}</span>`;
+              ul.appendChild(li);
+            });
+            document.getElementById('zona-resultado').classList.remove('hidden');
+          } else {
+            document.getElementById('zona-cramer').classList.remove('hidden');
+          }
+
+          setMsg('Listo.');
+        } else {
+          setMsg('');
+          showModal(js.error || 'Error desconocido');
+        }
+      } catch (e) {
+        console.error(e);
+        setMsg('');
+        showModal('Error al conectar con el servidor.');
+      }
+    });
+  }
+
+  // --- TECLADO VIRTUAL ---
   document.addEventListener('click', (e) => {
-    // acepta tanto .kbd como .key
     const btn = e.target.closest('.kbd, .key');
     if (!btn) return;
-    if (!ultimaCeldaActiva) return;
 
-    let ins =
-      btn.getAttribute('data-ins') ||
-      btn.getAttribute('data-insert') ||
-      btn.textContent.trim();
-
-    // caso especial "x^": queremos insertar "^" y dejar el cursor después del ^
-    const isXPowerButton = btn.textContent.trim() === 'x^' || ins === 'x^';
-
-    const input = ultimaCeldaActiva;
-    const value = input.value || '';
-
-    const start = (typeof input.selectionStart === 'number') ? input.selectionStart : value.length;
-    const end   = (typeof input.selectionEnd   === 'number') ? input.selectionEnd   : value.length;
-
-    let toInsert = ins;
-    let cursorPos = start + toInsert.length;
-
-    if (isXPowerButton) {
-      toInsert = '^';
-      cursorPos = start + 1;
+    if (!ultimaCeldaActiva) {
+      const first = document.querySelector('.celda input');
+      if (first) ultimaCeldaActiva = first;
+      else return;
     }
 
-    input.value = value.slice(0, start) + toInsert + value.slice(end);
+    let ins = btn.dataset.ins || btn.dataset.insert || btn.textContent.trim();
+    let toInsert = ins;
+    if (ins === 'x^' || ins === '^') {
+      toInsert = '^';
+    } else if (ins.endsWith('()')) {
+      toInsert = ins.slice(0, -1);
+    }
 
+    const input = ultimaCeldaActiva;
+    const start = input.selectionStart || input.value.length;
+    const end = input.selectionEnd || input.value.length;
+    const val = input.value;
+
+    input.value = val.slice(0, start) + toInsert + val.slice(end);
     input.focus();
-    input.setSelectionRange(cursorPos, cursorPos);
+    const newPos = start + toInsert.length;
+    input.setSelectionRange(newPos, newPos);
   });
-
 });
