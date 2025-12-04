@@ -1,18 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Obtener referencias
     const btnGenerar = document.getElementById('btn-generar');
     const btnResolver = document.getElementById('btn-resolver');
     const tabla = document.getElementById('tabla-economia');
     const checkDecimales = document.getElementById('check-decimales');
-    
+    const zonaTabla = document.getElementById('zona-tabla');
+    const zonaResultado = document.getElementById('zona-resultado');
+
+    // Seguridad: si no estamos en la página correcta, salir
+    if (!tabla || !btnGenerar) return;
+
+    let vectorBase = []; 
+    let nombresSectores = [];
     let numSectores = 3;
 
-    // Inicializar tabla al cargar
+    // Generar tabla al cargar
     generarTabla();
 
     btnGenerar.addEventListener('click', generarTabla);
 
     function generarTabla() {
-        const val = parseInt(document.getElementById('inp-sectores').value);
+        const inp = document.getElementById('inp-sectores');
+        const val = inp ? parseInt(inp.value) : 3;
+        
         if(!val || val < 2) return;
         numSectores = val;
         
@@ -21,23 +31,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- THEAD ---
         const thead = document.createElement('thead');
         const trHead = document.createElement('tr');
-        trHead.className = "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-300 dark:border-slate-600";
         
+        // Celda esquina
         const thCorner = document.createElement('th');
-        thCorner.className = "p-3 text-left border-r border-slate-200 dark:border-slate-600";
-        thCorner.textContent = "De \\ Para:";
+        thCorner.className = "row-head"; 
+        thCorner.textContent = "De \\ Para";
         trHead.appendChild(thCorner);
 
         for(let i=0; i<numSectores; i++) {
             const th = document.createElement('th');
-            th.className = "p-2 min-w-[120px] border-r border-slate-200 dark:border-slate-600 last:border-0";
             
+            // Input nombre sector
             const inputName = document.createElement('input');
             inputName.type = "text";
             inputName.value = `Sector ${i+1}`;
-            inputName.className = "w-full bg-transparent text-center font-bold text-slate-800 dark:text-slate-200 border-b border-transparent focus:border-rose-500 outline-none placeholder-slate-400 transition-colors";
-            inputName.dataset.colIdx = i;
             
+            // ESTILO: Transparente y COLOR FORZADO para modo claro/oscuro
+            inputName.className = "w-full bg-transparent text-center font-bold outline-none border-b border-transparent focus:border-rose-500 placeholder-slate-400";
+            inputName.style.color = "var(--text)"; // <--- ESTO ARREGLA LA VISIBILIDAD
+            
+            inputName.dataset.colIdx = i;
             inputName.addEventListener('input', (e) => actualizarNombres(e.target.value, i));
             
             th.appendChild(inputName);
@@ -50,21 +63,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const tbody = document.createElement('tbody');
         for(let r=0; r<numSectores; r++) {
             const tr = document.createElement('tr');
-            tr.className = "border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors";
             
+            // Header Fila
             const thRow = document.createElement('th');
-            thRow.className = "p-3 text-left font-semibold text-slate-700 dark:text-slate-300 bg-slate-50/50 dark:bg-slate-800/50 border-r border-slate-200 dark:border-slate-600";
+            thRow.className = "row-head text-left px-3";
             thRow.id = `row-name-${r}`;
             thRow.textContent = `Sector ${r+1}`;
             tr.appendChild(thRow);
 
+            // Celdas
             for(let c=0; c<numSectores; c++) {
                 const td = document.createElement('td');
-                td.className = "p-2 border-r border-slate-100 dark:border-slate-700 last:border-0";
+                td.className = "celda"; // Clase estándar (fondo blanco/oscuro automático)
+                
                 const inp = document.createElement('input');
                 inp.type = "text";
-                inp.className = "w-full bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 rounded-md py-2 px-2 text-center shadow-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all";
                 inp.placeholder = "0";
+                
                 td.appendChild(inp);
                 tr.appendChild(td);
             }
@@ -72,8 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         tabla.appendChild(tbody);
 
-        document.getElementById('zona-tabla').classList.remove('hidden');
-        document.getElementById('zona-resultado').classList.add('hidden');
+        // Mostrar zona
+        zonaTabla.classList.remove('hidden');
+        zonaResultado.classList.add('hidden');
     }
 
     function actualizarNombres(nuevoNombre, idx) {
@@ -82,8 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnResolver.addEventListener('click', async () => {
-        const nombres = [];
-        tabla.querySelectorAll('thead input').forEach(inp => nombres.push(inp.value));
+        nombresSectores = [];
+        tabla.querySelectorAll('thead input').forEach(inp => nombresSectores.push(inp.value));
 
         const datos = [];
         const filas = tabla.querySelectorAll('tbody tr');
@@ -94,9 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if(datos.length === 0) return;
-
-        // Leer opción de decimales
-        const usarDecimales = checkDecimales.checked;
+        
+        // Verificación segura del checkbox
+        const usarDecimales = checkDecimales ? checkDecimales.checked : false;
 
         try {
             const originalText = btnResolver.textContent;
@@ -108,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ 
                     tabla: datos, 
-                    nombres: nombres,
+                    nombres: nombresSectores,
                     usar_decimales: usarDecimales 
                 })
             });
@@ -122,39 +138,83 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            vectorBase = json.vector_base || [];
             mostrarResultados(json);
+            inicializarCalculadora();
 
         } catch (e) {
             console.error(e);
             alert("Error de conexión");
-            btnResolver.textContent = "Calcular Precios de Equilibrio";
             btnResolver.disabled = false;
         }
     });
 
     function mostrarResultados(data) {
-        document.getElementById('zona-resultado').classList.remove('hidden');
-        
-        // Interpretación HTML (permite negritas)
+        zonaResultado.classList.remove('hidden');
         document.getElementById('txt-interpretacion').innerHTML = data.interpretacion;
 
         const ul = document.getElementById('lista-solucion');
         ul.innerHTML = '';
         data.resultado.lines.forEach(linea => {
             const li = document.createElement('li');
-            li.className = "flex items-center gap-2 py-1";
-            
-            // Un pequeño punto o icono para cada ecuación
-            const icon = `<span class="text-rose-500 font-bold">›</span>`;
-            
-            // Resaltar las variables P(...)
+            li.className = "flex items-center gap-2 py-1 border-b border-slate-100 dark:border-slate-800 last:border-0";
+            // Resaltar variables P(...)
             let formatted = linea.replace(/(P\(.*?\))/g, '<span class="text-rose-600 dark:text-rose-400 font-bold">$1</span>');
-            
-            li.innerHTML = `${icon} <span>${formatted}</span>`;
+            li.innerHTML = `<span class="text-rose-500 font-bold">›</span> <span>${formatted}</span>`;
             ul.appendChild(li);
         });
         
-        // Scroll suave hacia resultados
-        document.getElementById('zona-resultado').scrollIntoView({ behavior: 'smooth' });
+        zonaResultado.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function inicializarCalculadora() {
+        const grid = document.getElementById('grid-calculadora');
+        grid.innerHTML = '';
+
+        if (!vectorBase || vectorBase.length === 0 || vectorBase.every(v => v === 0)) {
+            grid.innerHTML = '<p class="col-span-3 text-center text-slate-500 italic">No hay soluciones variables para calcular.</p>';
+            return;
+        }
+
+        nombresSectores.forEach((nombre, idx) => {
+            const div = document.createElement('div');
+            div.className = "flex flex-col";
+            
+            const label = document.createElement('label');
+            label.className = "text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1";
+            label.textContent = nombre;
+            
+            const input = document.createElement('input');
+            input.type = "number";
+            input.className = "input-calc w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500 outline-none";
+            input.placeholder = "0";
+            input.dataset.idx = idx;
+            
+            const valorInicial = vectorBase[idx] * 100; 
+            input.value = Number(valorInicial.toFixed(2));
+
+            input.addEventListener('input', (e) => recalcularEscenarios(idx, e.target.value));
+
+            div.appendChild(label);
+            div.appendChild(input);
+            grid.appendChild(div);
+        });
+    }
+
+    function recalcularEscenarios(idxOrigen, valorNuevo) {
+        const inputs = document.querySelectorAll('.input-calc');
+        const val = parseFloat(valorNuevo);
+        
+        if (isNaN(val) || vectorBase[idxOrigen] === 0) return;
+
+        const factor = val / vectorBase[idxOrigen];
+
+        inputs.forEach(inp => {
+            const i = parseInt(inp.dataset.idx);
+            if (i !== idxOrigen) {
+                const nuevoVal = vectorBase[i] * factor;
+                inp.value = Number(nuevoVal.toFixed(2));
+            }
+        });
     }
 });

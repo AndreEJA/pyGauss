@@ -33,9 +33,19 @@
     href="{{ url_for('aplicaciones.vista_economia') }}"
     class="card-method border-l-green-500 hover:border-r-green-500"
   >
-    <div class="text-lg font-semibold">Aplicaciones Económicas</div>
+    <div class="text-lg font-semibold">Modelo Cerrado (Precios)</div>
     <div class="text-sm opacity-80">
-      Modelos de Intercambio (Leontief). Encuentra precios de equilibrio.
+      Equilibrio de intercambio (Ingresos = Gastos).
+    </div>
+  </a>
+
+  <a
+    href="{{ url_for('aplicaciones.vista_economia_abierto') }}"
+    class="card-method border-l-green-500 hover:border-r-blue-500"
+  >
+    <div class="text-lg font-semibold">Modelo Abierto (Producción)</div>
+    <div class="text-sm opacity-80">
+      Producción necesaria para satisfacer demanda externa.
     </div>
   </a>
 </div>
