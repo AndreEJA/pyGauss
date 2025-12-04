@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Celda esquina vacía
         const thCorner = document.createElement('th');
-        thCorner.className = "row-head"; // Estilo estándar
+        thCorner.className = "row-head"; 
         thCorner.textContent = "De \\ Para";
         trHead.appendChild(thCorner);
 
@@ -31,18 +31,13 @@ document.addEventListener('DOMContentLoaded', () => {
         for(let i=0; i<numSectores; i++) {
             const th = document.createElement('th');
             
-            // Input transparente para el nombre del sector
             const inputName = document.createElement('input');
             inputName.type = "text";
             inputName.value = `Dpto ${String.fromCharCode(65+i)}`; 
             
-            // Estilos CSS directos + Tailwind para el borde focus
             inputName.className = "w-full bg-transparent text-center font-bold outline-none border-b border-transparent focus:border-blue-500 placeholder-slate-400";
-            
-            // CORRECCIÓN CRÍTICA: Forzar el color usando la variable del tema
             inputName.style.color = "var(--text)"; 
             
-            // Sincronizar nombre de columna con fila
             inputName.addEventListener('input', (e) => actualizarNombres(e.target.value, i));
             
             th.appendChild(inputName);
@@ -52,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Columna de Demanda Externa
         const thDemanda = document.createElement('th');
         thDemanda.textContent = "Demanda (d)";
-        // Estilo específico para diferenciarla
         thDemanda.className = "bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-l-2 border-slate-300 dark:border-slate-600";
         trHead.appendChild(thDemanda);
 
@@ -74,12 +68,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // Celdas de la Matriz A
             for(let c=0; c<numSectores; c++) {
                 const td = document.createElement('td');
-                td.className = "celda"; // Clase estándar: input blanco, borde gris
+                td.className = "celda"; 
                 
                 const inp = document.createElement('input');
                 inp.type = "text";
                 inp.placeholder = "0";
                 inp.dataset.type = "A";
+                
+                // Input transparente
+                inp.className = "w-full h-full !bg-transparent text-center outline-none text-slate-900 dark:text-white placeholder-slate-400";
                 
                 td.appendChild(inp);
                 tr.appendChild(td);
@@ -87,14 +84,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Celda de Demanda (d)
             const tdDemanda = document.createElement('td');
-            tdDemanda.className = "celda bg-blue-50/30 dark:bg-blue-900/10 border-l-2 border-slate-300 dark:border-slate-600";
+            tdDemanda.className = "celda bg-blue-50/50 dark:bg-blue-900/10 border-l-2 border-slate-300 dark:border-slate-600";
             
             const inpD = document.createElement('input');
             inpD.type = "text";
             inpD.placeholder = "0";
             inpD.dataset.type = "d";
-            // Destacar un poco la demanda
-            inpD.className = "font-semibold text-blue-700 dark:text-blue-400";
+            
+            // Input transparente sobre fondo azul
+            inpD.className = "w-full h-full !bg-transparent text-center font-bold outline-none text-blue-700 dark:text-blue-300 placeholder-blue-300";
             
             tdDemanda.appendChild(inpD);
             tr.appendChild(tdDemanda);
@@ -176,10 +174,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         data.solucion.forEach(item => {
             const tr = document.createElement('tr');
-            tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
-            tr.innerHTML = `
-                <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">${item.sector}</td>
-                <td class="px-4 py-3 text-right font-bold text-blue-600 dark:text-blue-400 font-mono text-lg">${item.valor}</td>
+            tr.className = "hover:bg-slate-50 transition-colors";
+            
+                tr.innerHTML = `
+                <td class="px-4 py-3 font-medium text-slate-900">${item.sector}</td>
+                <td class="px-4 py-3 text-right font-bold text-blue-600 font-mono text-lg">${item.valor}</td>
             `;
             tbody.appendChild(tr);
         });

@@ -46,9 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
             inputName.type = "text";
             inputName.value = `Sector ${i+1}`;
             
-            // ESTILO: Transparente y COLOR FORZADO para modo claro/oscuro
+            // CORRECCIÓN TABLA: Fondo transparente para respetar el estilo de la celda
             inputName.className = "w-full bg-transparent text-center font-bold outline-none border-b border-transparent focus:border-rose-500 placeholder-slate-400";
-            inputName.style.color = "var(--text)"; // <--- ESTO ARREGLA LA VISIBILIDAD
+            inputName.style.color = "var(--text)"; 
             
             inputName.dataset.colIdx = i;
             inputName.addEventListener('input', (e) => actualizarNombres(e.target.value, i));
@@ -74,11 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Celdas
             for(let c=0; c<numSectores; c++) {
                 const td = document.createElement('td');
-                td.className = "celda"; // Clase estándar (fondo blanco/oscuro automático)
+                td.className = "celda"; 
                 
                 const inp = document.createElement('input');
                 inp.type = "text";
                 inp.placeholder = "0";
+
+                // CORRECCIÓN TABLA: Fondo transparente para ver bien la celda blanca/oscura
+                inp.className = "w-full h-full !bg-transparent text-center outline-none text-slate-900 dark:text-white placeholder-slate-400";
                 
                 td.appendChild(inp);
                 tr.appendChild(td);
@@ -167,6 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         zonaResultado.scrollIntoView({ behavior: 'smooth' });
     }
 
+    // --- AQUÍ ESTABA EL PROBLEMA PRINCIPAL DE LA CAPTURA ---
     function inicializarCalculadora() {
         const grid = document.getElementById('grid-calculadora');
         grid.innerHTML = '';
@@ -186,7 +190,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const input = document.createElement('input');
             input.type = "number";
-            input.className = "input-calc w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500 outline-none";
+            
+            // CORRECCIÓN CALCULADORA:
+            // Usamos la clase 'input' global para que herede los colores de tu styles.css.
+            // Eliminamos las clases 'bg-white' o 'dark:bg-slate-800' manuales que causaban el conflicto.
+            input.className = "input w-full px-3 py-2 focus:ring-2 focus:ring-rose-500 outline-none";
+            
             input.placeholder = "0";
             input.dataset.idx = idx;
             
@@ -202,7 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function recalcularEscenarios(idxOrigen, valorNuevo) {
-        const inputs = document.querySelectorAll('.input-calc');
+        // Selector actualizado para que coincida con la nueva estructura (aunque .input lo cubre)
+        const inputs = document.querySelectorAll('#grid-calculadora input');
         const val = parseFloat(valorNuevo);
         
         if (isNaN(val) || vectorBase[idxOrigen] === 0) return;

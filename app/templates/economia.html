@@ -26,13 +26,10 @@
 
   <section id="zona-tabla" class="panel hidden">
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-bold text-slate-800 dark:text-white">
-        Tabla de Intercambio
-      </h3>
+      <h3 class="text-lg font-bold text-slate-800">Tabla de Intercambio</h3>
 
       <label class="inline-flex items-center cursor-pointer">
-        <span
-          class="mr-3 text-sm font-medium text-slate-600 dark:text-slate-400"
+        <span class="mr-3 text-sm font-medium text-slate-600"
           >Ver en decimales</span
         >
         <input type="checkbox" id="check-decimales" class="sr-only peer" />
@@ -43,7 +40,7 @@
     </div>
 
     <div
-      class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm mb-6"
+      class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm mb-6"
     >
       <table id="tabla-economia" class="matrix-table w-full"></table>
     </div>
@@ -60,32 +57,25 @@
 
   <section
     id="zona-resultado"
-    class="panel hidden border-l-4 border-l-rose-500 bg-slate-50 dark:bg-slate-800/50"
+    class="panel hidden border-l-4 border-l-rose-500 bg-slate-50"
   >
     <div class="flex flex-col gap-6">
       <div>
-        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">
+        <h3 class="text-xl font-bold text-slate-900 mb-2">
           Relaciones de Precio
         </h3>
-        <div
-          id="txt-interpretacion"
-          class="text-slate-700 dark:text-slate-300 text-sm mb-4"
-        ></div>
-        <div
-          class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-5 rounded-xl shadow-sm"
-        >
+        <div id="txt-interpretacion" class="text-slate-700 text-sm mb-4"></div>
+        <div class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm">
           <ul
             id="lista-solucion"
-            class="space-y-3 font-mono text-base text-slate-800 dark:text-slate-200"
+            class="space-y-3 font-mono text-base text-slate-800"
           ></ul>
         </div>
       </div>
 
-      <div
-        class="bg-rose-50 dark:bg-rose-900/10 p-5 rounded-xl border border-rose-100 dark:border-rose-900/30"
-      >
+      <div class="bg-rose-50 p-5 rounded-xl border border-rose-100">
         <h4
-          class="text-lg font-bold text-rose-700 dark:text-rose-400 mb-3 flex items-center gap-2"
+          class="text-lg font-bold text-rose-700 mb-3 flex items-center gap-2"
         >
           <svg
             class="w-5 h-5"
@@ -102,7 +92,7 @@
           </svg>
           Calculadora de Escenarios
         </h4>
-        <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+        <p class="text-sm text-slate-600 mb-4">
           Si un sector vale X, ¿cuánto valen los demás? Ingresa un valor abajo:
         </p>
 
