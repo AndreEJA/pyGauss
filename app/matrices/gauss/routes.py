@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, request, jsonify, send_file
 from .algebra import (
-    
     ResolverGaussJordan,
     ResolverGauss,            
     EvaluadorSeguro,
     MatrizAumentada,
-    FormateadorNumeros
+    FormateadorNumeros,
+    sistema_a_matriz_aumentada,   
 )
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
@@ -15,6 +15,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 
 from .pygauss_ext import gauss_solve, gauss_jordan_solve
 from .hf_client import hf_generate, load_hf_config
+
 
 def pivot_to_1based_int(p):
     if isinstance(p, int):
@@ -49,16 +50,85 @@ def _lineas_a_solucion(lineas):
                 left, right = s.split('=', 1)
                 sol[left.strip()] = right.strip()
     return sol
+
+
 gauss_bp = Blueprint("gauss", __name__, template_folder="../../../templates")
- 
+
+
 @gauss_bp.route("/", methods=["GET"])
 def vista_gauss():
     return render_template("gauss.html", title="Método de Gauss-Jordan")
 
- 
+
 @gauss_bp.route("/simple", methods=["GET"])
 def vista_gauss_simple():
     return render_template("gauss_simple.html", title="Método de Gauss")
+
+
+# ================================
+# NUEVO: sistema de ecuaciones → matriz
+# ================================
+@gauss_bp.route("/sistema_matriz", methods=["POST"])
+def sistema_matriz():
+    """
+    Recibe un sistema de ecuaciones en texto y devuelve la matriz aumentada
+    lista para rellenar la tabla del frontend.
+
+    JSON de entrada esperado:
+      {
+        "sistema": "2x+3y-z=5\nx-y+4z=7\n-x+2y+z=1",
+        "variables": "x, y, z",   # opcional
+        "modo_precision": "fraccion" | "decimal",   # opcional
+        "decimales": 6                               # opcional
+      }
+
+    Respuesta:
+      {
+        "ok": true,
+        "matriz": [[...], ...],         # valores formateados como strings
+        "filas": n_filas,
+        "columnas": n_cols_sin_b,
+        "variables": ["x", "y", "z"]
+      }
+    """
+    datos = request.get_json(force=True) or {}
+    sistema_str = datos.get("sistema", "") or ""
+    variables_str = datos.get("variables", "") or ""
+    modo_precision = datos.get("modo_precision", "fraccion")
+    decimales = int(datos.get("decimales", 6))
+
+    if not sistema_str.strip():
+        return jsonify({"ok": False, "error": "No se recibió ningún sistema de ecuaciones."}), 400
+
+    try:
+        # Usa la utilidad de algebra.py para convertir sistema → [A|b]
+        matriz_aug, vars_nombres = sistema_a_matriz_aumentada(
+            sistema_str,
+            variables_str if variables_str.strip() else None
+        )
+
+        # Formatear según la preferencia (fracción / decimal)
+        formateador = FormateadorNumeros(modo=modo_precision, decimales=decimales)
+        matriz_fmt = [
+            [formateador.fmt(v) for v in fila]
+            for fila in matriz_aug
+        ]
+
+        filas = len(matriz_fmt)
+        columnas = len(matriz_fmt[0]) - 1 if filas > 0 else 0
+
+        return jsonify({
+            "ok": True,
+            "matriz": matriz_fmt,
+            "filas": filas,
+            "columnas": columnas,
+            "variables": vars_nombres,
+        })
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": f"Error al interpretar el sistema: {e}"
+        }), 400
 
 
 @gauss_bp.route("/resolver", methods=["POST"])
@@ -95,13 +165,15 @@ def resolver_gauss_jordan():
     formateador = FormateadorNumeros(modo=modo_precision, decimales=decimales)
     solver = ResolverGaussJordan(formateador)
     resultado = solver.resolver(matriz)
-    # Añadir líneas x1=..., libres, etc. con Gauss-Jordan
+
+    # Añadir líneas x1=..., libres, etc. con Gauss-Jordan (pygauss_ext)
     A = [fila[:-1] for fila in matriz_num]
     b = [fila[-1] for fila in matriz_num]
     gj = gauss_jordan_solve(A, b, keep_steps=False)
     pivotes_raw = gj.get("pivots", [])
     pivotes_num = [pivot_to_1based_int(p) for p in pivotes_raw]
-    pivotes_vars = [f"x{i}" for i in pivotes_num]    
+    pivotes_vars = [f"x{i}" for i in pivotes_num]
+
     # Normaliza estructura
     if isinstance(resultado.get("final"), dict):
         resultado["final"]["lineas"] = gj.get("lines", [])
@@ -112,13 +184,14 @@ def resolver_gauss_jordan():
         resultado["final"]["variables_libres"] = [f"x{i+1}" for i in libres_idx]
     else:
         resultado["final"] = {
-        "lineas": gj.get("lines", []),
-        "pivotes": pivotes_num,
-        "pivotes_vars": pivotes_vars,
-        "variables_libres": [f"x{i+1}" for i in gj.get("free_vars", [])],
-        "solucion": _lineas_a_solucion(gj.get("lines", [])),
-    }
+            "lineas": gj.get("lines", []),
+            "pivotes": pivotes_num,
+            "pivotes_vars": pivotes_vars,
+            "variables_libres": [f"x{i+1}" for i in gj.get("free_vars", [])],
+            "solucion": _lineas_a_solucion(gj.get("lines", [])),
+        }
     return jsonify({"ok": True, **resultado})
+
 
 @gauss_bp.route("/resolver_simple", methods=["POST"])
 def resolver_gauss_simple():
@@ -152,27 +225,35 @@ def resolver_gauss_simple():
 
     matriz = MatrizAumentada(matriz_num)
     formateador = FormateadorNumeros(modo=modo_precision, decimales=decimales)
-    solver = ResolverGauss(formateador)  # 🔹 aquí usamos el método nuevo
+    solver = ResolverGauss(formateador)
     resultado = solver.resolver(matriz)
-    # Añadir líneas x1=..., libres, etc. con Gauss-Jordan
+
+    # Añadir líneas x1=..., libres, etc. con Gauss-Jordan (pygauss_ext)
     A = [fila[:-1] for fila in matriz_num]
     b = [fila[-1] for fila in matriz_num]
     gj = gauss_jordan_solve(A, b, keep_steps=False)
     pivotes_raw = gj.get("pivots", [])
     pivotes_num = [pivot_to_1based_int(p) for p in pivotes_raw]
-    pivotes_vars = [f"x{i}" for i in pivotes_num] 
+    pivotes_vars = [f"x{i}" for i in pivotes_num]
+
     # Normaliza estructura
     if isinstance(resultado.get("final"), dict):
         resultado["final"]["lineas"] = gj.get("lines", [])
         resultado["final"]["solucion"] = _lineas_a_solucion(gj.get("lines", []))
         resultado["final"]["pivotes"] = pivotes_num
         resultado["final"]["pivotes_vars"] = pivotes_vars
-        # variables libres como 'xk'
         libres_idx = gj.get("free_vars", [])
         resultado["final"]["variables_libres"] = [f"x{i+1}" for i in libres_idx]
     else:
-        resultado["final"] = {"lineas": gj.get("lines", []), "pivotes": pivotes_num, "pivotes_vars": pivotes_vars, "variables_libres": [f"x{i+1}" for i in gj.get("free_vars", [])], "solucion": _lineas_a_solucion(gj.get("lines", []))}
+        resultado["final"] = {
+            "lineas": gj.get("lines", []),
+            "pivotes": pivotes_num,
+            "pivotes_vars": pivotes_vars,
+            "variables_libres": [f"x{i+1}" for i in gj.get("free_vars", [])],
+            "solucion": _lineas_a_solucion(gj.get("lines", [])),
+        }
     return jsonify({"ok": True, **resultado})
+
 
 @gauss_bp.route("/pdf", methods=["POST"])
 def pdf():
@@ -194,7 +275,7 @@ def pdf():
     if final:
         elems.append(Paragraph("<b>Resultado:</b>", estilos["Heading2"]))
         if pivotes:
-            elems.append(Paragraph(f"Columnas pivote: {", ".join(f"x{i}" for i in range(1, len(pivotes)+1))}", estilos["BodyText"]))
+            elems.append(Paragraph(f"Columnas pivote: {', '.join(f'x{i}' for i in range(1, len(pivotes)+1))}", estilos["BodyText"]))
         if libres:
             elems.append(Paragraph(f"Variables libres: {', '.join(libres)}", estilos["BodyText"]))
         desc = final.get("descripcion", "")
@@ -214,6 +295,7 @@ def pdf():
         elems.append(Spacer(1, 12))
 
     elems.append(Paragraph("<b>Pasos:</b>", estilos["Heading2"]))
+
     for idx, p in enumerate(pasos, start=1):
         elems.append(Paragraph(f"Paso {idx}: {p.get('descripcion','')}", estilos["Heading4"]))
         matriz = p.get("matriz", [])

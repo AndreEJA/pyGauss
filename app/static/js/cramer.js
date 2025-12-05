@@ -77,7 +77,6 @@ function renderPasoDet(p, idx) {
 
   const body = document.createElement('div');
   body.className = 'grid sm:grid-cols-2 gap-4 p-3';
-  // El cuerpo hereda el color de texto del padre
 
   // Función interna para dibujar matriz pequeña
   const renderMat = (M, title) => {
@@ -101,7 +100,6 @@ function renderPasoDet(p, idx) {
       fila.forEach(val => {
         const td = document.createElement('td');
         td.className = 'p-2 border border-slate-300 dark:border-slate-600';
-        // Texto conectado a variable
         td.style.color = "var(--text)";
         td.textContent = val;
         tr.appendChild(td);
@@ -128,15 +126,11 @@ function renderCramerStep(p, idx) {
   
   // ESTRUCTURA BASE
   card.className = 'mb-8 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 transition-colors duration-200';
-  
-  // 🔥 FIX CRÍTICO: Conexión directa a tus variables CSS globales
-  // Esto hace que si cambias el tema, la tarjeta cambie INSTANTÁNEAMENTE
   card.style.backgroundColor = "var(--panel)";
   card.style.color = "var(--text)";
 
   const title = document.createElement('h3');
   title.className = 'text-xl font-extrabold mb-4 flex items-center gap-2';
-  // El color acento (rosa) suele funcionar en ambos modos, pero aseguramos
   title.style.color = "var(--accent)"; 
   
   title.innerHTML = `<span class="text-xs px-2 py-1 rounded-full" style="background: rgba(225, 29, 72, 0.1);">Var</span> ${p.variable}`;
@@ -160,9 +154,8 @@ function renderCramerStep(p, idx) {
       fila.forEach(val => {
         const td = document.createElement('td');
         td.className = 'px-4 py-2 border border-slate-200 dark:border-slate-600 font-mono text-sm';
-        // Forzamos contraste en las celdas
         td.style.color = "var(--text)";
-        td.style.backgroundColor = "var(--bg)"; // Fondo ligeramente distinto al panel
+        td.style.backgroundColor = "var(--bg)";
         td.textContent = val;
         tr.appendChild(td);
       });
@@ -234,6 +227,89 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ✅ NUEVO: SISTEMA → A y b
+  const btnSistema = document.getElementById('btn-sistema-a-matrices');
+  if (btnSistema) {
+    btnSistema.addEventListener('click', async () => {
+      const sistemaEl = document.getElementById('txt-sistema');
+      const varsEl = document.getElementById('inp-variables-sistema');
+      const sistema = (sistemaEl && sistemaEl.value) || '';
+      const variables = (varsEl && varsEl.value) || '';
+
+      if (!sistema.trim()) {
+        showModal('Escribe al menos una ecuación en el sistema.');
+        return;
+      }
+
+      const modo = document.getElementById('sel-modo').value;
+      const decimales = parseInt(document.getElementById('inp-decimales').value, 10) || 6;
+
+      setMsg('Interpretando sistema...');
+
+      try {
+        const resp = await fetch('/matrices/operaciones/cramer/sistema_matriz', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sistema,
+            variables,
+            modo_precision: modo,
+            decimales
+          })
+        });
+
+        const js = await resp.json();
+        if (!js.ok) {
+          setMsg('');
+          throw new Error(js.error || 'Error al interpretar el sistema.');
+        }
+
+        // js.n -> orden, js.A -> matriz de coeficientes, js.b -> vector (lista)
+        const n = js.n;
+        const A = js.A || [];
+        const b = js.b || [];
+
+        // Ajustamos el input de orden
+        document.getElementById('inp-orden').value = n;
+
+        // Crear tablas
+        crearTabla(n, n, 'tabla-A');
+        crearTabla(n, 1, 'tabla-b');
+
+        document.getElementById('zona-matrices').classList.remove('hidden');
+        ['zona-detA', 'zona-cramer', 'zona-resultado'].forEach(id => {
+          document.getElementById(id).classList.add('hidden');
+        });
+
+        // Rellenar A
+        const tablaA = document.getElementById('tabla-A');
+        const filasA = tablaA.querySelectorAll('tbody tr');
+        for (let r = 0; r < n; r++) {
+          const inputs = filasA[r].querySelectorAll('td input');
+          for (let c = 0; c < n; c++) {
+            inputs[c].value = (A[r] && A[r][c]) !== undefined ? A[r][c] : '0';
+          }
+        }
+
+        // Rellenar b
+        const tablaB = document.getElementById('tabla-b');
+        const filasB = tablaB.querySelectorAll('tbody tr');
+        for (let r = 0; r < n; r++) {
+          const inputs = filasB[r].querySelectorAll('td input');
+          if (inputs[0]) {
+            inputs[0].value = b[r] !== undefined ? b[r] : '0';
+          }
+        }
+
+        setMsg('Sistema cargado en A y b.');
+      } catch (err) {
+        console.error(err);
+        setMsg('');
+        showModal('Error: ' + err.message);
+      }
+    });
+  }
+
   // Resolver
   if (btnResolver) {
     btnResolver.addEventListener('click', async () => {
@@ -290,7 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ul.innerHTML = '';
             Object.entries(js.solucion).forEach(([k, v]) => {
               const li = document.createElement('li');
-              // Usar clase 'panel' para heredar tema
               li.className = 'panel p-4 border rounded-xl shadow-sm text-center'; 
               li.style.borderColor = "var(--border)";
               li.innerHTML = `<span class="font-bold mr-2" style="color: var(--text)">${k} =</span> <span class="text-xl font-extrabold" style="color: var(--accent)">${v}</span>`;

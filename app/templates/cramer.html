@@ -19,6 +19,71 @@
         </button>
       </div>
     </div>
+
+    <!-- 🔹 NUEVO: SISTEMA DE ECUACIONES → A y b -->
+    <div class="mt-6 space-y-3">
+      <h3 class="text-base font-semibold text-slate-900">
+        Sistema de ecuaciones (opcional)
+      </h3>
+
+      <p class="text-sm text-slate-600">
+        Escribe un sistema lineal Ax = b y luego usa
+        <span class="font-semibold">“Cargar sistema en A y b”</span>
+        para construir automáticamente la matriz A (coeficientes) y el vector b.
+      </p>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Sistema -->
+        <div class="space-y-2">
+          <label for="txt-sistema" class="lbl">Sistema</label>
+          <textarea
+            id="txt-sistema"
+            class="input w-full min-h-[140px]"
+            placeholder="Ejemplo:
+2x + 3y - z = 5
+x - y + 4z = 7
+-x + 2y + z = 1"
+          ></textarea>
+          <p class="text-xs text-slate-500">
+            Una ecuación por línea, siempre con <code>=</code>. Se permite
+            multiplicación implícita como <code>2x</code>, <code>3(x+1)</code>, etc.
+          </p>
+        </div>
+
+        <!-- Orden de variables + botón -->
+        <div class="space-y-3">
+          <div class="space-y-2">
+            <label for="inp-variables-sistema" class="lbl">
+              Orden de las variables (opcional)
+            </label>
+            <input
+              id="inp-variables-sistema"
+              type="text"
+              class="input w-full"
+              placeholder="x, y, z"
+            />
+            <p class="text-xs text-slate-500">
+              Si lo dejas vacío, el programa detecta las variables y las ordena alfabéticamente.
+            </p>
+          </div>
+
+          <div>
+            <button
+              id="btn-sistema-a-matrices"
+              type="button"
+              class="btn-accent w-full"
+            >
+              Cargar sistema en A y b
+            </button>
+            <p class="text-xs text-slate-500 mt-1">
+              Este botón rellenará A con los coeficientes de las incógnitas y b con
+              los términos independientes, ajustando el orden n según el sistema.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 🔹 FIN NUEVO BLOQUE -->
   </section>
 
   <section id="zona-matrices" class="panel hidden">

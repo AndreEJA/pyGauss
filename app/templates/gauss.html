@@ -1,7 +1,11 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
+{% block content %}
 <div class="space-y-8">
+  <!-- =================== PANEL DATOS / SISTEMA =================== -->
   <section class="panel">
     <h2 class="panel-title text-slate-900">Datos de la matriz</h2>
+
+    <!-- Controles clásicos de matriz -->
     <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end">
       <label class="block">
         <span class="lbl">Ecuaciones (filas)</span>
@@ -47,8 +51,74 @@
         <button id="btn-crear" class="btn-primary w-full">Crear Matriz</button>
       </div>
     </div>
+
+    <!-- NUEVO: SISTEMA DE ECUACIONES → MATRIZ -->
+    <div class="mt-6 space-y-3">
+      <h3 class="text-base font-semibold text-slate-900">
+        Sistema de ecuaciones (opcional)
+      </h3>
+
+      <p class="text-sm text-slate-600">
+        Escribe un sistema lineal y luego usa
+        <span class="font-semibold">“Cargar sistema en matriz”</span>
+        para que se llene la matriz aumentada automáticamente.
+      </p>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Lado izquierdo: textarea con el sistema -->
+        <div class="space-y-2">
+          <label for="txt-sistema" class="lbl">Sistema</label>
+          <textarea
+            id="txt-sistema"
+            class="input w-full min-h-[140px]"
+            placeholder="Ejemplo:
+2x + 3y - z = 5
+x - y + 4z = 7
+-x + 2y + z = 1"
+          ></textarea>
+          <p class="text-xs text-slate-500">
+            Una ecuación por línea, siempre con <code>=</code>.
+            Puedes usar cualquier letra para las incógnitas (x, y, z, a, b, ...).
+          </p>
+        </div>
+
+        <!-- Lado derecho: orden de variables + botón -->
+        <div class="space-y-3">
+          <div class="space-y-2">
+            <label for="inp-variables-sistema" class="lbl">
+              Orden de las variables (opcional)
+            </label>
+            <input
+              id="inp-variables-sistema"
+              type="text"
+              class="input w-full"
+              placeholder="x, y, z"
+            />
+            <p class="text-xs text-slate-500">
+              Si lo dejas vacío, más adelante el programa podrá detectar las
+              variables y ordenarlas alfabéticamente.
+            </p>
+          </div>
+
+          <div>
+            <button
+              id="btn-sistema-a-matriz"
+              type="button"
+              class="btn-accent w-full"
+            >
+              Cargar sistema en matriz
+            </button>
+            <p class="text-xs text-slate-500 mt-1">
+              Este botón rellenará la matriz aumentada con los coeficientes
+              y el término independiente <em>b</em> según el sistema escrito.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
+  <!-- =================== MATRIZ / TECLADO =================== -->
   <section id="zona-tabla" class="panel hidden">
     <div class="flex items-center justify-between mb-3">
       <h3 class="text-lg font-semibold text-slate-900">
@@ -80,9 +150,9 @@
       <button class="key" data-ins="pi">π</button>
       <button class="key" data-ins="e">e</button>
       <button class="key wide" data-ins="frac(, )">a/b</button>
-      <span class="tip"
-        >Tip: usa <code>frac(a,b)</code> o <code>3/4</code>.</span
-      >
+      <span class="tip">
+        Tip: usa <code>frac(a,b)</code> o <code>3/4</code>.
+      </span>
     </div>
 
     <div class="mt-6">
@@ -107,11 +177,13 @@
     </div>
   </section>
 
+  <!-- =================== PASOS =================== -->
   <section id="zona-pasos" class="space-y-4 hidden">
     <h3 class="text-lg font-semibold text-slate-900">Pasos</h3>
     <div id="contenedor-pasos" class="space-y-6"></div>
   </section>
 
+  <!-- =================== RESPUESTA FINAL =================== -->
   <section id="zona-final" class="panel final-card hidden">
     <h3 class="text-lg font-semibold mb-2 text-slate-900">Respuesta final</h3>
     <p id="final-desc" class="text-slate-800"></p>
@@ -121,29 +193,33 @@
     </div>
   </section>
 
+  <!-- =================== ZONA IA =================== -->
   <section id="zona-ia" class="panel hidden">
-    <h3 class="text-lg font-semibold mb-2 text-slate-900">Consulta IA (opcional)</h3>
-    <p class="text-slate-600 mb-2">Describe aquí el contexto del ejercicio o tu pregunta. Luego de resolver, puedes enviar esto a la IA para obtener un criterio corto sobre variables libres.</p>
-    <textarea id="ia-contexto" class="input w-full min-h-[120px]" placeholder="Escribe el enunciado del ejercicio o tu duda..."></textarea>
+    <h3 class="text-lg font-semibold mb-2 text-slate-900">
+      Consulta IA (opcional)
+    </h3>
+    <p class="text-slate-600 mb-2">
+      Describe aquí el contexto del ejercicio o tu pregunta. Luego de resolver,
+      puedes enviar esto a la IA para obtener un criterio corto sobre variables
+      libres.
+    </p>
+    <textarea
+      id="ia-contexto"
+      class="input w-full min-h-[120px]"
+      placeholder="Escribe el enunciado del ejercicio o tu duda..."
+    ></textarea>
     <div class="mt-3 flex gap-3">
       <button id="btn-ia" class="btn-accent">Preguntar a IA</button>
       <span id="ia-msg" class="text-sm text-slate-500"></span>
     </div>
-    <pre id="ia-out" class="mt-3 p-3 rounded-lg bg-slate-50 text-slate-800 whitespace-pre-wrap hidden"></pre>
+    <pre
+      id="ia-out"
+      class="mt-3 p-3 rounded-lg bg-slate-50 text-slate-800 whitespace-pre-wrap hidden"
+    ></pre>
   </section>
-
 </div>
-{% endblock %} {% block extra_js %}
-<script src="{{ url_for('static', filename='js/gauss.js') }}"></script>
 {% endblock %}
 
-  <section id="zona-ia" class="panel hidden">
-    <h3 class="text-lg font-semibold mb-2 text-slate-900">Consulta IA (opcional)</h3>
-    <p class="text-slate-600 mb-2">Describe aquí el contexto del ejercicio o tu pregunta. Luego de resolver, puedes enviar esto a la IA para obtener un criterio corto sobre variables libres.</p>
-    <textarea id="ia-contexto" class="input w-full min-h-[120px]" placeholder="Escribe el enunciado del ejercicio o tu duda..."></textarea>
-    <div class="mt-3 flex gap-3">
-      <button id="btn-ia" class="btn-accent">Preguntar a IA</button>
-      <span id="ia-msg" class="text-sm text-slate-500"></span>
-    </div>
-    <pre id="ia-out" class="mt-3 p-3 rounded-lg bg-slate-50 text-slate-800 whitespace-pre-wrap hidden"></pre>
-  </section>
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/gauss.js') }}"></script>
+{% endblock %}

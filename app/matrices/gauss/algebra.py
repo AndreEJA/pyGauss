@@ -205,3 +205,109 @@ class ResolverGauss:
         
         pasos = [{"descripcion": p.descripcion, "matriz": p.matriz, "col_pivote": p.col_pivote} for p in self.pasos]
         return {"pasos": pasos, "final": {"descripcion": "Matriz triangular superior."}}
+
+
+# =========================
+# NUEVO: Sistema → Matriz
+# =========================
+
+def sistema_a_matriz(sistema_str, variables_str=None):
+    """
+    Convierte un sistema de ecuaciones lineales (en texto) en:
+      - A_list: matriz de coeficientes (lista de listas de Fraction/float)
+      - b_list: términos independientes
+      - vars_order: lista de nombres de variables en el orden usado
+
+    Ejemplo de sistema_str:
+        \"\"\"2x + 3y - 5z = 10
+        x - y + 4z = 7
+        -x + 2y + z = 1\"\"\"
+
+    variables_str (opcional): cadena tipo "x, y, z".
+    Si se deja vacío, se detectan las variables y se ordenan alfabéticamente.
+    """
+    from sympy import symbols, Eq, linear_eq_to_matrix
+    from sympy.parsing.sympy_parser import (
+        parse_expr,
+        standard_transformations,
+        implicit_multiplication_application,
+        convert_xor,
+    )
+
+    # Habilitar:
+    #  - 2x  →  2*x
+    #  - 3(x+1) → 3*(x+1)
+    #  - x^2 → x**2
+    transformations = standard_transformations + (
+        implicit_multiplication_application,
+        convert_xor,
+    )
+
+    # 1. Limpiar líneas
+    lineas = [l.strip() for l in str(sistema_str).splitlines() if l.strip()]
+    if not lineas:
+        raise ValueError("No se encontraron ecuaciones en el sistema.")
+
+    ecuaciones = []
+    simbolos_encontrados = set()
+
+    # 2. Parsear cada línea como ecuación con '='
+    for linea in lineas:
+        if "=" not in linea:
+            raise ValueError(f"La ecuación '{linea}' no contiene signo '='.")
+        izquierda, derecha = linea.split("=", 1)
+        izquierda = izquierda.strip()
+        derecha = derecha.strip()
+
+        # 👇 aquí está el cambio importante
+        expr_izq = parse_expr(izquierda, transformations=transformations)
+        expr_der = parse_expr(derecha, transformations=transformations)
+
+        eq = Eq(expr_izq, expr_der)
+        ecuaciones.append(eq)
+        simbolos_encontrados |= eq.free_symbols
+
+    if not simbolos_encontrados:
+        raise ValueError(
+            "No se detectaron variables en el sistema. "
+            "Asegúrate de usar letras para las incógnitas (x, y, z, ...)."
+        )
+
+    # 3. Determinar el orden de variables
+    if variables_str:
+        nombres = [
+            v.strip()
+            for v in str(variables_str).replace(";", ",").split(",")
+            if v.strip()
+        ]
+        if not nombres:
+            raise ValueError("No se pudo interpretar el orden de variables.")
+        vars_order = symbols(nombres)
+    else:
+        # Orden alfabético por nombre
+        vars_order = sorted(list(simbolos_encontrados), key=lambda s: s.name)
+
+    # 4. Obtener matriz A y vector b (objetos SymPy)
+    A_sym, b_sym = linear_eq_to_matrix(ecuaciones, vars_order)
+
+    # 5. Convertir a listas Python compatibles con el resto del módulo
+    A_list = [
+        [a_fraccion_si_aplica(str(val)) for val in fila]
+        for fila in A_sym.tolist()
+    ]
+    b_list = [a_fraccion_si_aplica(str(val)) for val in list(b_sym)]
+
+    vars_nombres = [str(v) for v in vars_order]
+
+    return A_list, b_list, vars_nombres
+
+
+
+def sistema_a_matriz_aumentada(sistema_str, variables_str=None):
+    """
+    Azúcar sintáctico: devuelve directamente la matriz aumentada [A | b]
+    y el orden de variables.
+    """
+    A, b, vars_nombres = sistema_a_matriz(sistema_str, variables_str)
+    matriz_aug = [fila + [b_i] for fila, b_i in zip(A, b)]
+    return matriz_aug, vars_nombres

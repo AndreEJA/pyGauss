@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify
 from .operaciones_matrices import sumar_matrices, multiplicar_matrices, evaluar_matriz_str, multiplicar_matriz_por_vectores, sumar_matrices_con_escalares
 from ..gauss.algebra import FormateadorNumeros
-from ..gauss.algebra import a_fraccion_si_aplica # Importado para manejo de tipos
+from ..gauss.algebra import a_fraccion_si_aplica 
+from app.matrices.gauss.algebra import sistema_a_matriz_aumentada# Importado para manejo de tipos
 
 operaciones_bp = Blueprint("operaciones", __name__, template_folder="../../../templates")
 
@@ -254,35 +255,49 @@ def resolver_determinante():
 def vista_cramer():
     return render_template("cramer.html", title="Regla de Cramer")
 
-@operaciones_bp.route("/cramer/resolver", methods=["POST"])
-def resolver_cramer():
+@operaciones_bp.route("/cramer/sistema_matriz", methods=["POST"])
+def cramer_sistema_matriz():
+    """
+    Recibe un sistema escrito por el usuario (texto), lo interpreta y
+    devuelve A, b y el orden n ya listos para llenar las tablas en el front.
+    """
+
     datos = request.get_json(force=True)
-    matriz_A_str = datos.get("matriz_A_str")
-    vector_b_str = datos.get("vector_b_str")
+    sistema = datos.get("sistema", "")
+    variables = datos.get("variables", "")
     modo = datos.get("modo_precision", "fraccion")
     dec = int(datos.get("decimales", 6))
+
+    if not sistema.strip():
+        return jsonify({"ok": False, "error": "Escribe un sistema de ecuaciones."}), 400
+
     try:
-        A_raw = evaluar_matriz_str(matriz_A_str)
-        n = len(A_raw)
-        
-        b_raw_list = [x[0] for x in vector_b_str]
-        b_evaluated = evaluar_matriz_str([b_raw_list])[0] 
-        
-        if len(b_evaluated) != n:
-            return jsonify({"ok": False, "error": f"El vector b debe tener {n} componentes, pero se encontraron {len(b_evaluated)}."}), 400
+        # 🔹 Usamos el nombre correcto del parámetro: variables_str
+        matriz_aug, vars_nombres = sistema_a_matriz_aumentada(
+            sistema,
+            variables_str=variables if variables.strip() else None
+        )
 
-        res = cramer_solve(A_raw, b_evaluated, modo, dec)
-        
-        formateador = FormateadorNumeros(modo, dec)
-        
-        det_A_formatted = formateador.fmt(a_fraccion_si_aplica(res["det_A"]))
-        res["det_A"] = det_A_formatted
+        # matriz_aug es [ [a11,...,a1n,b1], ..., [an1,...,ann,bn] ]
+        A = [fila[:-1] for fila in matriz_aug]
+        b = [fila[-1] for fila in matriz_aug]
 
-        return jsonify({"ok": True, **res})
-        
-    except ValueError as e:
-        return jsonify({"ok": False, "error": str(e)}), 400
+        n = len(A)
+
+        fmt = FormateadorNumeros(modo, dec)
+        A_fmt = [[fmt.fmt(x) for x in fila] for fila in A]
+        b_fmt = [fmt.fmt(x) for x in b]
+
+        return jsonify({
+            "ok": True,
+            "n": n,
+            "A": A_fmt,
+            "b": b_fmt,
+            "variables": vars_nombres,
+        })
+
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"ok": False, "error": "Ocurrió un error inesperado al aplicar la Regla de Cramer."}), 500
+        return jsonify({
+            "ok": False,
+            "error": f"Error al interpretar el sistema: {e}"
+        }), 400
