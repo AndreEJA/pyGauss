@@ -31,57 +31,255 @@
 </style>
 
 <div class="space-y-8">
+  <!-- ================= MENÚ PRINCIPAL ================= -->
   <section class="panel">
-    <h2 class="panel-title text-slate-900">Traspuesta de una Matriz</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-      <label class="block">
-        <span class="lbl">Filas (m)</span>
-        <input id="inp-filas" type="number" min="1" value="2" class="input" />
-      </label>
-      <label class="block">
-        <span class="lbl">Columnas (n)</span>
-        <input id="inp-columnas" type="number" min="1" value="3" class="input" />
-      </label>
-      <div class="sm:col-span-2">
-        <button id="btn-crear" class="btn-primary w-full">Crear Matriz</button>
+    <h2 class="panel-title text-slate-900">
+      Traspuestas y operaciones con matrices
+    </h2>
+    <p class="text-sm text-slate-600 mb-4">
+      Elige qué quieres hacer:
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <button
+        id="btn-menu-simple"
+        class="w-full text-left rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-rose-400 hover:shadow-md transition"
+      >
+        <p class="font-semibold text-slate-900">Traspuesta de una matriz A</p>
+        <p class="text-sm text-slate-600">
+          Calcula Aᵗ para una matriz de tamaño m×n.
+        </p>
+      </button>
+
+      <button
+        id="btn-menu-suma"
+        class="w-full text-left rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-rose-400 hover:shadow-md transition"
+      >
+        <p class="font-semibold text-slate-900">
+          Transpuesta de la suma (A + B)ᵗ
+        </p>
+        <p class="text-sm text-slate-600">
+          Elige el tamaño m×n, suma A + B y calcula (A+B)ᵗ.
+        </p>
+      </button>
+
+      <button
+        id="btn-menu-mul"
+        class="w-full text-left rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-rose-400 hover:shadow-md transition"
+      >
+        <p class="font-semibold text-slate-900">
+          Multiplicación y transpuesta (AB)ᵗ
+        </p>
+        <p class="text-sm text-slate-600">
+          A de tamaño m×n, B de tamaño n×p, luego (AB)ᵗ.
+        </p>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============== MÓDULO 1: TRASPUESTA SIMPLE Aᵗ ============== -->
+  <section id="sec-simple" class="space-y-4">
+    <section class="panel">
+      <h3 class="text-lg font-semibold text-slate-900">
+        Traspuesta de una matriz A (m×n)
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+        <label class="block">
+          <span class="lbl">Filas (m)</span>
+          <input id="inp-filas" type="number" min="1" value="2" class="input" />
+        </label>
+        <label class="block">
+          <span class="lbl">Columnas (n)</span>
+          <input id="inp-columnas" type="number" min="1" value="3" class="input" />
+        </label>
+        <div class="sm:col-span-2">
+          <button id="btn-crear" class="btn-primary w-full">Crear Matriz A</button>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <section id="zona-matriz" class="panel hidden">
+      <h4 class="text-lg font-semibold text-slate-900 mb-3">Matriz A (m×n)</h4>
+      <div class="min-w-full overflow-auto rounded-xl border border-slate-200">
+        <table id="tabla-A" class="matrix-table w-full"></table>
+      </div>
+
+      <!-- TECLADO BLANCO TIPO "GAUSS" -->
+      <div class="keypad mt-3">
+        <button class="key" data-ins="(">(</button>
+        <button class="key" data-ins=")">)</button>
+        <button class="key" data-ins="+">+</button>
+        <button class="key" data-ins="-">−</button>
+        <button class="key" data-ins="*">×</button>
+        <button class="key" data-ins="/">÷</button>
+        <button class="key" data-ins="x^">x²</button>
+        <button class="key" data-ins="sqrt()">√</button>
+        <button class="key" data-ins="sin()">sin</button>
+        <button class="key" data-ins="cos()">cos</button>
+        <button class="key" data-ins="tan()">tan</button>
+        <button class="key" data-ins="pi">π</button>
+        <button class="key" data-ins="e">e</button>
+      </div>
+
+      <div class="mt-4 flex gap-3">
+        <button id="btn-resolver" class="btn-accent">Calcular Aᵗ</button>
+        <span id="msg" class="text-sm text-slate-500"></span>
+      </div>
+    </section>
+
+    <section id="zona-resultado" class="panel hidden">
+      <h4 class="text-lg font-semibold text-slate-900 mb-3">Resultado: Aᵗ</h4>
+      <div class="overflow-auto max-h-[50vh] rounded-xl border border-slate-200">
+        <table id="tabla-resultado" class="matrix-table w-full"></table>
+      </div>
+    </section>
   </section>
 
-  <section id="zona-matriz" class="panel hidden">
-    <h3 class="text-lg font-semibold text-slate-900 mb-3">Matriz A (m×n)</h3>
-    <div class="min-w-full overflow-auto rounded-xl border border-slate-200">
-      <table id="tabla-A" class="matrix-table w-full"></table>
-    </div>
+  <!-- ============== MÓDULO 2: (A + B)ᵀ ============== -->
+  <section id="sec-suma" class="space-y-4 hidden">
+    <section class="panel">
+      <h3 class="text-lg font-semibold text-slate-900 mb-2">
+        Transpuesta de la suma (A + B)<sup>T</sup>
+      </h3>
+      <p class="text-sm text-slate-600 mb-3">
+        Elige el tamaño de las matrices A y B (m×n). Primero se calcula la suma
+        <strong>A + B</strong> y luego su transpuesta
+        <strong>(A + B)<sup>T</sup></strong>.
+      </p>
 
-    <!-- TECLADO BLANCO TIPO "GAUSS" -->
-    <div class="keypad mt-3">
-      <button class="key" data-ins="(">(</button>
-      <button class="key" data-ins=")">)</button>
-      <button class="key" data-ins="+">+</button>
-      <button class="key" data-ins="-">−</button>
-      <button class="key" data-ins="*">×</button>
-      <button class="key" data-ins="/">÷</button>
-      <button class="key" data-ins="x^">x²</button>
-      <button class="key" data-ins="sqrt()">√</button>
-      <button class="key" data-ins="sin()">sin</button>
-      <button class="key" data-ins="cos()">cos</button>
-      <button class="key" data-ins="tan()">tan</button>
-      <button class="key" data-ins="pi">π</button>
-      <button class="key" data-ins="e">e</button>
-    </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 items-end">
+        <label class="block">
+          <span class="lbl">Filas (m)</span>
+          <input id="sum_m" type="number" min="1" class="input" placeholder="2">
+        </label>
 
-    <div class="mt-4 flex gap-3">
-      <button id="btn-resolver" class="btn-accent">Calcular Traspuesta</button>
-      <span id="msg" class="text-sm text-slate-500"></span>
-    </div>
+        <label class="block">
+          <span class="lbl">Columnas (n)</span>
+          <input id="sum_n" type="number" min="1" class="input" placeholder="2">
+        </label>
+
+        <div>
+          <button id="btn-crear-suma" class="btn-primary w-full mt-1 sm:mt-6">
+            Crear matrices A y B
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenedor dinámico de A, B y resultado -->
+      <div id="zona-suma" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <!-- Matriz A -->
+          <div>
+            <p class="font-semibold text-slate-800 mb-2">Matriz A (m×n)</p>
+            <div
+              class="inline-block border border-slate-300 rounded-lg px-3 py-2 bg-white"
+            >
+              <table id="tabla-suma-A" class="matrix-table"></table>
+            </div>
+          </div>
+
+          <!-- Matriz B -->
+          <div>
+            <p class="font-semibold text-slate-800 mb-2">Matriz B (m×n)</p>
+            <div
+              class="inline-block border border-slate-300 rounded-lg px-3 py-2 bg-white"
+            >
+              <table id="tabla-suma-B" class="matrix-table"></table>
+            </div>
+          </div>
+
+          <!-- Resultado (A+B)^T -->
+          <div>
+            <p class="font-semibold text-slate-800 mb-2">
+              Resultado (A + B)<sup>T</sup>
+            </p>
+            <button id="btn-resolver-suma" class="btn-accent mb-3">
+              Calcular (A + B)<sup>T</sup>
+            </button>
+            <div
+              id="res-suma-transp"
+              class="flex flex-col items-center text-slate-700 mt-3"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </section>
   </section>
 
-  <section id="zona-resultado" class="panel hidden">
-    <h3 class="text-lg font-semibold text-slate-900 mb-3">Resultado: Aᵗ</h3>
-    <div class="overflow-auto max-h-[50vh] rounded-xl border border-slate-200">
-      <table id="tabla-resultado" class="matrix-table w-full"></table>
-    </div>
+  <!-- ============== MÓDULO 3: (AB)ᵀ ============== -->
+  <section id="sec-mul" class="space-y-4 hidden">
+    <section class="panel">
+      <h3 class="text-lg font-semibold text-slate-900 mb-2">
+        Multiplicación y transpuesta (AB)<sup>T</sup>
+      </h3>
+      <p class="text-sm text-slate-600 mb-3">
+        Elige dimensiones compatibles: <strong>A</strong> de tamaño m×n y
+        <strong>B</strong> de tamaño n×p. Primero se calcula el producto
+        <strong>AB</strong> (m×p) y luego su transpuesta
+        <strong>(AB)<sup>T</sup></strong> (p×m).
+      </p>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4 items-end">
+        <label class="block">
+          <span class="lbl">A: Filas (m)</span>
+          <input id="mul_m" type="number" min="1" class="input" placeholder="3">
+        </label>
+
+        <label class="block">
+          <span class="lbl">A: Columnas (n)</span>
+          <input id="mul_n" type="number" min="1" class="input" placeholder="1">
+        </label>
+
+        <label class="block">
+          <span class="lbl">B: Columnas (p)</span>
+          <input id="mul_p" type="number" min="1" class="input" placeholder="3">
+        </label>
+
+        <div>
+          <button id="btn-crear-mul" class="btn-primary w-full mt-1 sm:mt-6">
+            Crear matrices A y B
+          </button>
+        </div>
+      </div>
+
+      <div id="zona-mul" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <!-- Matriz A -->
+          <div>
+            <p class="font-semibold text-slate-800 mb-2">Matriz A (m×n)</p>
+            <div
+              class="inline-block border border-slate-300 rounded-lg px-3 py-2 bg-white"
+            >
+              <table id="tabla-mul-A" class="matrix-table"></table>
+            </div>
+          </div>
+
+          <!-- Matriz B -->
+          <div>
+            <p class="font-semibold text-slate-800 mb-2">Matriz B (n×p)</p>
+            <div
+              class="inline-block border border-slate-300 rounded-lg px-3 py-2 bg-white"
+            >
+              <table id="tabla-mul-B" class="matrix-table"></table>
+            </div>
+          </div>
+
+          <!-- Resultado (AB)^T -->
+          <div>
+            <p class="font-semibold text-slate-800 mb-2">
+              Resultado (AB)<sup>T</sup>
+            </p>
+            <button id="btn-resolver-mul" class="btn-accent mb-3">
+              Calcular (AB)<sup>T</sup>
+            </button>
+            <div
+              id="res-mul-transp"
+              class="flex flex-col items-center text-slate-700 mt-3"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </section>
   </section>
 </div>
 
