@@ -1,5 +1,69 @@
-let ultimaCeldaActiva = null;
+// app/static/js/gauss_simple.js
+
+let ultimaCeldaActiva = null; // math-field activo
 let ultimoResultado = null;
+
+// ========= helpers LaTeX -> "pretty" =========
+
+function latexToPretty(latex) {
+  if (!latex) return "";
+  let s = latex;
+
+  // limpiar \placeholder{}, \left, \right, espacios, \( \), $$ $$
+  s = s.replace(/\\placeholder\{[^}]*\}/g, "");
+  s = s.replace(/\\ /g, " ");
+  s = s.replace(/\\left/g, "").replace(/\\right/g, "");
+  s = s.replace(/\\\(/g, "").replace(/\\\)/g, "");
+  s = s.replace(/\$\$/g, "").replace(/\$/g, "");
+
+  // \frac{a}{b} -> (a)/(b)
+  s = s.replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "($1)/($2)");
+
+  // \sqrt{...} -> √(...)
+  s = s.replace(/\\sqrt\{([^}]*)\}/g, "√($1)");
+
+  // \pi -> π
+  s = s.replace(/\\pi/g, "π");
+
+  // |x|: \left|x\right| -> |x|
+  s = s.replace(/\\left\|/g, "|").replace(/\\right\|/g, "|");
+
+  // potencias: x^{2} -> x^2
+  s = s.replace(/([A-Za-z0-9\)\]])\^\{([^}]*)\}/g, "$1^$2");
+
+  // quitar llaves restantes
+  s = s.replace(/[{}]/g, "");
+
+  // trig: LaTeX -> español pretty
+  s = s.replace(/\\sin/g, "sen");
+  s = s.replace(/\\cos/g, "cos");
+  s = s.replace(/\\tan/g, "tg");
+  s = s.replace(/\\arcsin/g, "asen");
+  s = s.replace(/\\arccos/g, "acos");
+  s = s.replace(/\\arctan/g, "atan");
+
+  // logs
+  s = s.replace(/\\ln/g, "ln");
+  s = s.replace(/\\log_?\{?10\}?/g, "log10");
+
+  return s.trim();
+}
+
+// sincroniza UN math-field con su input oculto "real"
+function syncCeldaDesdeMathfield(mf) {
+  const idReal = mf.dataset.realId;
+  if (!idReal) return;
+  const hidden = document.getElementById(idReal);
+  if (!hidden) return;
+
+  const latex = mf.value || "";
+  const pretty = latexToPretty(latex);
+
+  // Guardamos "pretty" (√, sen, ^, etc.). Python lo normaliza después.
+  hidden.value = pretty;
+}
+
+// ========= creación de tabla con math-field en cada celda =========
 
 function crearTabla(filas, columnas) {
   const tabla = document.getElementById("tabla-matriz");
@@ -10,7 +74,7 @@ function crearTabla(filas, columnas) {
 
   tabla.innerHTML = "";
 
-  // Crear encabezado
+  // encabezado
   const thead = document.createElement("thead");
   const trh = document.createElement("tr");
 
@@ -32,7 +96,7 @@ function crearTabla(filas, columnas) {
   thead.appendChild(trh);
   tabla.appendChild(thead);
 
-  // Crear cuerpo
+  // cuerpo con math-field + hidden
   const tbody = document.createElement("tbody");
   for (let r = 0; r < filas; r++) {
     const tr = document.createElement("tr");
@@ -46,12 +110,30 @@ function crearTabla(filas, columnas) {
       const td = document.createElement("td");
       td.className = "celda";
 
-      const input = document.createElement("input");
-      input.type = "text";
-      input.placeholder = "0";
-      input.addEventListener("focus", () => (ultimaCeldaActiva = input));
+      const mf = document.createElement("math-field");
+      mf.setAttribute("math-virtual-keyboard-policy", "manual");
+      mf.className = "celda-mf";
+
+      const hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.className = "celda-real";
+      const realId = `celda-r${r}-c${c}`;
+      hidden.id = realId;
+
+      mf.dataset.realId = realId;
+      mf.dataset.fila = String(r);
+      mf.dataset.col = String(c);
+
+      mf.addEventListener("focus", () => {
+        ultimaCeldaActiva = mf;
+      });
+
+      mf.addEventListener("input", () => {
+        syncCeldaDesdeMathfield(mf);
+      });
+
       // Navegación con flechas entre celdas
-      input.addEventListener("keydown", (e) => {
+      mf.addEventListener("keydown", (e) => {
         if (
           ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)
         ) {
@@ -60,7 +142,8 @@ function crearTabla(filas, columnas) {
         }
       });
 
-      td.appendChild(input);
+      td.appendChild(mf);
+      td.appendChild(hidden);
       tr.appendChild(td);
     }
 
@@ -79,12 +162,38 @@ function moverFoco(pos, key, filas, columnas) {
   if (key === "ArrowDown") r = Math.min(filas - 1, r + 1);
   if (key === "ArrowLeft") c = Math.max(0, c - 1);
   if (key === "ArrowRight") c = Math.min(columnas - 1, c + 1);
+
   const tabla = document.getElementById("tabla-matriz");
-  const inp = tabla
-    .querySelectorAll("tbody tr")
-    [r].querySelectorAll("td input")[c];
-  if (inp) inp.focus();
+  const filasDom = tabla.querySelectorAll("tbody tr");
+  const filaTr = filasDom[r];
+  if (!filaTr) return;
+  const mfs = filaTr.querySelectorAll("td math-field");
+  const mf = mfs[c];
+  if (mf) mf.focus();
 }
+
+// leerTabla: leemos los inputs ocultos "celda-real"
+function leerTabla() {
+  const tabla = document.getElementById("tabla-matriz");
+  const filas = tabla.querySelectorAll("tbody tr").length;
+  const columnas =
+    tabla.querySelectorAll("thead tr th").length - 2; // quita cabecera filas + b
+  const datos = [];
+
+  tabla.querySelectorAll("tbody tr").forEach((tr) => {
+    const vals = [];
+    tr.querySelectorAll("td").forEach((td) => {
+      const hidden = td.querySelector("input.celda-real");
+      const v = hidden ? hidden.value.trim() : "";
+      vals.push(v || "0");
+    });
+    datos.push(vals);
+  });
+
+  return { filas, columnas, datos };
+}
+
+// ========= mostrar pasos / resultado =========
 
 function mostrarPasos(pasos) {
   const cont = document.getElementById("contenedor-pasos");
@@ -94,7 +203,9 @@ function mostrarPasos(pasos) {
     const card = document.createElement("div");
     card.className = "card-paso";
     const titulo = document.createElement("div");
-    titulo.innerHTML = `<span class="badge">Paso ${i + 1}</span> <span class="ml-2 font-medium">${p.descripcion}</span>`;
+    titulo.innerHTML = `<span class="badge">Paso ${
+      i + 1
+    }</span> <span class="ml-2 font-medium">${p.descripcion}</span>`;
     card.appendChild(titulo);
 
     const wrap = document.createElement("div");
@@ -139,7 +250,7 @@ function mostrarPasos(pasos) {
   document.getElementById("zona-pasos").classList.remove("hidden");
 }
 
-// --- Render de líneas xk=... (Gauss simple) ---
+// Render de líneas xk=... (Gauss simple)
 function renderLineas(lineas) {
   const ul = document.getElementById("final-sol");
   if (!ul) return;
@@ -151,38 +262,77 @@ function renderLineas(lineas) {
   });
 }
 
-// --- Manejo del teclado de botones (keypad) ---
+function setMsg(t) {
+  const m = document.getElementById("msg");
+  if (m) m.textContent = t || "";
+}
+
+// ========= Teclado blanco -> LaTeX en el math-field activo =========
+
 document.addEventListener("click", (e) => {
-  if (e.target.matches(".key")) {
-    const ins = e.target.getAttribute("data-ins");
-    if (ultimaCeldaActiva) {
-      const start =
-        ultimaCeldaActiva.selectionStart ||
-        ultimaCeldaActiva.value.length;
-      const end =
-        ultimaCeldaActiva.selectionEnd || start;
-      const v = ultimaCeldaActiva.value;
-      let toInsert = ins;
-      let cursorPos = start + toInsert.length;
+  const keyBtn = e.target.closest(".key");
+  if (keyBtn) {
+    if (!ultimaCeldaActiva) return;
+    let ins = keyBtn.getAttribute("data-ins") || "";
 
-      if (ins.endsWith("()")) {
-        toInsert = ins.slice(0, -2);
-        cursorPos = start + toInsert.length + 1;
-      }
+    switch (ins) {
+      // Paréntesis y operaciones básicas tal cual
+      case "(":
+      case ")":
+      case "+":
+      case "-":
+      case "*":
+      case "/":
+        break;
 
-      // Lógica para el botón 'x²' (potenciación)
-      if (ins === "x^") {
-        toInsert = "^";
-        cursorPos = start + 1;
-      }
+      // x² -> exponente vacío
+      case "x^":
+        ins = "^{\\placeholder{}}";
+        break;
 
-      ultimaCeldaActiva.value =
-        v.slice(0, start) + toInsert + v.slice(end);
-      ultimaCeldaActiva.focus();
-      ultimaCeldaActiva.setSelectionRange(cursorPos, cursorPos);
+      // √ -> raíz como MathLive
+      case "sqrt()":
+        ins = "\\sqrt{\\placeholder{}}";
+        break;
+
+      // trig
+      case "sin()":
+        ins = "\\sin(";
+        break;
+      case "cos()":
+        ins = "\\cos(";
+        break;
+      case "tan()":
+        ins = "\\tan(";
+        break;
+
+      case "pi":
+        ins = "\\pi";
+        break;
+
+      // a/b
+      case "frac(, )":
+        ins = "\\frac{}{}";
+        break;
+
+      default:
+        break;
     }
+
+    ins = ins.replace(/\\\\/g, "\\");
+
+    const mf = ultimaCeldaActiva;
+    mf.focus();
+    if (typeof mf.insert === "function") {
+      mf.insert(ins, { format: "latex" });
+    } else {
+      mf.value = (mf.value || "") + ins;
+    }
+    syncCeldaDesdeMathfield(mf);
   }
 });
+
+// ========= DOMContentLoaded =========
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ gauss_simple.js cargado correctamente");
@@ -193,7 +343,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Crear matriz manualmente
+  // Crear matriz
   btnCrear.addEventListener("click", () => {
     const filas = parseInt(
       document.getElementById("inp-filas").value,
@@ -215,7 +365,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ultimoResultado = null;
   });
 
-  // ✅ NUEVO: botón para convertir sistema → matriz y llenar la tabla
+  // botón sistema → matriz
   const btnSistema = document.getElementById("btn-sistema-a-matriz");
   if (btnSistema) {
     btnSistema.addEventListener("click", async () => {
@@ -236,8 +386,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const msgEl = document.getElementById("msg");
-      if (msgEl) msgEl.textContent = "Interpretando sistema...";
+      setMsg("Interpretando sistema...");
 
       try {
         const resp = await fetch("/matrices/gauss/sistema_matriz", {
@@ -260,21 +409,27 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("inp-filas").value = js.filas;
         document.getElementById("inp-columnas").value = js.columnas;
 
-        // Crear tabla y rellenarla con la matriz regresada
+        // Crear tabla y rellenarla
         crearTabla(js.filas, js.columnas);
         const tabla = document.getElementById("tabla-matriz");
         const filasDom = tabla.querySelectorAll("tbody tr");
         for (let r = 0; r < js.filas; r++) {
-          const inputs = filasDom[r].querySelectorAll("td input");
-          for (let c = 0; c < inputs.length; c++) {
-            inputs[c].value =
+          const tds = filasDom[r].querySelectorAll("td");
+          for (let c = 0; c < tds.length; c++) {
+            const td = tds[c];
+            const mf = td.querySelector("math-field");
+            const hidden = td.querySelector("input.celda-real");
+            const valor =
               (js.matriz[r] && js.matriz[r][c]) !== undefined
                 ? js.matriz[r][c]
                 : "";
+            if (hidden) hidden.value = valor;
+            if (mf) {
+              mf.value = valor === "0" ? "" : valor;
+            }
           }
         }
 
-        // Ocultar pasos y resultado anteriores
         document
           .getElementById("zona-pasos")
           .classList.add("hidden");
@@ -283,9 +438,9 @@ document.addEventListener("DOMContentLoaded", () => {
           .classList.add("hidden");
         ultimoResultado = null;
 
-        if (msgEl) msgEl.textContent = "Matriz cargada desde el sistema.";
+        setMsg("Matriz cargada desde el sistema.");
       } catch (err) {
-        if (msgEl) msgEl.textContent = "";
+        setMsg("");
         alert("Error: " + err.message);
       }
     });
@@ -300,14 +455,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const datos = [];
-      tabla.querySelectorAll("tbody tr").forEach((tr) => {
-        const fila = [];
-        tr
-          .querySelectorAll("td input")
-          .forEach((inp) => fila.push(inp.value.trim()));
-        datos.push(fila);
-      });
+      const { datos } = leerTabla();
 
       const modo_precision =
         document.getElementById("sel-precision").value;
@@ -318,7 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ) || 6;
 
       try {
-        document.getElementById("msg").textContent = "Calculando...";
+        setMsg("Calculando...");
         const resp = await fetch("/matrices/gauss/resolver_simple", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -338,7 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document
           .getElementById("zona-final")
           .classList.remove("hidden");
-        document.getElementById("msg").textContent = "Listo.";
+        setMsg("Listo.");
         ultimoResultado = js;
         try {
           renderLineas(
@@ -346,7 +494,7 @@ document.addEventListener("DOMContentLoaded", () => {
           );
         } catch (_) {}
       } catch (err) {
-        document.getElementById("msg").textContent = "";
+        setMsg("");
         alert("Error: " + err.message);
       }
     });

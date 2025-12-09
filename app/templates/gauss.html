@@ -1,5 +1,34 @@
 {% extends "base.html" %}
 {% block content %}
+
+<script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
+
+<style>
+  /* Ocultar botones del teclado virtual de MathLive */
+  math-field::part(virtual-keyboard-toggle),
+  math-field::part(menu-toggle) {
+    display: none !important;
+  }
+
+  /* Estilo de los math-field dentro de las celdas de la matriz */
+  .matrix-table td math-field {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0.25rem 0.5rem;
+    box-sizing: border-box;
+    border-radius: 0.75rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+  }
+
+  .matrix-table td math-field::part(content) {
+    color: inherit;
+  }
+</style>
+
+
 <div class="space-y-8">
   <!-- =================== PANEL DATOS / SISTEMA =================== -->
   <section class="panel">
@@ -72,9 +101,9 @@
             id="txt-sistema"
             class="input w-full min-h-[140px]"
             placeholder="Ejemplo:
-2x + 3y - z = 5
-x - y + 4z = 7
--x + 2y + z = 1"
+            2x + 3y - z = 5
+            x - y + 4z = 7
+            -x + 2y + z = 1"
           ></textarea>
           <p class="text-xs text-slate-500">
             Una ecuación por línea, siempre con <code>=</code>.
@@ -221,5 +250,8 @@ x - y + 4z = 7
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/gauss.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gauss.js') }}?v=3"></script>
 {% endblock %}
+
+
+

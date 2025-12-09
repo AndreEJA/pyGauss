@@ -1,10 +1,76 @@
+// app/static/js/gauss.js
+
 let lineasActuales = [];
-let ultimaCeldaActiva = null,
-  ultimoResultado = null;
+let ultimaCeldaActiva = null;  // math-field activo
+let ultimoResultado = null;
+
+// ========= helpers para convertir LaTeX -> "pretty" (como Newton) =========
+
+function latexToPretty(latex) {
+  if (!latex) return "";
+  let s = latex;
+
+  // limpiar \placeholder{}, \left, \right, espacios, \( \), $$ $$
+  s = s.replace(/\\placeholder\{[^}]*\}/g, "");
+  s = s.replace(/\\ /g, " ");
+  s = s.replace(/\\left/g, "").replace(/\\right/g, "");
+  s = s.replace(/\\\(/g, "").replace(/\\\)/g, "");
+  s = s.replace(/\$\$/g, "").replace(/\$/g, "");
+
+  // \frac{a}{b} -> (a)/(b)
+  s = s.replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "($1)/($2)");
+
+  // \sqrt{...} -> √(...)
+  s = s.replace(/\\sqrt\{([^}]*)\}/g, "√($1)");
+
+  // \pi -> π
+  s = s.replace(/\\pi/g, "π");
+
+  // |x|: \left|x\right| -> |x|
+  s = s.replace(/\\left\|/g, "|").replace(/\\right\|/g, "|");
+
+  // potencias: x^{2} -> x^2
+  s = s.replace(/([A-Za-z0-9\)\]])\^\{([^}]*)\}/g, "$1^$2");
+
+  // quitar llaves restantes
+  s = s.replace(/[{}]/g, "");
+
+  // trig: LaTeX -> español pretty
+  s = s.replace(/\\sin/g, "sen");
+  s = s.replace(/\\cos/g, "cos");
+  s = s.replace(/\\tan/g, "tg");
+  s = s.replace(/\\arcsin/g, "asen");
+  s = s.replace(/\\arccos/g, "acos");
+  s = s.replace(/\\arctan/g, "atan");
+
+  // logs
+  s = s.replace(/\\ln/g, "ln");
+  s = s.replace(/\\log_?\{?10\}?/g, "log10");
+
+  return s.trim();
+}
+
+// sincroniza UN math-field con su input oculto "real"
+function syncCeldaDesdeMathfield(mf) {
+  const idReal = mf.dataset.realId;
+  if (!idReal) return;
+  const hidden = document.getElementById(idReal);
+  if (!hidden) return;
+
+  const latex = mf.value || "";
+  const pretty = latexToPretty(latex);
+
+  // Guardamos "pretty" (√, sen, etc.). El backend lo convierte a Python.
+  hidden.value = pretty;
+}
+
+// ========= creación de tabla con math-field en cada celda =========
 
 function crearTabla(filas, columnas) {
   const tabla = document.getElementById("tabla-matriz");
   tabla.innerHTML = "";
+
+  // cabecera
   const thead = document.createElement("thead");
   const trh = document.createElement("tr");
   const headV = document.createElement("th");
@@ -22,65 +88,108 @@ function crearTabla(filas, columnas) {
   thead.appendChild(trh);
   tabla.appendChild(thead);
 
+  // cuerpo con math-field
   const tbody = document.createElement("tbody");
   for (let r = 0; r < filas; r++) {
     const tr = document.createElement("tr");
+
     const rh = document.createElement("th");
     rh.className = "row-head";
     rh.textContent = String(r + 1);
     tr.appendChild(rh);
+
     for (let c = 0; c < columnas + 1; c++) {
       const td = document.createElement("td");
       td.className = "celda";
-      const input = document.createElement("input");
-      input.type = "text";
-      input.placeholder = "0";
-      input.addEventListener("focus", () => (ultimaCeldaActiva = input));
-      input.addEventListener("keydown", (e) => {
+
+      const mf = document.createElement("math-field");
+      mf.setAttribute("math-virtual-keyboard-policy", "manual");
+      mf.className = "celda-mf";
+
+      // input oculto con el valor "real" que se manda al backend
+      const hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.className = "celda-real";
+      const realId = `celda-r${r}-c${c}`;
+      hidden.id = realId;
+
+      mf.dataset.realId = realId;
+      mf.dataset.fila = String(r);
+      mf.dataset.col = String(c);
+
+      mf.addEventListener("focus", () => {
+        ultimaCeldaActiva = mf;
+      });
+
+      mf.addEventListener("input", () => {
+        syncCeldaDesdeMathfield(mf);
+      });
+
+      // navegación con flechas entre celdas
+      mf.addEventListener("keydown", (e) => {
         if (
           ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)
         ) {
           e.preventDefault();
-          moverFoco({ r, c }, e.key, filas, columnas + 1);
+          moverFoco(
+            { r, c },
+            e.key,
+            filas,
+            columnas + 1 // incluye columna de b
+          );
         }
       });
-      td.appendChild(input);
+
+      td.appendChild(mf);
+      td.appendChild(hidden);
       tr.appendChild(td);
     }
     tbody.appendChild(tr);
   }
   tabla.appendChild(tbody);
+
   document.getElementById("zona-tabla").classList.remove("hidden");
 }
 
+// ahora moverFoco busca math-field, no <input>
 function moverFoco(pos, key, filas, columnas) {
   let { r, c } = pos;
   if (key === "ArrowUp") r = Math.max(0, r - 1);
   if (key === "ArrowDown") r = Math.min(filas - 1, r + 1);
   if (key === "ArrowLeft") c = Math.max(0, c - 1);
   if (key === "ArrowRight") c = Math.min(columnas - 1, c + 1);
+
   const tabla = document.getElementById("tabla-matriz");
-  const inp = tabla
-    .querySelectorAll("tbody tr")
-    [r].querySelectorAll("td input")[c];
-  inp?.focus();
+  const filasDom = tabla.querySelectorAll("tbody tr");
+  const filaTr = filasDom[r];
+  if (!filaTr) return;
+  const mfs = filaTr.querySelectorAll("td math-field");
+  const mf = mfs[c];
+  if (mf) mf.focus();
 }
 
+// leerTabla ahora lee los inputs ocultos "celda-real"
 function leerTabla() {
   const tabla = document.getElementById("tabla-matriz");
   const filas = tabla.querySelectorAll("tbody tr").length;
   const columnas =
     tabla.querySelectorAll("thead tr th").length - 2; // -2: quita cabecera de filas y 'b'
   const datos = [];
+
   tabla.querySelectorAll("tbody tr").forEach((tr) => {
     const vals = [];
-    tr.querySelectorAll("td input").forEach((inp) =>
-      vals.push(inp.value.trim())
-    );
+    tr.querySelectorAll("td").forEach((td) => {
+      const hidden = td.querySelector("input.celda-real");
+      const v = hidden ? hidden.value.trim() : "";
+      vals.push(v || "0");
+    });
     datos.push(vals);
   });
+
   return { filas, columnas, datos };
 }
+
+// ========= resto de helpers de presentación =========
 
 function crearTH(txt) {
   const th = document.createElement("th");
@@ -95,7 +204,9 @@ function mostrarPasos(pasos) {
     const card = document.createElement("div");
     card.className = "card-paso";
     const titulo = document.createElement("div");
-    titulo.innerHTML = `<span class="badge">Paso ${i + 1}</span> <span class="ml-2 font-medium">${p.descripcion}</span>`;
+    titulo.innerHTML = `<span class="badge">Paso ${
+      i + 1
+    }</span> <span class="ml-2 font-medium">${p.descripcion}</span>`;
     card.appendChild(titulo);
 
     const wrap = document.createElement("div");
@@ -194,9 +305,16 @@ function rellenar(tipo) {
   const n = cols - 1;
   const cuadrada = filas === n;
   function setCell(r, c, val) {
-    tabla
-      .querySelectorAll("tbody tr")
-      [r].querySelectorAll("td input")[c].value = val;
+    const tr = tabla.querySelectorAll("tbody tr")[r];
+    const td = tr.querySelectorAll("td")[c];
+    const mf = td.querySelector("math-field");
+    const hidden = td.querySelector("input.celda-real");
+    if (mf) {
+      mf.value = val === "0" ? "" : val;
+    }
+    if (hidden) {
+      hidden.value = val;
+    }
   }
   if (tipo === "nula") {
     for (let r = 0; r < filas; r++) {
@@ -236,52 +354,86 @@ function rellenar(tipo) {
   }
 }
 
+// ========= teclado blanco: inserta LaTeX en el math-field activo =========
+
 document.addEventListener("click", (e) => {
-  if (e.target.matches(".key")) {
-    const ins = e.target.getAttribute("data-ins");
-    if (ultimaCeldaActiva) {
-      const start =
-        ultimaCeldaActiva.selectionStart || ultimaCeldaActiva.value.length;
-      const end = ultimaCeldaActiva.selectionEnd || start;
-      const v = ultimaCeldaActiva.value;
-      let toInsert = ins;
-      let cursorPos = start + toInsert.length;
-      if (ins.endsWith("()")) {
-        toInsert = ins.slice(0, -2);
-        cursorPos = start + toInsert.length + 1;
-      }
+  const keyBtn = e.target.closest(".key");
+  if (keyBtn) {
+    if (!ultimaCeldaActiva) return;
+    let ins = keyBtn.getAttribute("data-ins") || "";
 
-      // Lógica para el botón 'x²' (potenciación)
-      if (ins === "x^") {
-        toInsert = "^";
-        cursorPos = start + 1;
-      }
+    // traducimos data-ins a LaTeX para MathLive
+    switch (ins) {
+      case "(":
+      case ")":
+      case "+":
+      case "-":
+      case "*":
+      case "/":
+        // se usan tal cual
+        break;
 
-      ultimaCeldaActiva.value =
-        v.slice(0, start) + toInsert + v.slice(end);
-      ultimaCeldaActiva.focus();
-      ultimaCeldaActiva.setSelectionRange(cursorPos, cursorPos);
+      case "x^":
+        // crea un exponente vacío, como en Newton
+        ins = "^{\\placeholder{}}";
+        break;
+
+      case "sqrt()":
+        ins = "\\sqrt{\\placeholder{}}";
+        break;
+
+      case "sin()":
+        ins = "\\sin(";
+        break;
+
+      case "cos()":
+        ins = "\\cos(";
+        break;
+
+      case "tan()":
+        ins = "\\tan(";
+        break;
+
+      case "pi":
+        ins = "\\pi";
+        break;
+
+      case "frac(, )":
+        ins = "\\frac{}{}";
+        break;
+
+      default:
+        // otros quedan igual
+        break;
     }
+
+    ins = ins.replace(/\\\\/g, "\\");
+
+    const mf = ultimaCeldaActiva;
+    mf.focus();
+    if (typeof mf.insert === "function") {
+      mf.insert(ins, { format: "latex" });
+    } else {
+      mf.value = (mf.value || "") + ins;
+    }
+    syncCeldaDesdeMathfield(mf);
   }
-  if (e.target.matches(".fill-btn"))
-    rellenar(e.target.getAttribute("data-fill"));
+
+  const fillBtn = e.target.closest(".fill-btn");
+  if (fillBtn) {
+    rellenar(fillBtn.getAttribute("data-fill"));
+  }
 });
+
+// ========= DOMContentLoaded: eventos de botones principales =========
 
 document.addEventListener("DOMContentLoaded", () => {
   // Botón clásico: crear matriz manualmente
   document.getElementById("btn-crear").addEventListener("click", () => {
-    const filas = parseInt(
-      document.getElementById("inp-filas").value,
-      10
-    );
-    const cols = parseInt(
-      document.getElementById("inp-columnas").value,
-      10
-    );
+    const filas = parseInt(document.getElementById("inp-filas").value, 10);
+    const cols = parseInt(document.getElementById("inp-columnas").value, 10);
     if (!filas || !cols || filas <= 0 || cols <= 0) {
-      showModal(
-        "Ingresa números válidos para filas e incógnitas."
-      );
+      showModal("Ingresa números válidos para filas e incógnitas.");
       return;
     }
     crearTabla(filas, cols);
@@ -290,7 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ultimoResultado = null;
   });
 
-  // ✅ NUEVO: botón para convertir sistema → matriz y llenar la tabla
+  // botón sistema → matriz
   const btnSistema = document.getElementById("btn-sistema-a-matriz");
   if (btnSistema) {
     btnSistema.addEventListener("click", async () => {
@@ -298,13 +450,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const varsEl = document.getElementById("inp-variables-sistema");
       const sistema = (sistemaEl && sistemaEl.value) || "";
       const variables = (varsEl && varsEl.value) || "";
-      const modo_precision =
-        document.getElementById("sel-precision").value;
+      const modo_precision = document.getElementById("sel-precision").value;
       const decimales =
-        parseInt(
-          document.getElementById("inp-decimales").value,
-          10
-        ) || 6;
+        parseInt(document.getElementById("inp-decimales").value, 10) || 6;
 
       if (!sistema.trim()) {
         showModal("Escribe al menos una ecuación en el sistema.");
@@ -332,27 +480,30 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("inp-filas").value = js.filas;
         document.getElementById("inp-columnas").value = js.columnas;
 
-        // Crear tabla y rellenarla con la matriz regresada
+        // Crear tabla y rellenarla
         crearTabla(js.filas, js.columnas);
         const tabla = document.getElementById("tabla-matriz");
         const filasDom = tabla.querySelectorAll("tbody tr");
         for (let r = 0; r < js.filas; r++) {
-          const inputs = filasDom[r].querySelectorAll("td input");
-          for (let c = 0; c < inputs.length; c++) {
-            inputs[c].value =
+          const tds = filasDom[r].querySelectorAll("td");
+          for (let c = 0; c < tds.length; c++) {
+            const td = tds[c];
+            const mf = td.querySelector("math-field");
+            const hidden = td.querySelector("input.celda-real");
+            const valor =
               (js.matriz[r] && js.matriz[r][c]) !== undefined
                 ? js.matriz[r][c]
                 : "";
+            if (hidden) hidden.value = valor;
+            if (mf) {
+              // para no complicarnos con LaTeX, mostramos el valor como texto simple
+              mf.value = valor === "0" ? "" : valor;
+            }
           }
         }
 
-        // Ocultar pasos y resultado anteriores
-        document
-          .getElementById("zona-pasos")
-          .classList.add("hidden");
-        document
-          .getElementById("zona-final")
-          .classList.add("hidden");
+        document.getElementById("zona-pasos").classList.add("hidden");
+        document.getElementById("zona-final").classList.add("hidden");
         ultimoResultado = null;
         lineasActuales = [];
         setMsg("Matriz cargada desde el sistema.");
@@ -363,74 +514,65 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Botón resolver: Gauss-Jordan con la matriz actual
-  document
-    .getElementById("btn-resolver")
-    .addEventListener("click", async () => {
-      setMsg("Calculando...");
-      const { filas, columnas, datos } = leerTabla();
-      const modo_precision =
-        document.getElementById("sel-precision").value;
-      const decimales =
-        parseInt(
-          document.getElementById("inp-decimales").value,
-          10
-        ) || 6;
-      try {
-        const resp = await fetch("/matrices/gauss/resolver", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filas,
-            columnas,
-            tabla: datos,
-            modo_precision,
-            decimales,
-          }),
-        });
-        const js = await resp.json();
-        if (!js.ok) throw new Error(js.error || "Error");
-        mostrarPasos(js.pasos);
-        mostrarFinal(js.final);
-        setMsg("Listo.");
-        ultimoResultado = js;
-        // ✅ Guardar las líneas para la IA
-        lineasActuales = (js.final && js.final.lineas) || [];
-      } catch (err) {
-        setMsg("");
-        showModal("Error: " + err.message);
-      }
-    });
+  // Botón resolver
+  document.getElementById("btn-resolver").addEventListener("click", async () => {
+    setMsg("Calculando...");
+    const { filas, columnas, datos } = leerTabla();
+    const modo_precision = document.getElementById("sel-precision").value;
+    const decimales =
+      parseInt(document.getElementById("inp-decimales").value, 10) || 6;
+    try {
+      const resp = await fetch("/matrices/gauss/resolver", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filas,
+          columnas,
+          tabla: datos,
+          modo_precision,
+          decimales,
+        }),
+      });
+      const js = await resp.json();
+      if (!js.ok) throw new Error(js.error || "Error");
+      mostrarPasos(js.pasos);
+      mostrarFinal(js.final);
+      setMsg("Listo.");
+      ultimoResultado = js;
+      lineasActuales = (js.final && js.final.lineas) || [];
+    } catch (err) {
+      setMsg("");
+      showModal("Error: " + err.message);
+    }
+  });
 
   // Botón PDF
-  document
-    .getElementById("btn-pdf")
-    .addEventListener("click", async () => {
-      if (!ultimoResultado) {
-        showModal("Primero resuelve la matriz.");
-        return;
-      }
-      try {
-        const resp = await fetch("/matrices/gauss/pdf", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            titulo: "Método de Gauss-Jordan",
-            pasos: ultimoResultado.pasos,
-            final: ultimoResultado.final,
-          }),
-        });
-        const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "gauss_pasos.pdf";
-        a.click();
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        showModal("No se pudo generar el PDF: " + err.message);
-      }
-    });
+  document.getElementById("btn-pdf").addEventListener("click", async () => {
+    if (!ultimoResultado) {
+      showModal("Primero resuelve la matriz.");
+      return;
+    }
+    try {
+      const resp = await fetch("/matrices/gauss/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titulo: "Método de Gauss-Jordan",
+          pasos: ultimoResultado.pasos,
+          final: ultimoResultado.final,
+        }),
+      });
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "gauss_pasos.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      showModal("No se pudo generar el PDF: " + err.message);
+    }
+  });
 });
 
 // --- IA opcional ---

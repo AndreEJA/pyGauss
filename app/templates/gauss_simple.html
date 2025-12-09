@@ -1,5 +1,35 @@
 {% extends "base.html" %}
+
 {% block content %}
+
+<!-- MathLive para que las celdas de la matriz sean “bonitas” -->
+<script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
+
+<style>
+  /* Ocultar botones de teclado virtual de MathLive */
+  math-field::part(virtual-keyboard-toggle),
+  math-field::part(menu-toggle) {
+    display: none !important;
+  }
+
+  /* Estilo de los math-field dentro de las celdas de la matriz */
+  .matrix-table td math-field {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0.25rem 0.5rem;
+    box-sizing: border-box;
+    border-radius: 0.75rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+  }
+
+  .matrix-table td math-field::part(content) {
+    color: inherit;
+  }
+</style>
+
 <div class="space-y-8">
   <section class="panel">
     <h2 class="panel-title text-slate-900">Método de Gauss</h2>
@@ -34,7 +64,7 @@
       </div>
     </div>
 
-    <!-- NUEVO: SISTEMA DE ECUACIONES → MATRIZ -->
+    <!-- SISTEMA DE ECUACIONES → MATRIZ -->
     <div class="mt-6 space-y-3">
       <h3 class="text-base font-semibold text-slate-900">
         Sistema de ecuaciones (opcional)
@@ -114,6 +144,7 @@ x - y + 4z = 7
       <table id="tabla-matriz" class="matrix-table w-full"></table>
     </div>
 
+    <!-- TECLADO BLANCO -->
     <div class="mt-4 keypad">
       <button class="key" data-ins="(">(</button>
       <button class="key" data-ins=")">)</button>
@@ -152,6 +183,7 @@ x - y + 4z = 7
     </div>
   </section>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
