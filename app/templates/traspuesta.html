@@ -27,50 +27,112 @@
 
   .matrix-table td math-field::part(content) {
     color: inherit;
+    
+  }
+</style>
+<style>
+  /* Arreglar títulos en modo claro */
+  .panel-title {
+    color: #1e293b !important;      /* slate-800 */
+    opacity: 1 !important;          /* que no se vea transparente */
+  }
+
+  /* En modo oscuro que sigan claros */
+  .dark .panel-title {
+    color: #f1f5f9 !important;      /* slate-50 */
+    opacity: 1 !important;
+  }
+</style>
+<style>
+  /* Títulos del panel en modo claro */
+  .panel-title {
+    color: #1e293b !important; /* slate-800 */
+    opacity: 1 !important;
+  }
+
+  /* Títulos del panel en modo oscuro */
+  .dark .panel-title {
+    color: #f1f5f9 !important; /* slate-50 */
+    opacity: 1 !important;
+  }
+
+  /* Texto descriptivo "Elige qué quieres hacer:" y similares */
+  .panel > p {
+    color: #334155 !important;  /* slate-700 */
+    opacity: 1 !important;
+  }
+
+  .dark .panel > p {
+    color: #cbd5e1 !important; /* slate-300 */
+    opacity: 1 !important;
   }
 </style>
 
+
 <div class="space-y-8">
   <!-- ================= MENÚ PRINCIPAL ================= -->
-  <section class="panel">
-    <h2 class="panel-title text-slate-900">
-      Traspuestas y operaciones con matrices
+  <section class="panel relative overflow-hidden">
+    <!-- Barra decorativa superior -->
+    <div
+      class="absolute inset-x-0 top-0 h-1.5
+             bg-gradient-to-r from-rose-500 via-purple-500 to-blue-500
+             rounded-t-2xl pointer-events-none"
+    ></div>
+
+    <h2 class="panel-title text-slate-900 dark:text-slate-50 flex items-center gap-3">
+      <!-- Iconito matemático para resaltar -->
+      <span
+        class="inline-flex h-9 w-9 items-center justify-center
+               rounded-2xl border border-slate-200 dark:border-slate-600
+               bg-slate-100 dark:bg-slate-800
+               text-slate-900 dark:text-slate-50 text-lg font-semibold"
+      >
+        Aᵗ
+      </span>
+      <span>Traspuestas y operaciones con matrices</span>
     </h2>
-    <p class="text-sm text-slate-600 mb-4">
+
+    <p class="text-sm text-slate-600 dark:text-slate-300 mb-4">
       Elige qué quieres hacer:
     </p>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
       <button
         id="btn-menu-simple"
-        class="w-full text-left rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-rose-400 hover:shadow-md transition"
+        class="w-full text-left rounded-2xl border border-slate-200 dark:border-slate-700
+               bg-white/80 dark:bg-slate-900/60
+               px-4 py-3 shadow-sm hover:border-rose-400 hover:shadow-md transition"
       >
-        <p class="font-semibold text-slate-900">Traspuesta de una matriz A</p>
-        <p class="text-sm text-slate-600">
+        <p class="font-semibold text-slate-900 dark:text-slate-50">Traspuesta de una matriz A</p>
+        <p class="text-sm text-slate-600 dark:text-slate-300">
           Calcula Aᵗ para una matriz de tamaño m×n y analiza si puede ser simétrica.
         </p>
       </button>
 
       <button
         id="btn-menu-suma"
-        class="w-full text-left rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-rose-400 hover:shadow-md transition"
+        class="w-full text-left rounded-2xl border border-slate-200 dark:border-slate-700
+               bg-white/80 dark:bg-slate-900/60
+               px-4 py-3 shadow-sm hover:border-rose-400 hover:shadow-md transition"
       >
-        <p class="font-semibold text-slate-900">
+        <p class="font-semibold text-slate-900 dark:text-slate-50">
           Transpuesta de la suma (A + B)ᵗ
         </p>
-        <p class="text-sm text-slate-600">
+        <p class="text-sm text-slate-600 dark:text-slate-300">
           Elige el tamaño m×n, suma A + B y calcula (A+B)ᵗ.
         </p>
       </button>
 
       <button
         id="btn-menu-mul"
-        class="w-full text-left rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-rose-400 hover:shadow-md transition"
+        class="w-full text-left rounded-2xl border border-slate-200 dark:border-slate-700
+               bg-white/80 dark:bg-slate-900/60
+               px-4 py-3 shadow-sm hover:border-rose-400 hover:shadow-md transition"
       >
-        <p class="font-semibold text-slate-900">
+        <p class="font-semibold text-slate-900 dark:text-slate-50">
           Multiplicación y transpuesta (AB)ᵗ
         </p>
-        <p class="text-sm text-slate-600">
+        <p class="text-sm text-slate-600 dark:text-slate-300">
           A de tamaño m×n, B de tamaño n×p, luego (AB)ᵗ.
         </p>
       </button>
