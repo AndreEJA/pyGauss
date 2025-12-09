@@ -14,7 +14,7 @@ function latexToPretty(latex) {
   s = s.replace(/\\\(/g, "").replace(/\\\)/g, "");
   s = s.replace(/\$\$/g, "").replace(/\$/g, "");
 
-  // \frac{a}{b} -> (a)/(b)   (por si en el futuro usas fracciones)
+  // \frac{a}{b} -> (a)/(b)
   s = s.replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "($1)/($2)");
 
   // \sqrt{...} -> √(...)
@@ -40,7 +40,7 @@ function latexToPretty(latex) {
   s = s.replace(/\\arccos/g, "acos");
   s = s.replace(/\\arctan/g, "atan");
 
-  // logs básicos (por si luego los agregas al teclado)
+  // logs básicos
   s = s.replace(/\\ln/g, "ln");
   s = s.replace(/\\log_?\{?10\}?/g, "log10");
 
@@ -240,7 +240,18 @@ function renderPasoDet(p, idx) {
   return wrap;
 }
 
+// ========= helpers numéricos simples para la parte teórica =========
+
+function parseNumero(str) {
+  if (str === null || str === undefined) return 0;
+  const s = String(str).replace(",", ".").trim();
+  if (s === "") return 0;
+  const v = Number(s);
+  return Number.isFinite(v) ? v : 0;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  // ---------- Determinante normal por Gauss (ya existente) ----------
   document.getElementById("btn-crear").addEventListener("click", () => {
     const n = parseInt(document.getElementById("inp-orden").value, 10);
     if (!Number.isInteger(n) || n < 2) {
@@ -382,4 +393,103 @@ document.addEventListener("DOMContentLoaded", () => {
 
     syncCeldaDesdeMathfield(mf);
   });
+
+ /* ==========================================
+   NUEVO 1: Propiedad det(kA) = k^n · det(A)
+   ========================================== */
+
+const btnDetkA = document.getElementById("btn-det-kA");
+if (btnDetkA) {
+  btnDetkA.addEventListener("click", () => {
+    const n = parseInt(document.getElementById("inp-det-n").value, 10);
+    const detA = parseNumero(document.getElementById("inp-detA").value);
+    const k = parseNumero(document.getElementById("inp-k").value);
+
+    if (!Number.isInteger(n) || n <= 0) {
+      showModal("n debe ser un entero positivo (n ≥ 1).");
+      return;
+    }
+
+    const kPotN = Math.pow(k, n);
+    const detkA = detA * kPotN;
+
+    // spans dentro de la tarjeta
+    const card = document.getElementById("res-det-kA-card");
+    const spanN = document.getElementById("res-det-n");
+    const spanDetA = document.getElementById("res-det-detA");
+    const spanK = document.getElementById("res-det-k");
+    const spanKPow = document.getElementById("res-det-kpow");
+    const spanFormula = document.getElementById("res-det-formula");
+    const spanValor = document.getElementById("res-det-kA-valor");
+
+    if (!card) return;
+
+    // rellenar texto
+    spanN.textContent = n.toString();
+    spanDetA.textContent = detA.toString();
+    spanK.textContent = k.toString();
+    spanKPow.textContent = `${k}^${n} = ${kPotN}`;
+    spanFormula.textContent = `${kPotN} · ${detA} = ${detkA}`;
+    spanValor.textContent = detkA.toString();
+
+    card.classList.remove("hidden");
+  });
+}
+
+
+  /* ==========================================
+     NUEVO 2: (A + B)^T para matrices 2×2
+     ========================================== */
+
+  const btnSumaTransp = document.getElementById("btn-suma-transp");
+  if (btnSumaTransp) {
+    btnSumaTransp.addEventListener("click", () => {
+      // leemos A
+      const a11 = parseNumero(document.getElementById("a11").value);
+      const a12 = parseNumero(document.getElementById("a12").value);
+      const a21 = parseNumero(document.getElementById("a21").value);
+      const a22 = parseNumero(document.getElementById("a22").value);
+
+      // leemos B
+      const b11 = parseNumero(document.getElementById("b11").value);
+      const b12 = parseNumero(document.getElementById("b12").value);
+      const b21 = parseNumero(document.getElementById("b21").value);
+      const b22 = parseNumero(document.getElementById("b22").value);
+
+      // C = A + B
+      const c11 = a11 + b11;
+      const c12 = a12 + b12;
+      const c21 = a21 + b21;
+      const c22 = a22 + b22;
+
+      // (A+B)^T: se intercambian filas por columnas
+      const t11 = c11;
+      const t12 = c21;
+      const t21 = c12;
+      const t22 = c22;
+
+      // mostramos la matriz resultante
+      const cont = document.getElementById("res-suma-transp");
+      cont.innerHTML = `
+        <p class="text-sm mb-2">
+          Primero sumamos A + B y luego tomamos la transpuesta:
+          <strong>(A + B)<sup>T</sup></strong>.
+        </p>
+        <div class="inline-block border border-slate-300 rounded-lg px-3 py-2 bg-white">
+          <table class="matrix-table">
+            <tbody>
+              <tr>
+                <td class="celda text-center px-3 py-1">${t11}</td>
+                <td class="celda text-center px-3 py-1">${t12}</td>
+              </tr>
+              <tr>
+                <td class="celda text-center px-3 py-1">${t21}</td>
+                <td class="celda text-center px-3 py-1">${t22}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    });
+  }
 });

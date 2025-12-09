@@ -1,55 +1,158 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">Independencia lineal</h1>
+
+<style>
+
+  /* Panel de pasos: tarjeta */
+  #contenedor-pasos .card-paso {
+    border-radius: 1rem;
+    border: 1px solid #e5e7eb;       /* slate-200 */
+    background-color: #ffffff;       /* blanco, como la card de Gauss */
+    overflow: hidden;
+  }
+
+  /* Tabla de pasos (modo claro) */
+  #contenedor-pasos .matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  #contenedor-pasos .matrix-table th,
+  #contenedor-pasos .matrix-table td {
+    border: 1px solid #e5e7eb;       /* bordes suaves */
+    padding: 0.6rem 0.75rem;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+  /* Encabezado parecido al de Gauss: gris claro + texto oscuro */
+  #contenedor-pasos .matrix-table thead th {
+    background-color: #f3f4f6;       /* gris muy claro (slate-100) */
+    color: #020617;                  /* casi negro */
+    font-weight: 700;
+  }
+
+  /* Filas en blanco, como la captura de Gauss */
+  #contenedor-pasos .matrix-table tbody td {
+    background-color: #ffffff;
+    color: #020617;
+  }
+
+  /* Badge "Paso 1" etc. */
+  #contenedor-pasos .badge {
+    background-color: #e5e7eb;       /* gris claro para modo claro */
+    color: #020617;
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  /* ------------- MODO OSCURO ------------- */
+  .dark #contenedor-pasos .card-paso {
+    border-color: #1f2937;          /* slate-800 */
+    background-color: #020617;      /* casi negro */
+  }
+
+  .dark #contenedor-pasos .matrix-table thead th {
+    background-color: #020617;
+    color: #e5e7eb;
+  }
+
+  .dark #contenedor-pasos .matrix-table tbody td {
+    background-color: #020617;
+    color: #e5e7eb;
+  }
+
+  .dark #contenedor-pasos .matrix-table th,
+  .dark #contenedor-pasos .matrix-table td {
+    border-color: #1f2937;
+  }
+
+  .dark #contenedor-pasos .badge {
+    background-color: #f97373;  /* rojo suave en oscuro para que destaque */
+    color: #111827;
+  }
+</style>
+
+<h1 class="panel-title text-slate-900">
+  Independencia lineal
+</h1>
 
 <div class="space-y-8">
   <!-- PANEL CONFIGURACIÓN -->
   <section class="panel">
-    <h2 class="panel-title">Configurar vectores</h2>
-    <p class="text-slate-600 mb-4">
+    <h2 class="panel-title text-slate-900">
+      Configurar vectores
+    </h2>
+    <p class="text-slate-600 dark:text-slate-300 mb-4">
       Indica cuántos vectores vas a analizar y cuántas componentes tiene cada uno.
     </p>
 
     <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end">
       <label class="block">
         <span class="lbl">Cantidad de vectores</span>
-        <input id="inp-filas" type="number" min="1" max="10" value="3" class="input">
+        <input
+          id="inp-filas"
+          type="number"
+          min="1"
+          max="10"
+          value="3"
+          class="input"
+        >
       </label>
       <label class="block">
         <span class="lbl">Dimensión (componentes)</span>
-        <input id="inp-cols" type="number" min="1" max="10" value="3" class="input">
+        <input
+          id="inp-cols"
+          type="number"
+          min="1"
+          max="10"
+          value="3"
+          class="input"
+        >
       </label>
       <div class="block">
-        <button id="btn-crear" class="btn-primary w-full">Crear vectores</button>
+        <button id="btn-crear" class="btn-primary w-full">
+          Crear vectores
+        </button>
       </div>
     </div>
   </section>
 
   <!-- PANEL DE VECTORES -->
   <section id="zona-vectores" class="panel hidden">
-    <h2 class="panel-title mb-2">Vectores</h2>
-    <p class="text-slate-600 mb-4">
+    <h2 class="panel-title mb-2 text-slate-900 dark:text-slate-50">
+      Vectores
+    </h2>
+    <p class="text-slate-600 dark:text-slate-300 mb-4">
       Completa los valores de cada vector (uno por columna).
     </p>
 
     <div id="contenedor-vectores" class="overflow-auto"></div>
 
     <div class="mt-6 flex flex-wrap items-center gap-3">
-      <button id="btn-verificar" class="btn-accent">Verificar independencia</button>
-      <span id="msg" class="text-sm text-slate-500"></span>
+      <button id="btn-verificar" class="btn-accent">
+        Verificar independencia
+      </button>
+      <span id="msg" class="text-sm text-slate-500 dark:text-slate-300"></span>
     </div>
   </section>
 
   <!-- PASOS -->
-  <section id="zona-pasos" class="space-y-4 hidden">
-    <h2 class="panel-title">Pasos del método</h2>
+  <section id="zona-pasos" class="panel space-y-4 hidden">
+    <h2 class="panel-title text-slate-900 dark:text-slate-50">
+      Pasos del método
+    </h2>
     <div id="contenedor-pasos" class="space-y-6"></div>
   </section>
 
   <!-- RESULTADO -->
   <section id="zona-resultado" class="panel hidden final-card">
-    <h2 class="panel-title mb-2">Resultado final</h2>
-    <p id="resultado-texto" class="text-slate-800"></p>
+    <h2 class="panel-title mb-2 text-slate-900 dark:text-slate-50">
+      Resultado final
+    </h2>
+    <p id="resultado-texto" class="text-slate-800 dark:text-slate-100"></p>
   </section>
 </div>
 {% endblock %}

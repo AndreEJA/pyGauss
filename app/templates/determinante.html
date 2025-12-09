@@ -30,9 +30,8 @@
   }
 </style>
 
-  
-
 <div class="space-y-8">
+  <!-- ================= DETERMINANTE NORMAL ================= -->
   <section class="panel">
     <h2 class="panel-title text-slate-900">
       Determinante de una Matriz Cuadrada
@@ -40,7 +39,13 @@
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
       <label class="block">
         <span class="lbl">Orden (n para n×n)</span>
-        <input id="inp-orden" type="number" min="2" value="3" class="input" />
+        <input
+          id="inp-orden"
+          type="number"
+          min="2"
+          class="input"
+          placeholder="3"
+        />
       </label>
       <div class="sm:col-span-3">
         <button id="btn-crear" class="btn-primary w-full">Crear Matriz</button>
@@ -88,8 +93,8 @@
           id="inp-decimales"
           type="number"
           min="0"
-          value="6"
           class="input w-28"
+          placeholder="6"
         />
       </label>
       <button id="btn-resolver" class="btn-accent">
@@ -112,6 +117,216 @@
       id="resultado-valor"
       class="text-2xl font-extrabold text-slate-900"
     ></div>
+  </section>
+
+  <!-- ================== NUEVO 1: det(kA) ================== -->
+  <section class="panel">
+    <h3 class="text-lg font-semibold text-slate-900 mb-2">
+      Determinantes y escalares
+    </h3>
+    <p class="text-sm text-slate-600 mb-3">
+      Si conoces el determinante de una matriz cuadrada A de orden n, puedes
+      calcular el determinante de kA usando la propiedad
+      <strong>det(kA) = k<sup>n</sup> · det(A)</strong>.
+    </p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <label class="block">
+        <span class="lbl">Orden n (por ejemplo, 3 para una 3×3)</span>
+        <input
+          id="inp-det-n"
+          type="number"
+          min="1"
+          class="input"
+          placeholder="3"
+        />
+      </label>
+      <label class="block">
+        <span class="lbl">det(A)</span>
+        <input
+          id="inp-detA"
+          type="text"
+          class="input"
+          placeholder="5"
+        />
+      </label>
+      <label class="block">
+        <span class="lbl">Escalar k</span>
+        <input
+          id="inp-k"
+          type="text"
+          class="input"
+          placeholder="2"
+        />
+      </label>
+    </div>
+
+    <div class="mt-4 space-y-4">
+      <button id="btn-det-kA" class="btn-accent">
+        Calcular det(kA)
+      </button>
+
+      <!-- tarjeta de resultado centrada -->
+      <div
+        id="res-det-kA-card"
+        class="hidden rounded-2xl border border-slate-200 bg-white/90 shadow-sm p-5"
+      >
+        <div class="text-center mb-4">
+          <p class="text-xs uppercase tracking-wide text-slate-500">
+            det(kA)
+          </p>
+          <p
+            id="res-det-kA-valor"
+            class="text-4xl font-extrabold text-slate-900"
+          ></p>
+        </div>
+
+        <hr class="my-3 border-slate-200" />
+
+        <div
+          class="text-center text-sm text-slate-600 leading-relaxed space-y-1"
+        >
+          <p>  
+            <strong>Explicación</strong>
+          </p>
+          <p>
+            n =
+            <span id="res-det-n"></span>, det(A) =
+            <span id="res-det-detA"></span>, k =
+            <span id="res-det-k"></span>
+          </p>
+          <p>kⁿ = <span id="res-det-kpow"></span></p>
+          <p>
+            Entonces <strong>det(kA)</strong> =
+            <span id="res-det-formula"></span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== NUEVO 2: (A + B)^T para matrices 2×2 ========== -->
+  <section class="panel">
+    <h3 class="text-lg font-semibold text-slate-900 mb-2">
+      Determinante de la suma de una matriz (A + B)<sup>T</sup>
+    </h3>
+    <p class="text-sm text-slate-600 mb-3">
+      Dadas dos matrices 2×2, esta sección calcula primero la suma
+      <strong>A + B</strong> y luego su transpuesta
+      <strong>(A + B)<sup>T</sup></strong>.
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+      <!-- Matriz A -->
+      <div>
+        <p class="font-semibold text-slate-800 mb-2">Matriz A</p>
+        <div
+          class="inline-block border border-slate-300 rounded-lg px-3 py-2 bg-white"
+        >
+          <table class="matrix-table">
+            <tbody>
+              <tr>
+                <td class="celda px-2 py-1">
+                  <input
+                    id="a11"
+                    type="text"
+                    class="input w-20"
+                    placeholder="a₁₁"
+                  />
+                </td>
+                <td class="celda px-2 py-1">
+                  <input
+                    id="a12"
+                    type="text"
+                    class="input w-20"
+                    placeholder="a₁₂"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td class="celda px-2 py-1">
+                  <input
+                    id="a21"
+                    type="text"
+                    class="input w-20"
+                    placeholder="a₂₁"
+                  />
+                </td>
+                <td class="celda px-2 py-1">
+                  <input
+                    id="a22"
+                    type="text"
+                    class="input w-20"
+                    placeholder="a₂₂"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Matriz B -->
+      <div>
+        <p class="font-semibold text-slate-800 mb-2">Matriz B</p>
+        <div
+          class="inline-block border border-slate-300 rounded-lg px-3 py-2 bg-white"
+        >
+          <table class="matrix-table">
+            <tbody>
+              <tr>
+                <td class="celda px-2 py-1">
+                  <input
+                    id="b11"
+                    type="text"
+                    class="input w-20"
+                    placeholder="b₁₁"
+                  />
+                </td>
+                <td class="celda px-2 py-1">
+                  <input
+                    id="b12"
+                    type="text"
+                    class="input w-20"
+                    placeholder="b₁₂"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td class="celda px-2 py-1">
+                  <input
+                    id="b21"
+                    type="text"
+                    class="input w-20"
+                    placeholder="b₂₁"
+                  />
+                </td>
+                <td class="celda px-2 py-1">
+                  <input
+                    id="b22"
+                    type="text"
+                    class="input w-20"
+                    placeholder="b₂₂"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Resultado (A+B)^T -->
+      <div>
+        <p class="font-semibold text-slate-800 mb-2">
+          Resultado (A + B)<sup>T</sup>
+        </p>
+        <button id="btn-suma-transp" class="btn-accent mb-3">
+          Calcular (A + B)<sup>T</sup>
+        </button>
+        <div id="res-suma-transp" class="flex flex-col items-center text-slate-700 mt-3"></div>
+        
+      </div>
+    </div>
   </section>
 </div>
 
