@@ -28,6 +28,43 @@
   .matrix-table td math-field::part(content) {
     color: inherit;
   }
+
+  /* ===============================
+     TARJETAS DE PASOS (MISMO ESTILO QUE MATRIZ PRINCIPAL)
+     =============================== */
+
+  .dark #contenedor-pasos .card-paso {
+    background-color: #0b1120 !important;   /* panel oscuro como el de la matriz */
+    border: 1px solid #1e293b !important;   /* borde similar */
+    border-radius: 1rem !important;
+    padding: 1.25rem !important;
+    color: #e5e7eb !important;              /* texto claro (incluye F1↔F2, etc.) */
+  }
+
+  /* ===============================
+     TABLA DE LOS PASOS (colores exactos)
+     =============================== */
+
+  /* Encabezados (x1, x2, x3, b) */
+  .dark #contenedor-pasos .matrix-table th {
+    background-color: #1e293b !important;  /* mismo header que la matriz aumentada */
+    color: #e5e7eb !important;
+    font-weight: 600;
+    border: 1px solid #334155 !important;
+  }
+
+  /* Celdas del cuerpo */
+  .dark #contenedor-pasos .matrix-table td {
+    background-color: #0f172a !important;  /* mismo tono de filas */
+    color: #e5e7eb !important;
+    border: 1px solid #334155 !important;
+  }
+
+  /* Eliminar listrado */
+  .dark #contenedor-pasos .matrix-table tr:nth-child(even) td,
+  .dark #contenedor-pasos .matrix-table tr:nth-child(odd) td {
+    background-color: #0f172a !important;
+  }
 </style>
 
 <div class="space-y-8">
