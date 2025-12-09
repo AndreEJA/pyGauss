@@ -174,6 +174,150 @@ function parseNumero(str) {
   return Number.isFinite(v) ? v : 0;
 }
 
+/* ========= helpers nuevos para el modo "con letras" ========= */
+
+// ¿La matriz tiene alguna entrada que sea solo letras? (x, y, z, a, etc.)
+function matrizTieneVariablesSimples(A) {
+  const reVar = /^[A-Za-z]+$/;
+  for (const fila of A) {
+    for (let v of fila) {
+      v = (v || "").trim();
+      if (reVar.test(v)) return true;
+    }
+  }
+  return false;
+}
+
+// Transpuesta puramente como texto (sin evaluar nada)
+function transponerMatrizTexto(A) {
+  const m = A.length;
+  const n = A[0].length;
+  const AT = [];
+  for (let j = 0; j < n; j++) {
+    AT[j] = [];
+    for (let i = 0; i < m; i++) {
+      AT[j][i] = A[i][j];
+    }
+  }
+  return AT;
+}
+
+/* ========= comprobar si A es simétrica usando A y Aᵗ ========= */
+function evaluarSimetria(A, AT) {
+  const simMsg = document.getElementById("sim-msg");
+  if (!simMsg) return;
+
+  // limpiar texto y clases base
+  simMsg.innerHTML = "";
+  simMsg.className = "mt-3 text-sm";
+
+  if (!A.length || !A[0] || A.length !== A[0].length) {
+    simMsg.innerHTML =
+      "La matriz A no es cuadrada, por lo tanto <strong>no puede ser simétrica</strong>.";
+    simMsg.classList.add("text-amber-600");
+    return;
+  }
+
+  const n = A.length;
+  let esSimetrica = true;
+  const detalles = [];
+
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      let aij = (A[i][j] ?? "").trim();
+      let aji = (A[j][i] ?? "").trim();
+
+      if (aij === "") aij = "0";
+      if (aji === "") aji = "0";
+
+      if (aij !== aji) {
+        esSimetrica = false;
+        detalles.push(
+          `a<sub>${i + 1},${j + 1}</sub> = ${aij} ≠ a<sub>${j + 1},${
+            i + 1
+          }</sub> = ${aji}`
+        );
+      }
+    }
+  }
+
+  if (esSimetrica) {
+    simMsg.innerHTML =
+      "La matriz A <strong>es simétrica</strong> porque se cumple A = Aᵗ (todos los elementos a<sub>ij</sub> coinciden con a<sub>ji</sub>).";
+    simMsg.classList.add("text-emerald-600");
+  } else {
+    let html = `
+      <span class="block mb-1 text-rose-600 font-medium">
+        La matriz A <strong>NO es simétrica</strong> porque A ≠ Aᵗ.
+      </span>
+      <span class="block text-slate-700 mb-1">
+        Se encontraron diferencias en las siguientes posiciones (pares en espejo):
+      </span>
+      <ul class="list-disc list-inside text-slate-700">
+    `;
+    for (const d of detalles) {
+      html += `<li>${d}</li>`;
+    }
+    html += "</ul>";
+    simMsg.innerHTML = html;
+  }
+}
+
+/* ========= encontrar valores/ecuaciones para que A sea simétrica ========= */
+function resolverSimetriaConVariables(A) {
+  const n = A.length;
+  const resultados = [];
+
+  if (!A[0] || n !== A[0].length) {
+    return {
+      ok: false,
+      msg: "La matriz no es cuadrada; no se pueden encontrar valores para que sea simétrica."
+    };
+  }
+
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const aij = (A[i][j] ?? "").trim();
+      const aji = (A[j][i] ?? "").trim();
+
+      const n1 = Number(aij);
+      const n2 = Number(aji);
+
+      const esNum1 = !isNaN(n1);
+      const esNum2 = !isNaN(n2);
+
+      // ambos numéricos
+      if (esNum1 && esNum2) {
+        if (n1 !== n2) {
+          resultados.push(
+            `No hay forma de hacer simétrica este par: a<sub>${i + 1},${j +
+              1}</sub> = ${aij} ≠ a<sub>${j + 1},${i + 1}</sub> = ${aji}`
+          );
+        }
+        continue;
+      }
+
+      // uno número y otro "variable"
+      if (esNum1 && !esNum2) {
+        resultados.push(`${aji} = ${aij}`);
+      } else if (!esNum1 && esNum2) {
+        resultados.push(`${aij} = ${aji}`);
+      } else {
+        // ambos parecen letras / expresiones
+        if (aij !== aji) {
+          resultados.push(`${aij} = ${aji}`);
+        }
+      }
+    }
+  }
+
+  return {
+    ok: true,
+    ecuaciones: resultados
+  };
+}
+
+/* ================== DOMContentLoaded ================== */
 document.addEventListener("DOMContentLoaded", () => {
   /* ==========================================
      MENÚ PRINCIPAL: mostrar/ocultar módulos
@@ -234,6 +378,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
       crearTabla(m, n, "tabla-A");
       document.getElementById("zona-matriz").classList.remove("hidden");
+
+      // limpiar resultado y mensajes cuando se recrea la matriz
+      const zonaRes = document.getElementById("zona-resultado");
+      if (zonaRes) zonaRes.classList.add("hidden");
+      const simMsg = document.getElementById("sim-msg");
+      if (simMsg) {
+        simMsg.innerHTML = "";
+        simMsg.className = "mt-3 text-sm text-slate-600";
+      }
+      const simVars = document.getElementById("sim-vars");
+      if (simVars) {
+        simVars.innerHTML = "";
+      }
     });
   }
 
@@ -242,6 +399,51 @@ document.addEventListener("DOMContentLoaded", () => {
       const matriz = leerTabla("tabla-A");
       if (msg) msg.textContent = "Calculando...";
 
+      // ¿Hay variables tipo x, y, z? → modo solo-frontend
+      const tieneVars = matrizTieneVariablesSimples(matriz);
+
+      if (tieneVars) {
+        // 1) calcular A^T en el frontend (sin backend)
+        const AT = transponerMatrizTexto(matriz);
+        renderMatrix(AT, "tabla-resultado");
+        document
+          .getElementById("zona-resultado")
+          .classList.remove("hidden");
+
+        // 2) evaluar simetría con A y A^T
+        evaluarSimetria(matriz, AT);
+
+        // 3) ecuaciones para que sea simétrica
+        const sol = resolverSimetriaConVariables(matriz);
+        const eqDiv = document.getElementById("sim-vars");
+        if (eqDiv) {
+          if (!sol.ok) {
+            eqDiv.innerHTML = `<p class="mt-2 text-sm text-rose-600">${sol.msg}</p>`;
+          } else if (!sol.ecuaciones.length) {
+            eqDiv.innerHTML = `
+              <p class="mt-2 text-sm text-emerald-600">
+                No se encontraron variables: la matriz ya está completamente numérica.
+              </p>`;
+          } else {
+            let html = `
+              <h4 class="mt-4 font-semibold text-sm text-slate-900">
+                Valores/ecuaciones para que A sea simétrica:
+              </h4>
+              <ul class="list-disc list-inside text-sm text-slate-700 mt-1">
+            `;
+            sol.ecuaciones.forEach((e) => {
+              html += `<li>${e}</li>`;
+            });
+            html += "</ul>";
+            eqDiv.innerHTML = html;
+          }
+        }
+
+        if (msg) msg.textContent = "";
+        return; // importante: no llamar al backend
+      }
+
+      // ----- MODO NUMÉRICO NORMAL (sin letras) → usar backend -----
       try {
         const resp = await fetch("/matrices/operaciones/traspuesta/resolver", {
           method: "POST",
@@ -252,10 +454,38 @@ document.addEventListener("DOMContentLoaded", () => {
         const js = await resp.json();
 
         if (js.ok) {
+          // mostrar Aᵗ
           renderMatrix(js.resultado, "tabla-resultado");
           document
             .getElementById("zona-resultado")
             .classList.remove("hidden");
+
+          // evaluar si A es simétrica usando A y Aᵗ
+          evaluarSimetria(matriz, js.resultado);
+
+          // en modo numérico, también podemos intentar ecuaciones,
+          // pero normalmente no habrá letras:
+          const sol = resolverSimetriaConVariables(matriz);
+          const eqDiv = document.getElementById("sim-vars");
+          if (eqDiv) {
+            if (!sol.ok) {
+              eqDiv.innerHTML = `<p class="mt-2 text-sm text-rose-600">${sol.msg}</p>`;
+            } else if (!sol.ecuaciones.length) {
+              eqDiv.innerHTML = "";
+            } else {
+              let html = `
+                <h4 class="mt-4 font-semibold text-sm text-slate-900">
+                  Valores/ecuaciones para que A sea simétrica:
+                </h4>
+                <ul class="list-disc list-inside text-sm text-slate-700 mt-1">
+              `;
+              sol.ecuaciones.forEach((e) => {
+                html += `<li>${e}</li>`;
+              });
+              html += "</ul>";
+              eqDiv.innerHTML = html;
+            }
+          }
         } else {
           alert(js.error || "Error");
         }

@@ -47,7 +47,7 @@
       >
         <p class="font-semibold text-slate-900">Traspuesta de una matriz A</p>
         <p class="text-sm text-slate-600">
-          Calcula Aᵗ para una matriz de tamaño m×n.
+          Calcula Aᵗ para una matriz de tamaño m×n y analiza si puede ser simétrica.
         </p>
       </button>
 
@@ -83,10 +83,14 @@
       <h3 class="text-lg font-semibold text-slate-900">
         Traspuesta de una matriz A (m×n)
       </h3>
+      <p class="text-sm text-slate-600 mb-3">
+        Ingresa la matriz A. Se calculará Aᵗ, se verificará si A es simétrica y, si hay letras,
+        se mostrarán las ecuaciones necesarias para que la matriz sea simétrica.
+      </p>
       <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
         <label class="block">
           <span class="lbl">Filas (m)</span>
-          <input id="inp-filas" type="number" min="1" value="2" class="input" />
+          <input id="inp-filas" type="number" min="1" value="3" class="input" />
         </label>
         <label class="block">
           <span class="lbl">Columnas (n)</span>
@@ -121,8 +125,8 @@
         <button class="key" data-ins="e">e</button>
       </div>
 
-      <div class="mt-4 flex gap-3">
-        <button id="btn-resolver" class="btn-accent">Calcular Aᵗ</button>
+      <div class="mt-4 flex gap-3 items-center">
+        <button id="btn-resolver" class="btn-accent">Calcular Aᵗ y analizar simetría</button>
         <span id="msg" class="text-sm text-slate-500"></span>
       </div>
     </section>
@@ -132,6 +136,12 @@
       <div class="overflow-auto max-h-[50vh] rounded-xl border border-slate-200">
         <table id="tabla-resultado" class="matrix-table w-full"></table>
       </div>
+
+      <!-- Mensaje de simetría -->
+      <p id="sim-msg" class="mt-3 text-sm text-slate-600"></p>
+
+      <!-- NUEVO: ecuaciones / valores para que A sea simétrica -->
+      <div id="sim-vars" class="mt-4 text-sm text-slate-800"></div>
     </section>
   </section>
 
