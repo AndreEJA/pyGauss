@@ -310,84 +310,97 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Resolver
-  if (btnResolver) {
-    btnResolver.addEventListener('click', async () => {
-      const matriz_A = leerTabla('tabla-A');
-      const vector_b = leerTabla('tabla-b');
-      const modo = document.getElementById('sel-modo').value;
-      const decimales = parseInt(document.getElementById('inp-decimales').value, 10) || 6;
+ // Resolver
+if (btnResolver) {
+  btnResolver.addEventListener('click', async () => {
+    const matriz_A = leerTabla('tabla-A');
 
-      setMsg('Calculando...');
+    // 🔹 vector_b: aplanar n×1 -> 1D
+    const vector_b_matriz = leerTabla('tabla-b');
+    const vector_b = vector_b_matriz.map(fila => (fila[0] ?? '0'));
 
+    const modo = document.getElementById('sel-modo').value;
+    const decimales = parseInt(document.getElementById('inp-decimales').value, 10) || 6;
+
+    setMsg('Calculando...');
+
+    try {
+      const resp = await fetch('/matrices/operaciones/cramer/resolver', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          matriz_A_str: matriz_A,
+          vector_b_str: vector_b,
+          modo_precision: modo,
+          decimales
+        })
+      });
+
+      // 🔹 Mejora: si el servidor responde HTML o un error, lo mostramos
+      const text = await resp.text();
+      let js;
       try {
-        const resp = await fetch('/matrices/operaciones/cramer/resolver', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            matriz_A_str: matriz_A,
-            vector_b_str: vector_b,
-            modo_precision: modo,
-            decimales
-          })
-        });
-        const js = await resp.json();
-
-        document.getElementById('zona-detA').classList.add('hidden');
-        document.getElementById('zona-cramer').classList.add('hidden');
-        document.getElementById('zona-resultado').classList.add('hidden');
-
-        if (js.ok) {
-          // 1. Determinante A
-          const divDetA = document.getElementById('valor-detA');
-          divDetA.textContent = `det(A) = ${js.det_A}`;
-          const listaDetA = document.getElementById('lista-pasos-detA');
-          listaDetA.innerHTML = '';
-          if (js.pasos) {
-            js.pasos.forEach((p, i) => listaDetA.appendChild(renderPasoDet(p, i + 1)));
-          }
-          document.getElementById('zona-detA').classList.remove('hidden');
-
-          // 2. Cramer
-          const msgCramer = document.getElementById('cramer-message');
-          if (msgCramer) msgCramer.textContent = js.mensaje;
-
-          const listaCramer = document.getElementById('lista-pasos-cramer');
-          listaCramer.innerHTML = '';
-
-          if (js.pasos_cramer) {
-            js.pasos_cramer.forEach((p, i) => listaCramer.appendChild(renderCramerStep(p, i + 1)));
-            document.getElementById('zona-cramer').classList.remove('hidden');
-          }
-
-          // 3. Solución Final
-          if (js.solucion) {
-            const ul = document.getElementById('resultado-solucion');
-            ul.innerHTML = '';
-            Object.entries(js.solucion).forEach(([k, v]) => {
-              const li = document.createElement('li');
-              li.className = 'panel p-4 border rounded-xl shadow-sm text-center'; 
-              li.style.borderColor = "var(--border)";
-              li.innerHTML = `<span class="font-bold mr-2" style="color: var(--text)">${k} =</span> <span class="text-xl font-extrabold" style="color: var(--accent)">${v}</span>`;
-              ul.appendChild(li);
-            });
-            document.getElementById('zona-resultado').classList.remove('hidden');
-          } else {
-            document.getElementById('zona-cramer').classList.remove('hidden');
-          }
-
-          setMsg('Listo.');
-        } else {
-          setMsg('');
-          showModal(js.error || 'Error desconocido');
-        }
+        js = JSON.parse(text);
       } catch (e) {
-        console.error(e);
-        setMsg('');
-        showModal('Error al conectar con el servidor.');
+        throw new Error(`Respuesta no válida del servidor (status ${resp.status}): ${text.slice(0, 200)}`);
       }
-    });
-  }
+
+      document.getElementById('zona-detA').classList.add('hidden');
+      document.getElementById('zona-cramer').classList.add('hidden');
+      document.getElementById('zona-resultado').classList.add('hidden');
+
+      if (js.ok) {
+        // 1. Determinante A
+        const divDetA = document.getElementById('valor-detA');
+        divDetA.textContent = `det(A) = ${js.det_A}`;
+        const listaDetA = document.getElementById('lista-pasos-detA');
+        listaDetA.innerHTML = '';
+        if (js.pasos) {
+          js.pasos.forEach((p, i) => listaDetA.appendChild(renderPasoDet(p, i + 1)));
+        }
+        document.getElementById('zona-detA').classList.remove('hidden');
+
+        // 2. Cramer
+        const msgCramer = document.getElementById('cramer-message');
+        if (msgCramer) msgCramer.textContent = js.mensaje;
+
+        const listaCramer = document.getElementById('lista-pasos-cramer');
+        listaCramer.innerHTML = '';
+
+        if (js.pasos_cramer) {
+          js.pasos_cramer.forEach((p, i) => listaCramer.appendChild(renderCramerStep(p, i + 1)));
+          document.getElementById('zona-cramer').classList.remove('hidden');
+        }
+
+        // 3. Solución Final
+        if (js.solucion) {
+          const ul = document.getElementById('resultado-solucion');
+          ul.innerHTML = '';
+          Object.entries(js.solucion).forEach(([k, v]) => {
+            const li = document.createElement('li');
+            li.className = 'panel p-4 border rounded-xl shadow-sm text-center';
+            li.style.borderColor = "var(--border)";
+            li.innerHTML = `<span class="font-bold mr-2" style="color: var(--text)">${k} =</span> <span class="text-xl font-extrabold" style="color: var(--accent)">${v}</span>`;
+            ul.appendChild(li);
+          });
+          document.getElementById('zona-resultado').classList.remove('hidden');
+        } else {
+          document.getElementById('zona-cramer').classList.remove('hidden');
+        }
+
+        setMsg('Listo.');
+      } else {
+        setMsg('');
+        showModal(js.error || 'Error desconocido');
+      }
+    } catch (e) {
+      console.error(e);
+      setMsg('');
+      showModal('Error al conectar con el servidor: ' + e.message);
+    }
+  });
+}
+
 
   // --- TECLADO VIRTUAL ---
   document.addEventListener('click', (e) => {
