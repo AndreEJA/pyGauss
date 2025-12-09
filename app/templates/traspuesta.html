@@ -1,5 +1,35 @@
 {% extends "base.html" %}
+
 {% block content %}
+
+<!-- MathLive para que las celdas de la matriz sean “bonitas” -->
+<script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
+
+<style>
+  /* Ocultar botones del teclado virtual de MathLive */
+  math-field::part(virtual-keyboard-toggle),
+  math-field::part(menu-toggle) {
+    display: none !important;
+  }
+
+  /* Estilo de los math-field dentro de las celdas de la matriz */
+  .matrix-table td math-field {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0.25rem 0.5rem;
+    box-sizing: border-box;
+    border-radius: 0.75rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+  }
+
+  .matrix-table td math-field::part(content) {
+    color: inherit;
+  }
+</style>
+
 <div class="space-y-8">
   <section class="panel">
     <h2 class="panel-title text-slate-900">Traspuesta de una Matriz</h2>
@@ -24,7 +54,7 @@
       <table id="tabla-A" class="matrix-table w-full"></table>
     </div>
 
-    <!-- TECLADO: AHORA CON ESTILO TIPO "KEY" -->
+    <!-- TECLADO BLANCO TIPO "GAUSS" -->
     <div class="keypad mt-3">
       <button class="key" data-ins="(">(</button>
       <button class="key" data-ins=")">)</button>
@@ -32,7 +62,7 @@
       <button class="key" data-ins="-">−</button>
       <button class="key" data-ins="*">×</button>
       <button class="key" data-ins="/">÷</button>
-      <button class="key" data-ins="^">x^</button>
+      <button class="key" data-ins="x^">x²</button>
       <button class="key" data-ins="sqrt()">√</button>
       <button class="key" data-ins="sin()">sin</button>
       <button class="key" data-ins="cos()">cos</button>
@@ -54,7 +84,9 @@
     </div>
   </section>
 </div>
+
 {% endblock %}
+
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/traspuesta.js') }}"></script>
+<script src="{{ url_for('static', filename='js/traspuesta.js') }}" defer></script>
 {% endblock %}

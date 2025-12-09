@@ -1,5 +1,37 @@
 {% extends "base.html" %}
+
 {% block content %}
+
+<!-- MathLive para celdas bonitas -->
+<script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
+
+<style>
+  /* Ocultar botones del teclado virtual de MathLive */
+  math-field::part(virtual-keyboard-toggle),
+  math-field::part(menu-toggle) {
+    display: none !important;
+  }
+
+  /* Estilo de los math-field dentro de la tabla */
+  .matrix-table td math-field {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0.25rem 0.5rem;
+    box-sizing: border-box;
+    border-radius: 0.75rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+  }
+
+  .matrix-table td math-field::part(content) {
+    color: inherit;
+  }
+</style>
+
+  
+
 <div class="space-y-8">
   <section class="panel">
     <h2 class="panel-title text-slate-900">
@@ -15,8 +47,8 @@
       </div>
     </div>
     <p class="text-sm text-slate-600 mt-2">
-      Para n=2 se usa la fórmula de $ad-bc$. Para n &gt; 2 se usa la reducción por
-      filas (método de Gauss).
+      Para n=2 se usa la fórmula de \(ad - bc\). Para n &gt; 2 se usa la
+      reducción por filas (método de Gauss).
     </p>
   </section>
 
@@ -26,7 +58,7 @@
       <table id="tabla-A" class="matrix-table w-full"></table>
     </div>
 
-    <!-- TECLADO CON ESTILO NUEVO -->
+    <!-- TECLADO con estilo unificado -->
     <div class="kbd-row keypad mt-3">
       <button class="kbd key" data-ins="pi">π</button>
       <button class="kbd key" data-ins="e">e</button>
@@ -39,7 +71,7 @@
       <button class="kbd key" data-ins="(">(</button>
       <button class="kbd key" data-ins=")">)</button>
       <button class="kbd key" data-ins="+">+</button>
-      <button class="kbd key" data-ins="-">-</button>
+      <button class="kbd key" data-ins="-">−</button>
     </div>
 
     <div class="mt-4 flex gap-3 flex-wrap items-end">
@@ -82,7 +114,9 @@
     ></div>
   </section>
 </div>
+
 {% endblock %}
+
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/determinante.js') }}"></script>
+<script src="{{ url_for('static', filename='js/determinante.js') }}" defer></script>
 {% endblock %}

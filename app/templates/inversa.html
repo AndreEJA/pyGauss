@@ -1,5 +1,35 @@
 {% extends "base.html" %}
+
 {% block content %}
+
+<!-- MathLive para celdas bonitas -->
+<script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
+
+<style>
+  /* Ocultar botones del teclado virtual de MathLive */
+  math-field::part(virtual-keyboard-toggle),
+  math-field::part(menu-toggle) {
+    display: none !important;
+  }
+
+  /* Estilo de los math-field dentro de la tabla */
+  .matrix-table td math-field {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0.25rem 0.5rem;
+    box-sizing: border-box;
+    border-radius: 0.75rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+  }
+
+  .matrix-table td math-field::part(content) {
+    color: inherit;
+  }
+</style>
+
 <div class="space-y-8">
   <section class="panel">
     <h2 class="panel-title text-slate-900">Inversa de una Matriz</h2>
@@ -23,7 +53,7 @@
       <table id="tabla-A" class="matrix-table w-full"></table>
     </div>
 
-    <!-- TECLADO: .kbd (para JS) + .key (para estilo) -->
+    <!-- TECLADO: igual estilo que el resto -->
     <div class="kbd-row keypad mt-3">
       <button class="kbd key" data-ins="(">(</button>
       <button class="kbd key" data-ins=")">)</button>
@@ -39,7 +69,7 @@
       <button class="kbd key" data-ins="e">e</button>
     </div>
 
-    <div class="mt-4 flex gap-3">
+    <div class="mt-4 flex gap-3 flex-wrap items-end">
       <label class="block">
         <span class="lbl">Modo</span>
         <select id="sel-modo" class="input">
@@ -68,7 +98,9 @@
     </div>
   </section>
 </div>
+
 {% endblock %}
+
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/inversa.js') }}"></script>
+<script src="{{ url_for('static', filename='js/inversa.js') }}" defer></script>
 {% endblock %}
